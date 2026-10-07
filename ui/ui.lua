@@ -39,7 +39,8 @@ function PkCore.ui.build()
 
     -- center column: terminal (flex) + vitals (fixed 50px), stacked
     PkCore.ui.sections.vitals   = Geyser.Container:new({ x = "0%", y = "100%-55", width = "100%", height = "50px" }, PkCore.ui.sections.center)
-    PkCore.ui.sections.playerVitals = Geyser.Container:new({ x = "0%", y = "0%", width = "60%", height = "100%" }, PkCore.ui.sections.vitals)
+    PkCore.ui.sections.balanceOrbs = Geyser.Container:new({ x = "0%", y = "0%", width = "30px", height = "100%" }, PkCore.ui.sections.vitals)
+    PkCore.ui.sections.playerVitals = Geyser.Container:new({ x = "34px", y = "0%", width = "60%-34px", height = "100%" }, PkCore.ui.sections.vitals)
     PkCore.ui.sections.target       = Geyser.Container:new({ x = "60%+5px", y = "0%", width = "40%-5px", height = "100%" }, PkCore.ui.sections.vitals)
 
     -- right column: map / chat / room, stacked (same keys as before, so room.lua/vitals.lua/chat.lua need no changes)

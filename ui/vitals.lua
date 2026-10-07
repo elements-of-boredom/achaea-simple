@@ -2,6 +2,7 @@ PkCore.ui.vitals = PkCore.ui.vitals or {}
 
 local GAUGE_BACK = "#2c313a"
 local GAUGE_TEXT_CSS = [[background-color: transparent;]]
+local ORB_SIZE = 16
 
 local t = PkCore.ui.theme
 local GAUGES = {
@@ -15,6 +16,15 @@ local function gaugeStyle(color1, color2)
   return string.format(
     [[background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 %s, stop:1 %s); border: none;]],
     color1, color2)
+end
+
+local function orbStyle(colorHex, filled)
+  if filled then
+    return string.format("background-color: #%s; border: 1px solid #%s; border-radius: %dpx;",
+      colorHex, colorHex, ORB_SIZE / 2)
+  end
+  return string.format("background-color: transparent; border: 2px solid #%s; border-radius: %dpx;",
+    colorHex, ORB_SIZE / 2)
 end
 
 function PkCore.ui.vitals.cleanup()
@@ -87,7 +97,35 @@ function PkCore.ui.vitals.ensureTarget()
     return PkCore.ui.vitals.target
 end
 
+function PkCore.ui.vitals.ensureBalanceOrbs()
+  if PkCore.ui.vitals.orbs then return PkCore.ui.vitals.orbs end
+  if not (PkCore.ui and PkCore.ui.sections and PkCore.ui.sections.balanceOrbs) then return nil end
+
+  local container = PkCore.ui.sections.balanceOrbs
+
+  local balOrb = Geyser.Label:new({
+    name = "PkCore_vitals_orb_balance",
+    x = 7, y = "20%-" .. (ORB_SIZE / 2), width = ORB_SIZE, height = ORB_SIZE,
+  }, container)
+
+  local eqOrb = Geyser.Label:new({
+    name = "PkCore_vitals_orb_eq",
+    x = 7, y = "60%-" .. (ORB_SIZE / 2), width = ORB_SIZE, height = ORB_SIZE,
+  }, container)
+
+  PkCore.ui.vitals.orbs = { balance = balOrb, equilibrium = eqOrb }
+  return PkCore.ui.vitals.orbs
+end
+
+function PkCore.ui.vitals.renderBalanceOrbs()
+  local orbs = PkCore.ui.vitals.ensureBalanceOrbs()
+  if not orbs then return end
+  orbs.balance:setStyleSheet(orbStyle(t.hp, PkCore.balance.balance))
+  orbs.equilibrium:setStyleSheet(orbStyle(t.mana, PkCore.balance.equilibrium))
+end
+
 function PkCore.ui.vitals.render()
+  PkCore.ui.vitals.renderBalanceOrbs() 
   local gauges = PkCore.ui.vitals.ensureGauges()
   if not gauges then return end
   for _, def in ipairs(GAUGES) do

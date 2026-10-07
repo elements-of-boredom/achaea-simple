@@ -79,13 +79,13 @@ function PkCore.room.sortedExits()
 end
 
 function PkCore.room.isTargetPlayer()
-  local name = PkCore.room.targetName()
-  if not name then return false end
-  local normalized = name:lower()
-  for _, player in ipairs(PkCore.room.playerNames()) do
-    if player:lower() == normalized then return true end
+  if not PkCore.room.targetId then return false end
+  for _, entry in ipairs(PkCore.room.mobEntries()) do
+    if tostring(entry.id) == PkCore.room.targetId then
+      return false
+    end
   end
-  return false
+  return true
 end
 
 

@@ -33,5 +33,7 @@ local function evaluate()
 
     send(classData.basicAttack)
 end
+-- add this so we can leverage it from aliases
+PkCore.reactor.evaluate = evaluate
 
 PkCore.reactor.registerMode("hunt", { evaluate = evaluate })

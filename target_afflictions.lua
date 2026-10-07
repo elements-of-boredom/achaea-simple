@@ -17,3 +17,5 @@ end
 
 PkCore.trackHandler(registerAnonymousEventHandler("AK got aff", PkCore.protected("target.onAkGotAff", syncFromAK)))
 PkCore.trackHandler(registerAnonymousEventHandler("AK lost aff", PkCore.protected("target.onAkLostAff", syncFromAK)))
+-- AK doesn't always raise events, refresh the score everytime we get vitals (every `tic`)
+PkCore.trackHandler(registerAnonymousEventHandler("gmcp.Char.Vitals", PkCore.protected("target.onVitalsSync", syncFromAK)))

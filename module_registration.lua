@@ -1,10 +1,12 @@
 -- Bootstrap sub-modules
 PkCore.loadModule("config.lua")
 
+-- Blackboards (state) --
 PkCore.loadModule("gmcp.lua")
 PkCore.loadModule("readiness.lua")
 PkCore.loadModule("target_afflictions.lua")
 PkCore.loadModule("room_info.lua")
+PkCore.loadModule("player_status.lua")
 
 -- Class systems --
 PkCore.loadModule("classes/class_loader.lua")
@@ -32,3 +34,9 @@ PkCore.loadModule("rift.lua")
 PkCore.loadModule("reactor.lua")
 PkCore.loadModule("reactor_modes/hunt.lua")
 PkCore.loadModule("reactor_modes/pk.lua")
+
+-- Utility / Aliases --
+PkCore.loadModule("aliases/stats.lua")
+PkCore.loadModule("aliases/iht.lua")
+PkCore.loadModule("aliases/hh.lua") 
+PkCore.loadModule("aliases/st.lua")
