@@ -16,17 +16,18 @@ PkCore.afflictions.blocking = {
 }
 PkCore.afflictions.venomLock = { "paralysis", "impatience", "asthma", "anorexia", "slickness" }
 
-function PkCore.canAct()
-  -- Cannot act with no balance or EQ (barring things like rage, or special skills)
-  if not (PkCore.balance.balance and PkCore.balance.equilibrium) then
-    return false
-  end
-  if PkCore.status.stunned then return false end
-  if PkCore.afflictions.armsDamaged() then return false end
+function PkCore.isHindered()
+  if PkCore.status.stunned then return true end
+  if PkCore.afflictions.armsDamaged() then return true end
   for name in pairs(PkCore.afflictions.list) do
-    if PkCore.afflictions.isBlocking(name) then return false end
+    if PkCore.afflictions.isBlocking(name) then return true end
   end
-  return true
+  return false
+end
+
+function PkCore.canAct()
+  if PkCore.isHindered() then return false end
+  return PkCore.balance.balance and PkCore.balance.equilibrium
 end
 
 function PkCore.afflictions.isBlocking(name)

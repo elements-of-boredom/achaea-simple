@@ -34,6 +34,11 @@ PkCore.loadModule("rift.lua")
 PkCore.loadModule("reactor.lua")
 PkCore.loadModule("reactor_modes/hunt.lua")
 PkCore.loadModule("reactor_modes/pk.lua")
+-- All pk stragies must go aver pk.lua
+PkCore.loadModule("reactor_modes/strategies/heartseed.lua")
+PkCore.loadModule("reactor_modes/strategies/shockwave.lua")
+PkCore.loadModule("reactor_modes/strategies/sylvan_lock.lua")
+PkCore.loadModule("reactor_modes/strategies/fireguy.lua")
 
 -- Utility / Aliases --
 PkCore.loadModule("aliases/stats.lua")

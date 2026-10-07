@@ -30,6 +30,7 @@ end
 function PkCore.ui.vitals.cleanup()
   PkCore.ui.vitals.gauges = nil
   PkCore.ui.vitals.target = nil
+  PkCore.ui.vitals.orbs = nil
 end
 
 function PkCore.ui.vitals.ensureGauges()
