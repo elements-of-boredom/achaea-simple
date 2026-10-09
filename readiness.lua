@@ -66,6 +66,7 @@ function PkCore.balance.report()
     tostring(PkCore.balance.balance), tostring(PkCore.balance.equilibrium), tostring(PkCore.status.stunned)))
 end
 
+
 local function applyChange(name, value)
   if PkCore.balance[name] == value then return end
   PkCore.balance[name] = value
@@ -98,6 +99,12 @@ local function onUnstunned()
 end
 
 -- SELF AFFLICTION TRACKING --
+local function parseAffliction(raw)
+  local name, count = raw:match("^(%a+) %((%d+)%)$")
+  if name then return name, tonumber(count) end
+  return raw, nil
+end
+
 function PkCore.afflictions.has(name)
   return PkCore.afflictions.list[name] == true
 end
@@ -107,7 +114,8 @@ local function onAfflictionsList()
   if not data then return end
   PkCore.afflictions.list = {}
   for _, entry in ipairs(data) do
-    PkCore.afflictions.list[entry.name] = true
+    local name, count = parseAffliction(entry.name)
+    PkCore.afflictions.list[entry.name] = count or true
   end
   PkCore.stateChanged()
 end
@@ -115,17 +123,19 @@ end
 local function onAfflictionAdd()
   local entry = gmcp and gmcp.Char and gmcp.Char.Afflictions and gmcp.Char.Afflictions.Add
   if not entry or not entry.name then return end
+  local name, count = parseAffliction(entry.name)
   if PkCore.config.values.affEchos then
     PkCore.cecho("(<red>+" .. entry.name:lower() .. "<reset>)\n")
   end
-  PkCore.afflictions.list[entry.name] = true
+  PkCore.afflictions.list[name] = count or true
   PkCore.stateChanged()
 end
 
 local function onAfflictionRemove()
   local names = gmcp and gmcp.Char and gmcp.Char.Afflictions and gmcp.Char.Afflictions.Remove
   if not names then return end
-  for _, name in ipairs(names) do
+  for _, raw in ipairs(names) do
+    local name = parseAffliction(raw)
     if PkCore.config.values.affEchos then
       PkCore.cecho("(<green>-" .. name:lower() .. "<reset>)\n")
     end

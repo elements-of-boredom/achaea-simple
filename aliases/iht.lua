@@ -5,13 +5,13 @@ function PkCore.iht()
     return
   end
   local mob = mobs[1]
-  local names = {}
-  for _, m in ipairs(mobs) do
-    table.insert(names, m.name)
-  end
-  --PkCore.note("iht: " .. table.concat(names, ", "))
   send("st " .. mob.id)
   PkCore.room.targetId = tostring(mob.id)
+  target2 = mob.name:lower()
+  target = target2:title()
+  if ak and ak.oresetparse then
+    ak.oresetparse()
+  end
   PkCore.reactor.evaluate()
 end
 

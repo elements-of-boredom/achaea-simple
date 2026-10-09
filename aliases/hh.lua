@@ -56,7 +56,7 @@ local function sendNextHarvest()
         if harvestActive then
             harvestActive = false
             if harvestSucceeded > 0 then
-                send("inr all")
+                send("inr all", false)
             end
             harvestSucceeded = 0
         end
@@ -67,7 +67,7 @@ local function sendNextHarvest()
     end
     local name = table.remove(harvestQueue, 1)
     harvestWaiting = true
-    send("harvest " .. name)
+    send("harvest " .. name, false)
 end
 
 PkCore.trackHandler(registerAnonymousEventHandler("PkCore balance gained",
@@ -163,7 +163,7 @@ function PkCore.harvest.here()
     capturing = false
     buffer = {}
     manualPending = true
-    send("plants")
+    send("plants", false)
     PkCore.trackTimer(tempTimer(2, PkCore.protected("hh.manualTimeout", function()
         manualPending = false
     end)))

@@ -257,6 +257,7 @@ local RULES = {
   { "^As you continue to draw the vital waters", { 0, 255, 0 } },
   { "^You may purge your great form of afflictions once again", { 0, 255, 0 } },
   { "^You have found a ", { 240, 160, 30 } },
+  { "^You feel your standing grow among the residents of the", { 240, 160, 30 } },
 }
 
 -- ── Apply ────────────────────────────────────────────────────────────────

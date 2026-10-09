@@ -13,22 +13,6 @@ local ARM_LEG_KEYS = { "rightleg", "leftleg", "rightarm", "leftarm" }
 local WORD_TO_LIMB = {}
 for key, word in pairs(LIMB_WORDS) do WORD_TO_LIMB[word] = key end
 
--- Override AK's Viridianrend damage calc the server-reported percentage
--- instead of its hardcoded health-tier guess.
-local lastRealViridianrendDamage = nil
-
-PkCore.trackTrigger(tempRegexTrigger(
-  "^As you carve into [\\w'\\-]+, you perceive that you have dealt ([\\d.]+)% damage to \\w+ (.+)\\.$",
-  PkCore.protected("heartseed.onViridianrendDamage", function()
-    lastRealViridianrendDamage = tonumber(matches[2])
-  end)))
-
-ak.limbs.myformulas = ak.limbs.myformulas or {}
-ak.limbs.myformulas.viridianrend = function(who, attacker, weapon, limb, augment, check)
-  local damage = lastRealViridianrendDamage or 22
-  lastRealViridianrendDamage = nil -- consume once, force it to be reset each time, prolly not needed....
-  return damage
-end
 
 -- Config , TODO: wire into config maybe?
 H.venom = H.venom or "prefarar"
@@ -80,6 +64,13 @@ PkCore.trackHandler(registerAnonymousEventHandler("PkCore state changed",
 )
 PkCore.trackTrigger(tempRegexTrigger("^You have slain ", PkCore.protected("heartseed.onTargetSlain", resetTracking)))
 
+local function onRestorationApply(kind)
+  H.lastApply = { target = kind, startTime = getEpoch(), resolveTime = getEpoch() + SALVE_BALANCE }
+  PkCore.note("heartseed: restoration applied to " .. kind)
+  PkCore.stateChanged()
+end
+
+
 function H.setPrepLimbs(a, b)
   H.prepLimbs = { a }
   if b and b ~= "" then
@@ -126,6 +117,11 @@ local function readyLimb()
   return nil
 end
 
+local function broken(key)
+  local threshold = (key == "torso" or key == "head") and 100 or 200
+  return (affstrack.score[key] or 0) >= threshold
+end
+
 local function allPrepLimbsPrimed()
   for _, key in ipairs(H.prepLimbs) do
     if not (ready(key) or broken(key)) then
@@ -142,11 +138,6 @@ local function nextUnpreparedLimb()
     end
   end
   return nil
-end
-
-local function broken(key)
-  local threshold = (key == "torso" or key == "head") and 100 or 200
-  return (affstrack.score[key] or 0) >= threshold
 end
 
 function H.explain()
@@ -175,7 +166,12 @@ function H.thornrend(key)
   if not target then return end
   local word = LIMB_WORDS[key] or key
   H.pendingLimb = key
-  send("thornrend " .. target .. " " .. H.venom .. " " .. word .. " " .. H.armsPlant)
+  local venom = ready(key) and "gecko" or H.venom
+  local fullrend = "thornrend " .. target .. " " .. venom .. " " .. word .. " " .. H.armsPlant
+  if key == "rightleg" or key == "leftleg" then
+    fullrend = fullrend .. " | SWING QUARTERSTAFF ".. target
+  end
+  send(fullrend)
 end
 
 function H.castHeartseed()
@@ -192,6 +188,12 @@ function H.vinewreathe()
   local target = liveTarget()
   if not target then return end
   send("VINEWREATHE " .. target)
+  H.vinewreatheActive = true
+  -- Disable it after 15 seconds as a safety. --
+  PkCore.trackTimer(tempTimer(15, function()
+    H.vinewreatheActive = false
+    PkCore.stateChanged()
+  end))
 end
 
 local function evaluate()
@@ -201,7 +203,7 @@ local function evaluate()
   if not target then return end
 
   -- heartseed-specific decision logic goes here
-  if H.consecutiveParries > 1 and not H.vinewreatheActive then
+  if H.consecutiveParries > 0 and not H.vinewreatheActive then
     PkCore.note("heartseed: getting parried - vinewreathe!")
     H.vinewreathe()
   end
@@ -225,6 +227,13 @@ local function evaluate()
     return
   end
 
+  if not allPrepLimbsPrimed() then
+    local limb = nextUnpreparedLimb() or H.prepLimbs[1]
+    PkCore.note("heartseed: prepping " .. (LIMB_WORDS[limb] or limb) .. " to bait a limb restoration")
+    H.thornrend(limb)
+    return
+  end
+
   -- They are applying to their legs/arms and torso is prepped
   if limbRestorationActive() then
     H.castHeartseed()
@@ -233,13 +242,6 @@ local function evaluate()
 
   if H.torsoMildtrauma or H.salveBlocked then
     H.castHeartseed()
-    return
-  end
-
-  if not allPrepLimbsPrimed() then
-    local limb = nextUnpreparedLimb() or H.prepLimbs[1]
-    PkCore.note("heartseed: prepping " .. (LIMB_WORDS[limb] or limb) .. " to bait a limb restoration")
-    H.thornrend(limb)
     return
   end
 
@@ -252,6 +254,33 @@ local function evaluate()
   PkCore.note("heartseed: waiting on opponent to apply a restoration")
 end
 
+----- AK OVERRIDES --------
+-- Override AK's Viridianrend damage calc the server-reported percentage
+-- instead of its hardcoded health-tier guess.
+local lastRealViridianrendDamage = nil
+
+PkCore.trackTrigger(tempRegexTrigger(
+  "^As you carve into [\\w'\\-]+, you perceive that you have dealt ([\\d.]+)% damage to \\w+ (.+)\\.$",
+  PkCore.protected("heartseed.onViridianrendDamage", function()
+    lastRealViridianrendDamage = tonumber(matches[2])
+    H.consecutiveParries = 0
+    PkCore.stateChanged()
+  end)))
+
+local function realLimbDamage(who, attacker, weapon, limb, augment, check)
+  local damage = lastRealViridianrendDamage or 22
+  lastRealViridianrendDamage = nil -- consume once, force it to be reset each time, prolly not needed....
+  return damage
+end
+-- Queue up for onready so we don't error on cold start -- 
+PkCore.onReady(function()
+  ak.limbs.myformulas = ak.limbs.myformulas or {}
+  ak.limbs.myformulas.viridianrend = realLimbDamage
+  ak.limbs.myformulas.wreathed = realLimbDamage
+end)
+
+--- REGISTRATIONS ----
+
 PkCore.pk_mode.registerStrategy("heartseed", { evaluate = evaluate })
 
 PkCore.registerAlias("PkCore heartseed venom", [[^heartseed\s+venom\s+(\S+)$]], [[PkCore.heartseed.venom = matches[2] ]])
@@ -261,3 +290,48 @@ PkCore.registerAlias("PkCore heartseed salveblocked", [[^heartseed\s+salveblocke
 PkCore.registerAlias("PkCore heartseed damageperhit", [[^heartseed\s+damageperhit\s+(\d+)$]], [[PkCore.heartseed.damagePerHit = tonumber(matches[2])]])
 PkCore.registerAlias("PkCore heartseed status", [[^heartseed\s+(?:status|why)$]], [[PkCore.heartseed.explain()]])
 PkCore.registerAlias("PkCore heartseed reset", [[^heartseed\s+reset$]], [[PkCore.heartseed.reset()]])
+
+-- Triggers --
+-- Parry tracking --
+PkCore.trackTrigger(tempRegexTrigger(
+  "^(\\w+) parries the attack with a deft manoeuvre\\.$",
+  PkCore.protected("heartseed.onParry", function()
+    local tgt = liveTarget()
+    if tgt and matches[2] == tgt then
+      H.consecutiveParries = H.consecutiveParries + 1
+      PkCore.stateChanged()
+    end
+  end))
+)
+-- vinewreathe down -- 
+PkCore.trackTrigger(tempRegexTrigger(
+  "^The vines flailing about (\\w+)'s form recede\\.$",
+  PkCore.protected("heartseed.onVinewreatheExpired", function()
+    local tgt = liveTarget()
+    if tgt and matches[2] == tgt then
+      H.vinewreatheActive = false
+      PkCore.stateChanged()
+    end
+  end))
+)
+
+-- Restoration tracking
+-- legs/arms restoration applied --
+PkCore.trackTrigger(tempRegexTrigger(
+  "^(\\w+) takes some salve from a vial and rubs it on (?:his|her|their) (legs|arms)\\.$",
+  PkCore.protected("heartseed.onLimbRestoration", function()
+    local tgt = liveTarget()
+    if tgt and matches[2] == tgt then
+      onRestorationApply(matches[3])
+    end
+  end)))
+
+-- body/torso restoration applied --
+PkCore.trackTrigger(tempRegexTrigger(
+  "^(\\w+) takes some salve from a vial and rubs it on (?:his|her|their) body\\.$",
+  PkCore.protected("heartseed.onBodyRestoration", function()
+    local tgt = liveTarget()
+    if tgt and matches[2] == tgt then
+      onRestorationApply("body")
+    end
+  end)))

@@ -1,2 +1,2 @@
-return {{[ [[ginseng]] ] = true,},
+return {{[ [[moss]] ] = true,[ [[pear]] ] = true,[ [[bloodroot]] ] = true,[ [[kelp]] ] = true,[ [[ginseng]] ] = true,},
 }

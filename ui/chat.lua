@@ -93,7 +93,7 @@ function PkCore.ui.chat.ensureWidgets()
     local console = Geyser.MiniConsole:new({
       name = "PkCore_chat_" .. tab.key,
       x = "1%", y = belowTabs, width = "99%", height = "100%-" .. belowTabs,
-      autoWrap = true,
+      autoWrap = true, font = "SF Mono",
       fontSize = 10,
     }, PkCore.ui.sections.chat)
     setBgColor("PkCore_chat_" .. tab.key, 0, 0, 0, 0)

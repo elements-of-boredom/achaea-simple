@@ -1,5 +1,7 @@
--- Bootstrap sub-modules
+-- Bootstrap sub-modules -- should have no other dependencies
 PkCore.loadModule("config.lua")
+PkCore.loadModule("ui/ui.lua")
+PkCore.loadModule("ui/theme.lua") 
 
 -- Blackboards (state) --
 PkCore.loadModule("gmcp.lua")
@@ -7,16 +9,16 @@ PkCore.loadModule("readiness.lua")
 PkCore.loadModule("target_afflictions.lua")
 PkCore.loadModule("room_info.lua")
 PkCore.loadModule("player_status.lua")
+PkCore.loadModule("prompt_tags.lua")
 
 -- Class systems --
 PkCore.loadModule("classes/class_loader.lua")
+PkCore.loadModule("rage.lua")
 
 -- PRETTY! --
 PkCore.loadModule("colorize.lua")
 
 -- UI --
-PkCore.loadModule("ui/ui.lua")
-PkCore.loadModule("ui/theme.lua")
 PkCore.loadModule("ui/header.lua")
 PkCore.loadModule("ui/topbar.lua")
 PkCore.loadModule("ui/map.lua")
@@ -41,6 +43,7 @@ PkCore.loadModule("reactor_modes/strategies/sylvan_lock.lua")
 PkCore.loadModule("reactor_modes/strategies/fireguy.lua")
 
 -- Utility / Aliases --
+PkCore.loadModule("gold_pickup.lua")
 PkCore.loadModule("aliases/stats.lua")
 PkCore.loadModule("aliases/iht.lua")
 PkCore.loadModule("aliases/hh.lua") 

@@ -33,8 +33,8 @@ function PkCore.ui.room.ensureWidget()
     return console
   end
 
-  PkCore.ui.room.widget = makeConsole("PkCore_room_console", "2%", "40%")
-  PkCore.ui.room.itemsWidget = makeConsole("PkCore_room_items_console", "44%", "55%")
+  PkCore.ui.room.widget = makeConsole("PkCore_room_console", "56%", "40%")
+  PkCore.ui.room.itemsWidget = makeConsole("PkCore_room_items_console", "2%", "55%")
   
   return PkCore.ui.room.widget
 end
@@ -47,7 +47,7 @@ function PkCore.ui.room.render()
   itemsWidget:clear()
   local t = PkCore.ui.theme
 
-  widget:hecho("|b|c" .. t.text .. tostring(PkCore.room.name or "Unknown Room") .. "|r\n")
+  --widget:hecho("|b|c" .. t.text .. tostring(PkCore.room.name or "Unknown Room") .. "|r\n")
   widget:hecho("|b|c" .. t.text .. "[Exits]:|r |c" .. t.textBody .. table.concat(PkCore.room.sortedExits(), ", ") .. "|r\n\n")
 
   widget:hecho("|b|c" .. t.text .. "[Players]:|r\n")
@@ -56,7 +56,7 @@ function PkCore.ui.room.render()
   end
   widget:hecho("\n")
 
-  widget:hecho("|b|c" .. t.text .. "Mobs:|r\n")
+  widget:hecho("|b|c" .. t.text .. "[Mobs]:|r\n")
   for _, entry in ipairs(PkCore.room.mobEntries()) do
     if PkCore.room.targetId and tostring(entry.id) == PkCore.room.targetId then
       widget:hecho("|c" .. t.target .. "> " .. entry.name .. " |c" .. t.idMuted .. " @" .. tostring(entry.id) .. "|r\n")

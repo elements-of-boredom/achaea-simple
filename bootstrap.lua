@@ -99,6 +99,19 @@ function PkCore.loadModule(name, printSuccess)
   end
 end
 
+function PkCore.onReady(fn)
+  if gmcp and gmcp.Char and gmcp.Char.Vitals then
+    fn()
+    return
+  end
+  local handlerId
+  handlerId = registerAnonymousEventHandler("gmcp.Char.Vitals", PkCore.protected("PkCore.onReady", function()
+    killAnonymousEventHandler(handlerId)
+    fn()
+  end))
+  PkCore.trackHandler(handlerId)
+end
+
 function PkCore.cleanup()
   for _, id in ipairs(PkCore.triggerIds) do pcall(killTrigger, id) end
   for _, id in ipairs(PkCore.timerIds) do pcall(killTimer, id) end

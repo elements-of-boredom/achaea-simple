@@ -4,7 +4,7 @@ function PkCore.setTarget(name)
     PkCore.note("usage: st <name>")
     return
   end
-  send("st " .. name)
+  send("st " .. name, false)
   target2 = name:lower()
   target = target2:title()
   if ak and ak.oresetparse then

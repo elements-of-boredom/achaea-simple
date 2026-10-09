@@ -114,6 +114,7 @@ function PkCore.room.targetName()
   for _, entry in ipairs(PkCore.room.mobEntries()) do
     if tostring(entry.id) == PkCore.room.targetId then return entry.name end
   end
+  if type(target) == "string" and target ~= "" then return target end
   return PkCore.room.targetId
 end
 

@@ -31,6 +31,9 @@ PkCore.ui.theme = {
   willpower2 = "d9a0db",  
   target  = "c7796f",
   target2 = "e2a098",
+  good     = "006400",
+  warning  = "e6c800",
+  critical = "dc3232",
 }
 
 function PkCore.ui.theme.rgba(hex, alpha)
@@ -38,4 +41,11 @@ function PkCore.ui.theme.rgba(hex, alpha)
   local g = tonumber(hex:sub(3, 4), 16)
   local b = tonumber(hex:sub(5, 6), 16)
   return string.format("rgba(%d,%d,%d,%d)", r, g, b, alpha)
+end
+
+function PkCore.ui.theme.decimal(hex)
+  local r = tonumber(hex:sub(1, 2), 16)
+  local g = tonumber(hex:sub(3, 4), 16)
+  local b = tonumber(hex:sub(5, 6), 16)
+  return string.format("%d,%d,%d", r, g, b)
 end
