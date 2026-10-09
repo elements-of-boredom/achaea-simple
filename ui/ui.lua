@@ -18,7 +18,7 @@ local function styleMainWindow()
     setBorderLeft(leftPanelWidth + 5)
     setBorderRight((width * .25) + 5)
     setBorderTop(56)
-    setBorderBottom(61)
+    setBorderBottom(81)
     setBackgroundImage("main", getMudletHomeDir() .. "/pk/assets/forestral-grove-bg-v2.png", "cover", true)
 end
 
@@ -37,7 +37,11 @@ function PkCore.ui.build()
         right  = Geyser.Container:new({ name = "PkCore_ui_right",  x = "75%", y = "5px", width = "25%-5px", height = "100%-10" }, PkCore.ui.root),
     }
 
-    -- center column: terminal (flex) + vitals (fixed 50px), stacked
+    -- center column: terminal (flex) + limbs + vitals (fixed 50px), stacked
+    PkCore.ui.sections.limbs = Geyser.Container:new({ x = "0%", y = "100%-75", width = "100%", height = "20px" }, PkCore.ui.sections.center)
+    PkCore.ui.sections.myLimbs = Geyser.Container:new({ x = "0%", y = "0%", width = "60%-5px", height = "100%" }, PkCore.ui.sections.limbs)
+    PkCore.ui.sections.targetLimbs = Geyser.Container:new({ x = "60%+5px", y = "0%", width = "40%-5px", height = "100%" }, PkCore.ui.sections.limbs)
+    
     PkCore.ui.sections.vitals   = Geyser.Container:new({ x = "0%", y = "100%-55", width = "100%", height = "50px" }, PkCore.ui.sections.center)
     PkCore.ui.sections.balanceOrbs = Geyser.Container:new({ x = "0%", y = "0%", width = "30px", height = "100%" }, PkCore.ui.sections.vitals)
     PkCore.ui.sections.playerVitals = Geyser.Container:new({ x = "34px", y = "0%", width = "60%-34px", height = "100%" }, PkCore.ui.sections.vitals)

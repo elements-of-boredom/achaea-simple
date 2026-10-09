@@ -11,5 +11,11 @@ function PkCore.setTarget(name)
     ak.oresetparse()
   end
 end
+function PkCore.resetAK()
+  if ak and ak.oresetparse then
+    ak.oresetparse()
+  end
+end
 
 PkCore.registerAlias("PkCore st", [[^st\s+(.+)$]], [[PkCore.setTarget(matches[2])]])
+PkCore.registerAlias("PkCore st (reset)", [[^st$]], [[PkCore.resetAK()]])
