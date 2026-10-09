@@ -48,3 +48,6 @@ PkCore.loadModule("aliases/stats.lua")
 PkCore.loadModule("aliases/iht.lua")
 PkCore.loadModule("aliases/hh.lua") 
 PkCore.loadModule("aliases/st.lua")
+
+-- Compatabiilty fixes --
+PkCore.loadModule("wundersys_compat.lua")

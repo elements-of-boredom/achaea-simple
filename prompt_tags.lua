@@ -262,10 +262,6 @@ PkCore.registerAlias("PkCore prompt debug", [[^promptdebug\s+(on|off)$]], [[PkCo
 -- Send the full prompt we will ultimately use for parsing/replacement
 PkCore.onReady(function()
   send("config prompt custom [*s] *h/*H *m/*M *e/*E *w/*W *b *d *c *r *k *t *T *1 *2 *3 *4")
-  -- Temporary: disables WunderSys's own prompt redraw so the native server
-  -- prompt (and our @tags above) are what actually shows. Remove once
-  -- WunderSys is fully replaced.
-  wsys.promptsub = function() end
 end)
 
 
