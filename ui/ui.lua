@@ -38,7 +38,7 @@ function PkCore.ui.build()
     }
 
     -- center column: terminal (flex) + limbs + vitals (fixed 50px), stacked
-    PkCore.ui.sections.limbs = Geyser.Container:new({ x = "0%", y = "100%-75", width = "100%", height = "20px" }, PkCore.ui.sections.center)
+    PkCore.ui.sections.limbs = Geyser.Container:new({ x = "0%", y = "100%-78", width = "100%", height = "20px" }, PkCore.ui.sections.center)
     PkCore.ui.sections.myLimbs = Geyser.Container:new({ x = "0%", y = "0%", width = "60%-5px", height = "100%" }, PkCore.ui.sections.limbs)
     PkCore.ui.sections.targetLimbs = Geyser.Container:new({ x = "60%+5px", y = "0%", width = "40%-5px", height = "100%" }, PkCore.ui.sections.limbs)
     
