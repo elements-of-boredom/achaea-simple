@@ -58,6 +58,8 @@ PkCore.afflictionIgnore = {
   deafness = true,
 }
 
+local LIMB_KEYS = { rightleg = true, leftleg = true, rightarm = true, leftarm = true, torso = true, head = true }
+
 local AFFLICTION_COLOR_GROUPS = {
   { color = "218,112,214", names = { prone = true } },
   { color = "127,255,0", names = { asthma=true, sensitivity=true, weariness=true, clumsiness=true, healthleech=true, rebbies=true } },
@@ -173,6 +175,18 @@ PkCore.registerPromptTag("afflictions", function()
   local theme = PkCore.ui.theme
   return table.concat(parts, " ") .. "<" .. theme.decimal(theme.text) .. ">"
 end)
+PkCore.registerPromptTag("targetafflictions", function()
+  local parts = {}
+  for _, name in ipairs(PkCore.target.afflictions) do
+    if not LIMB_KEYS[name] then
+      local short = PkCore.afflictionShort[name] or name
+      table.insert(parts, "<" .. afflictionColor(name) .. ">" .. short)
+    end
+  end
+  if #parts == 0 then return "" end
+  local theme = PkCore.ui.theme
+  return table.concat(parts, " ") .. "<" .. theme.decimal(theme.text) .. ">"
+end)
 PkCore.registerPromptTag("timestamp", function()
   local ts = line:match("^%[([%d:.]+)%]")
   return ts or ""
@@ -211,7 +225,7 @@ PkCore.registerPromptTagColor("wpdeltacolour", deltaColorTag("w", t.willpower, t
 
 
 PkCore.promptFormat = PkCore.promptFormat or
-  "[@timestamp] #hcolour@hp<r>h #mcolour@mp<r>m #ecolour@epperc<r>e #wcolour@wpperc<r>w @eq@bal@defenses{target: [@target(@targethpperc)]} {rage:R:@rage} {afflictions:[@afflictions]} {hpdelta:(#hpdeltacolour@hpdelta<r>)} {mpdelta:(#mpdeltacolour@mpdelta<r>)} {epdelta:(#epdeltacolour@epdelta<r>)} {wpdelta:(#wpdeltacolour@wpdelta<r>)}"
+  "[@timestamp] #hcolour@hp<r>h #mcolour@mp<r>m #ecolour@epperc<r>e #wcolour@wpperc<r>w @eq@bal@defenses {rage:R:@rage}{target: [@target(@targethpperc)]}{targetafflictions:T[@targetafflictions]} {afflictions:M[@afflictions]} {hpdelta:(#hpdeltacolour@hpdelta<r>)} {mpdelta:(#mpdeltacolour@mpdelta<r>)} {epdelta:(#epdeltacolour@epdelta<r>)} {wpdelta:(#wpdeltacolour@wpdelta<r>)}"
 
 local function substituteColors(template)
   return (template:gsub("#(%w+)", function(tag)
