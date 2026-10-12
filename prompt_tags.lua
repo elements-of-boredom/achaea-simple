@@ -256,7 +256,11 @@ local function substituteConditionals(template)
     return inner
   end))
 end
+PkCore.promptTriggerInstanceId = (PkCore.promptTriggerInstanceId or 0) + 1
+local myInstanceId = PkCore.promptTriggerInstanceId
 
+local lastRendered = nil
+local lastRenderedAt = nil
 PkCore.trackTrigger(tempPromptTrigger(
   PkCore.protected("status.promptAnnotate", function()
     if not PkCore.vitals.hp then return end
@@ -265,8 +269,21 @@ PkCore.trackTrigger(tempPromptTrigger(
     end
     local rendered = substituteTags(substituteConditionals(substituteColors(PkCore.promptFormat)))
       :gsub("^%s+", ""):gsub("%s+$", ""):gsub("%s+", " ")
+
+    local now = getEpoch()
+    if rendered == lastRendered and lastRenderedAt and (now - lastRenderedAt) < 0.15 then
+      return -- same content, arrived within 150ms, identical prompt
+    end
+
+    lastRendered = rendered
+    lastRenderedAt = now
+
     deleteLine()
     decho("\n"..rendered)
+    if PkCore.promptDebug then
+      cecho("\nDBG:" .. PkCore.lastRawPrompt)
+    end
+    --decho("\n"..rendered.." {#"..myInstanceId.."}")
   end)))
 
 PkCore.registerAlias("PkCore prompt format set", [[^promptformat\s+(.+)$]], [[PkCore.promptFormat = matches[2] ]])
