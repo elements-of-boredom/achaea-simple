@@ -142,12 +142,16 @@ PkCore.registerPromptTag("hpdelta", nativeDeltaPerc("h", "maxhp"))
 PkCore.registerPromptTag("mpdelta", nativeDeltaPerc("m", "maxmp"))
 PkCore.registerPromptTag("epdelta", nativeDeltaPerc("e", "maxep", 2))
 PkCore.registerPromptTag("wpdelta", nativeDeltaPerc("w", "maxwp", 2))
+PkCore.registerPromptTag("paused", function()
+  return (wsys and wsys.paused) and "PAUSED" or ""
+end)
 
 PkCore.registerPromptTag("bal", function() return PkCore.balance.balance and "x" or "-" end)
 PkCore.registerPromptTag("eq", function() return PkCore.balance.equilibrium and "e" or "-" end)
 PkCore.registerPromptTag("target", function() return PkCore.room.targetName() or "" end)
 PkCore.registerPromptTag("targethpperc", function() return PkCore.room.targetHpPercent or "" end)
 PkCore.registerPromptTag("rage", function() return tostring(PkCore.playerStatus.rage or 0) end)
+PkCore.registerPromptTag("shaping", function() return tostring(PkCore.playerStatus.shaping or 0) end)
 PkCore.registerPromptTag("afflictions", function()
   local names = {}
   for name in pairs(PkCore.afflictions.list) do
@@ -222,10 +226,22 @@ PkCore.registerPromptTagColor("hpdeltacolour", deltaColorTag("h", t.hp, t.hp2))
 PkCore.registerPromptTagColor("mpdeltacolour", deltaColorTag("m", t.mana, t.mana2))
 PkCore.registerPromptTagColor("epdeltacolour", deltaColorTag("e", t.endurance, t.endurance2))
 PkCore.registerPromptTagColor("wpdeltacolour", deltaColorTag("w", t.willpower, t.willpower2))
+PkCore.registerPromptTagColor("pausedcolour", function()
+  local theme = PkCore.ui.theme
+  return theme.decimal(theme.critical)
+end)
+PkCore.registerPromptTagColor("shapingcolour", function()
+  local theme = PkCore.ui.theme
+  local value = PkCore.playerStatus.shaping or 0
+  if value >= 4 then return theme.decimal(theme.critical) end
+  if value >= 2 then return theme.decimal(theme.warning) end
+  if value >= 1 then return theme.decimal(theme.good) end
+  return theme.decimal(theme.text)
+end)
 
 
 PkCore.promptFormat = PkCore.promptFormat or
-  "[@timestamp] #hcolour@hp<r>h #mcolour@mp<r>m #ecolour@epperc<r>e #wcolour@wpperc<r>w @eq@bal@defenses {rage:R:@rage}{target: [@target(@targethpperc)]}{targetafflictions:T[@targetafflictions]} {afflictions:M[@afflictions]} {hpdelta:(#hpdeltacolour@hpdelta<r>)} {mpdelta:(#mpdeltacolour@mpdelta<r>)} {epdelta:(#epdeltacolour@epdelta<r>)} {wpdelta:(#wpdeltacolour@wpdelta<r>)}"
+  "{paused:#pausedcolour(@paused)<r>}[@timestamp] #hcolour@hp<r>h #mcolour@mp<r>m #ecolour@epperc<r>e #wcolour@wpperc<r>w @eq@bal@defenses {shaping:#shapingcolour S:@shaping} {rage:R:@rage}{target: [@target(@targethpperc)]}{targetafflictions:T[@targetafflictions]} {afflictions:M[@afflictions]} {hpdelta:(#hpdeltacolour@hpdelta<r>)} {mpdelta:(#mpdeltacolour@mpdelta<r>)} {epdelta:(#epdeltacolour@epdelta<r>)} {wpdelta:(#wpdeltacolour@wpdelta<r>)}"
 
 local function substituteColors(template)
   return (template:gsub("#(%w+)", function(tag)
@@ -272,6 +288,7 @@ PkCore.trackTrigger(tempPromptTrigger(
 
     local now = getEpoch()
     if rendered == lastRendered and lastRenderedAt and (now - lastRenderedAt) < 0.15 then
+      deleteLine()
       return -- same content, arrived within 150ms, identical prompt
     end
 

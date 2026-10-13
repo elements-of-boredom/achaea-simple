@@ -4,8 +4,9 @@ local t = PkCore.ui.theme
 local RAIL_BTN_CSS = "background-color: rgba(12,22,19,184); border: 1px solid #" .. t.border .. ";"
 local RAIL_BTN_TEXT = "#e8eee2"
 local CONSOLE_BG_CSS = "background: transparent; border: 1px solid #" .. t.border .. ";"
+local DIVIDER_LABEL = "---"
 
-local BUTTON_ORDER = {"MTree", "Heart Tree", "Raia", "Narcisse", "Pear Tree", " ", "Adryn", "WorldReaver", "Aster",
+local BUTTON_ORDER = {"MTree", "Heart Tree", "Raia", "Narcisse", "Pear Tree", DIVIDER_LABEL, "Adryn", "WorldReaver", "Aster",
                       "Aster Cows", "DivingBoard", "Dryad Garden", "IronMill"}
 
 local BUTTONS = {
@@ -23,9 +24,6 @@ local BUTTONS = {
     },
     ["Pear Tree"] = {
         command = "path track 5086"
-    },
-    [" "] = {
-        command = " "
     },
     ["Adryn"] = {
         command = "adryn",
@@ -133,27 +131,63 @@ local function spaceOut(s)
     return table.concat(chars, "<br>")
 end
 
+local function divider(container, y)
+    PkCore.ui.rail.dividerCount = (PkCore.ui.rail.dividerCount or 0) + 1
+    local id = PkCore.ui.rail.dividerCount
+    local glowColor = t.tabAccent or t.border
+
+    local glow = Geyser.Label:new({
+        name = "PkCore_rail_divider_glow_" .. id,
+        x = "10%",
+        y = y,
+        width = "80%",
+        height = 6
+    }, container)
+    glow:setStyleSheet(string.format(
+        "background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 transparent, stop:0.3 %s, stop:0.5 %s, stop:0.7 %s, stop:1 transparent); border: none;",
+        PkCore.ui.theme.rgba(glowColor, 50), PkCore.ui.theme.rgba(glowColor, 120), PkCore.ui.theme.rgba(glowColor, 50)))
+
+    local core = Geyser.Label:new({
+        name = "PkCore_rail_divider_core_" .. id,
+        x = "10%",
+        y = y + 2,
+        width = "80%",
+        height = 2
+    }, container)
+    core:setStyleSheet(string.format(
+        "background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 transparent, stop:0.1 #%s, stop:0.5 #%s, stop:0.9 #%s, stop:1 transparent); border: none;",
+        glowColor, glowColor, glowColor))
+    raiseWindow("PkCore_rail_divider_core_" .. id)
+
+    return 6 -- total vertical space the divider occupies, for the caller's layout math
+end
+
 local function buildButtons()
     local buttons = {}
     local y = PAD
     for i, label in ipairs(BUTTON_ORDER) do
-        local def = BUTTONS[label]
-        local name = "PkCore_rail_" .. i
-        local btn = Geyser.Label:new({
-            name = name,
-            x = PAD,
-            y = y,
-            width = "100%-" .. (PAD * 2),
-            height = BUTTON_HEIGHT,
-            font = "Consolas",
-            fontSize = 9
-        }, PkCore.ui.sections.left)
-        btn:setStyleSheet(RAIL_BTN_CSS)
-        btn:echo(label:upper(), RAIL_BTN_TEXT, "cb")
-        btn:setClickCallback(onRailClick, label)
-        raiseWindow(name)
-        buttons[i] = btn
-        y = y + BUTTON_HEIGHT + GAP
+        if label == DIVIDER_LABEL then
+            local h = divider(PkCore.ui.sections.left, y)
+            y = y + h + GAP
+        else
+            local def = BUTTONS[label]
+            local name = "PkCore_rail_" .. i
+            local btn = Geyser.Label:new({
+                name = name,
+                x = PAD,
+                y = y,
+                width = "100%-" .. (PAD * 2),
+                height = BUTTON_HEIGHT,
+                font = "Consolas",
+                fontSize = 9
+            }, PkCore.ui.sections.left)
+            btn:setStyleSheet(RAIL_BTN_CSS)
+            btn:echo(label:upper(), RAIL_BTN_TEXT, "cb")
+            btn:setClickCallback(onRailClick, label)
+            raiseWindow(name)
+            buttons[i] = btn
+            y = y + BUTTON_HEIGHT + GAP
+        end
     end
     PkCore.ui.rail.buttons = buttons
     return y

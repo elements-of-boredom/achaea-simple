@@ -12,18 +12,17 @@ end
 
 local function evaluate()
     if PkCore.reactor.mode ~= "hunt" then return end
+    local target = findTargetMob()
+    if not target then
+        --PkCore.note("hunt.lua - Target not in room")
+        return
+    end
     PkCore.rage.attemptUse()
     if not PkCore.canAct() then
         --PkCore.note("hunt: canAct=false (bal=" .. tostring(PkCore.balance.balance) ..
         --" eq=" .. tostring(PkCore.balance.equilibrium) ..
         --" stunned=" .. tostring(PkCore.status.stunned) .. ")")
       return
-    end
-
-    local target = findTargetMob()
-    if not target then
-        --PkCore.note("hunt.lua - Target not in room")
-        return
     end
 
     local classData = PkCore.classes.current()

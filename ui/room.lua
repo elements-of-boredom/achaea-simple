@@ -70,10 +70,10 @@ function PkCore.ui.room.render()
   local shown = math.min(#rows, 15)
   for i = 1, shown do
     local entry = rows[i]
-    itemsWidget:hecho("|c" .. t.textMuted .. entry.name .. (entry.count > 1 and (" x" .. entry.count) or (" @" .. entry.id)) .. "|r\n")
+    itemsWidget:hecho("|c" .. t.textBody .. entry.name .. (entry.count > 1 and (" x" .. entry.count) or (" @" .. entry.id)) .. "|r\n")
   end
   if #rows > shown then
-    itemsWidget:hecho("|c" .. t.textMuted .. "(+" .. (#rows - shown) .. " more)|r\n")
+    itemsWidget:hecho("|c" .. t.textBody .. "(+" .. (#rows - shown) .. " more)|r\n")
   end
 end
 

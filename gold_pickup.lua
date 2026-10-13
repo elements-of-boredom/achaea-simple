@@ -13,7 +13,7 @@ local recentlyKilledByMe = false
 local function onGoldSpill()
   local mode = PkCore.goldPickup.mode
   if mode == "off" then return end
-  if mode == "self" and not recentlyKilledSelf then return end
+  if mode == "me" and not recentlyKilledByMe then return end
   PkCore.goldPickup.pending = true
   PkCore.goldPickup.attemptPickup()
 end
@@ -53,7 +53,7 @@ for _, pattern in ipairs(GOLD_DROP_PATTERNS) do
   PkCore.trackTrigger(tempRegexTrigger(pattern, PkCore.protected("goldPickup.onSpill", onGoldSpill)))
 end
 
-PkCore.registerAlias("PkCore goldpickup set", [[^goldpickup\s+(on|self|off)$]],
+PkCore.registerAlias("PkCore goldpickup set", [[^goldpickup\s+(on|me|off)$]],
   [[PkCore.goldPickup.setMode(matches[2])]])
 PkCore.registerAlias("PkCore goldpickup report", [[^goldpickup$]],
   [[PkCore.goldPickup.report()]])
