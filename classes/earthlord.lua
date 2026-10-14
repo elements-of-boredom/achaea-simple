@@ -7,6 +7,12 @@ local WORD_TO_LIMB = {
   ["right arm"] = "rightarm", ["left arm"] = "leftarm",
   ["head"] = "head", ["torso"] = "torso",
 }
+local CALCIFY_AFFLICTION = { head = "calcifiedskull", torso = "calcifiedtorso" }
+local HEAD_SALVE_CURES = { "calcifiedskull", "damagedhead", "mangledhead" }
+local BODY_SALVE_CURES = { "calcifiedtorso", "mildtrauma", "serioustrauma" }
+local function isCurrentTarget(name)
+  return type(target) == "string" and name:lower() == target:lower()
+end
 
 local lastRealEarthlordDamage = nil
 
@@ -19,6 +25,17 @@ PkCore.onReady(function()
   end
 end)
 
+--calcify
+PkCore.trackTrigger(tempRegexTrigger(
+  "^Reaching out, you press a single stone digit to the (head|torso) of ([\\w'\\-]+), beginning the transformation of the calcium within\\.$",
+  PkCore.protected("earthlord.onCalcify", function()
+    local aff = CALCIFY_AFFLICTION[matches[2]]
+    if not aff or not isCurrentTarget(matches[3]) then return end
+    affstrack.score[aff] = 100
+    raiseEvent("AK got aff", aff)
+    display(affstrack.score)
+  end)))
+
 PkCore.trackTrigger(tempRegexTrigger(
   "^As your blow lands with a crunch, you perceive that you have dealt ([\\d.]+)% damage to [\\w'\\-]+'s (.+)\\.$",
   PkCore.protected("earthlord.onLimbHit", function()
@@ -27,6 +44,84 @@ PkCore.trackTrigger(tempRegexTrigger(
     if not target or not limbKey then return end
     lastRealEarthlordDamage = tonumber(matches[2])
     ak.limbs.LimbHit(target, "Me", "earthfist", limbKey, "percent")
+  end)))
+
+-- Nothing in AK clears these either, so they'd stick forever - clear on the
+-- matching salve application.
+PkCore.trackTrigger(tempRegexTrigger(
+  "^([\\w'\\-]+) takes some salve from a vial and rubs it on (?:his|her|their) (head|body)\\.$",
+  PkCore.protected("earthlord.onSalveApplied", function()
+    if not isCurrentTarget(matches[2]) then return end
+    if matches[3] == "head" then
+      if (affstrack.score.mangledhead or 0) > 0 then
+        affstrack.score.mangledhead = 0
+        affstrack.score.damagedhead = 100
+        affstrack.score.head = 100
+        raiseEvent("AK lost aff", "mangledhead")
+        raiseEvent("AK got aff", "damagedhead")
+      elseif (affstrack.score.damagedhead or 0) > 0 then
+        affstrack.score.damagedhead = 0
+        affstrack.score.head = 0
+        raiseEvent("AK lost aff", "damagedhead")
+      elseif (affstrack.score.calcifiedskull or 0) > 0 then
+        affstrack.score.calcifiedskull = 0
+        raiseEvent("AK lost aff", "calcifiedskull")
+      end
+    else -- body
+      if (affstrack.score.serioustrauma or 0) > 0 then
+        affstrack.score.serioustrauma = 0
+        affstrack.score.mildtrauma = 100
+        affstrack.score.torso = 100
+        raiseEvent("AK lost aff", "serioustrauma")
+        raiseEvent("AK got aff", "mildtrauma")
+      elseif (affstrack.score.mildtrauma or 0) > 0 then
+        affstrack.score.mildtrauma = 0
+        affstrack.score.torso = 0
+        raiseEvent("AK lost aff", "mildtrauma")
+      elseif (affstrack.score.calcifiedtorso or 0) > 0 then
+        affstrack.score.calcifiedtorso = 0
+        raiseEvent("AK lost aff", "calcifiedtorso")
+      end
+    end
+  end)))
+
+-- Head completion: calcifiedskull -> damagedhead, or damagedhead -> mangledhead
+PkCore.trackTrigger(tempRegexTrigger(
+  "^A look of pain comes over ([\\w'\\-]+) and the bones seem to shift beneath the skin stretched across (?:his|her|their) skull\\.$",
+  PkCore.protected("earthlord.onCalcifySkullComplete", function()
+    if not isCurrentTarget(matches[2]) then return end
+    affstrack.score.calcifiedskull = 0
+    raiseEvent("AK lost aff", "calcifiedskull")
+    if (affstrack.score.damagedhead or 0) > 0 then
+      affstrack.score.damagedhead = 0
+      affstrack.score.mangledhead = 100
+      affstrack.score.head = 200
+      raiseEvent("AK lost aff", "damagedhead")
+      raiseEvent("AK got aff", "mangledhead")
+    else
+      affstrack.score.damagedhead = 100
+      affstrack.score.head = 100
+      raiseEvent("AK got aff", "damagedhead")
+    end
+  end)))
+-- Torso completion: calcifiedtorso -> mildtrauma, or mildtrauma -> serioustrauma
+PkCore.trackTrigger(tempRegexTrigger(
+  "^([\\w'\\-]+) clutches at (?:his|her|their) chest, the sound of crackling bone audible over a sharply indrawn breath\\.$",
+  PkCore.protected("earthlord.onCalcifyTorsoComplete", function()
+    if not isCurrentTarget(matches[2]) then return end
+    affstrack.score.calcifiedtorso = 0
+    raiseEvent("AK lost aff", "calcifiedtorso")
+    if (affstrack.score.mildtrauma or 0) > 0 then
+      affstrack.score.mildtrauma = 0
+      affstrack.score.serioustrauma = 100
+      affstrack.score.torso = 200
+      raiseEvent("AK lost aff", "mildtrauma")
+      raiseEvent("AK got aff", "serioustrauma")
+    else
+      affstrack.score.mildtrauma = 100
+      affstrack.score.torso = 100
+      raiseEvent("AK got aff", "mildtrauma")
+    end
   end)))
 
 --- CLASS DATA ---

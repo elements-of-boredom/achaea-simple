@@ -1,5 +1,5 @@
 PkCore.classes = PkCore.classes or {}
-local CLASS_FILES = { "sylvan", "bard", "bluedragon" }
+local CLASS_FILES = { "sylvan", "bard", "bluedragon", "earthlord" }
 
 for _, name in ipairs(CLASS_FILES) do
   local path = PkCore.path .. "/classes/" .. name .. ".lua"
