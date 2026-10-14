@@ -1,6 +1,10 @@
 PkCore.classes = PkCore.classes or {}
 local CLASS_FILES = { "sylvan", "bard", "bluedragon", "earthlord" }
 
+local CLASS_NAME_ALIASES = {
+  earthlord = { "earthelementallord" },
+}
+
 for _, name in ipairs(CLASS_FILES) do
   local path = PkCore.path .. "/classes/" .. name .. ".lua"
   local loader, loadErr = loadfile(path)
@@ -8,6 +12,9 @@ for _, name in ipairs(CLASS_FILES) do
     local ok, data = pcall(loader)
     if ok and type(data) == "table" then
       PkCore.classes[name] = data
+      for _, alias in ipairs(CLASS_NAME_ALIASES[name] or {}) do
+        PkCore.classes[alias] = data
+      end
     else
       PkCore.note("classes/" .. name .. ".lua error: " .. tostring(data))
     end

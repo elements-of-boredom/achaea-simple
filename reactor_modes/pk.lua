@@ -34,4 +34,5 @@ end
 
 PkCore.reactor.registerMode("pk", { evaluate = evaluate })
 PkCore.registerAlias("PkCore pk strategy set", [[^pk\s+(\w+)$]], [[PkCore.pk_mode.setStrategy(matches[2])]])
-PkCore.registerAlias("PkCore pk strategy report", [[^pk$]], [[PkCore.pk_mode.report()]])
+PkCore.registerAlias("PkCore pk strategy report", [[^pk r$]], [[PkCore.pk_mode.report()]])
+PkCore.registerAlias("PkCore pk strategy evaluate", [[^pk$]], [[PkCore.pk_mode.evaluate()]])

@@ -103,41 +103,23 @@ local function bodyRestorationActive() return applyActive({ "body", "torso" }) e
 
 -- Reads AK, then determines if next hit would put us over breakpoint
 local function ready(key)
-  local target = liveTarget()
-  if not target then return false end
-  local current = ak.limbs.limbcount[target] and ak.limbs.limbcount[target][key]
-  if not current then return false end
-  return current + H.damagePerHit >= 100
+  return PkCore.limbPrep.ready(key, H.damagePerHit)
 end
 
 local function readyLimb()
-  for _, key in ipairs(ARM_LEG_KEYS) do
-    if ready(key) then return key end
-  end
-  return nil
+  return PkCore.limbPrep.readyAmong(ARM_LEG_KEYS, H.damagePerHit)
 end
 
 local function broken(key)
-  local threshold = (key == "torso" or key == "head") and 100 or 200
-  return (affstrack.score[key] or 0) >= threshold
+  return PkCore.limbPrep.broken(key)
 end
 
 local function allPrepLimbsPrimed()
-  for _, key in ipairs(H.prepLimbs) do
-    if not (ready(key) or broken(key)) then
-      return false
-    end
-  end
-  return true
+  return PkCore.limbPrep.allPrimed(H.prepLimbs, H.damagePerHit)
 end
 
 local function nextUnpreparedLimb()
-  for _, key in ipairs(H.prepLimbs) do
-    if not (ready(key) or broken(key)) then
-      return key
-    end
-  end
-  return nil
+  return PkCore.limbPrep.nextUnprepared(H.prepLimbs, H.damagePerHit)
 end
 
 function H.explain()
