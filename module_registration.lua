@@ -42,6 +42,7 @@ PkCore.loadModule("reactor_modes/strategies/heartseed.lua")
 PkCore.loadModule("reactor_modes/strategies/shockwave.lua")
 PkCore.loadModule("reactor_modes/strategies/sylvan_lock.lua")
 PkCore.loadModule("reactor_modes/strategies/fireguy.lua")
+PkCore.loadModule("reactor_modes/strategies/rockboy.lua")
 
 -- Utility / Aliases --
 PkCore.loadModule("gold_pickup.lua")

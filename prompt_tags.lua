@@ -241,7 +241,7 @@ end)
 
 
 PkCore.promptFormat = PkCore.promptFormat or
-  "{paused:#pausedcolour(@paused)<r>}[@timestamp] #hcolour@hp<r>h #mcolour@mp<r>m #ecolour@epperc<r>e #wcolour@wpperc<r>w @eq@bal@defenses {shaping:#shapingcolour S:@shaping} {rage:R:@rage}{target: [@target(@targethpperc)]}{targetafflictions:T[@targetafflictions]} {afflictions:M[@afflictions]} {hpdelta:(#hpdeltacolour@hpdelta<r>)} {mpdelta:(#mpdeltacolour@mpdelta<r>)} {epdelta:(#epdeltacolour@epdelta<r>)} {wpdelta:(#wpdeltacolour@wpdelta<r>)}"
+  "{paused:#pausedcolour(@paused)<r>}[@timestamp] #hcolour@hp<r>h #mcolour@mp<r>m #ecolour@epperc<r>e #wcolour@wpperc<r>w @eq@bal@defenses {shaping:#shapingcolour S:@shaping<r>} {rage:R:@rage<r>}{target: [@target(@targethpperc)]}{targetafflictions:T[@targetafflictions]} {afflictions:M[@afflictions]} {hpdelta:(#hpdeltacolour@hpdelta<r>)} {mpdelta:(#mpdeltacolour@mpdelta<r>)} {epdelta:(#epdeltacolour@epdelta<r>)} {wpdelta:(#wpdeltacolour@wpdelta<r>)}"
 
 local function substituteColors(template)
   return (template:gsub("#(%w+)", function(tag)

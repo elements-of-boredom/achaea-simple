@@ -260,6 +260,36 @@ local RULES = {
   { "^You feel your standing grow among the residents of the", { 240, 160, 30 } },
 }
 
+
+--lua decho("<255,255,0><fx:bolt>The ancient dragon roars</fx>\n")
+--lua decho("<255,0,0><fx:flame>The ancient dragon roars</fx>\n")
+--lua decho("<40,80,255><fx:flame>The ancient dragon roars</fx>\n")
+--lua decho("<0,220,60><fx:flame>The ancient dragon roars</fx>\n")
+--lua decho("<170,60,255><fx:flame>The ancient dragon roars</fx>\n")
+--lua decho("<0,255,255><fx:frost>The ancient dragon roars</fx>\n")
+--lua decho("<0,255,0><fx:drip>The ancient dragon roars</fx>\n")
+--lua decho("<176,16,16><fx:drip>The ancient dragon roars</fx>\n")
+--lua decho("<255,255,255><fx:sparkle>The ancient dragon roars</fx>\n")
+--lua decho("<155,48,192><fx:fumes>The ancient dragon roars</fx>\n")
+--lua decho("<160,16,16><fx:streak>The ancient dragon roars</fx>\n")
+--lua decho("<95,95,215><fx:streak>The ancient dragon roars</fx>\n")
+--lua decho("<80,80,80><fx:shadow>The ancient dragon roars</fx>\n")
+--lua decho("<255,255,135><fx:rays>The ancient dragon roars</fx>\n")
+--lua decho("<0,255,175><fx:sway>The ancient dragon roars</fx>\n")
+--lua decho("<32,32,255><fx:ripple>The ancient dragon roars</fx>\n")
+--lua decho("<0,160,0><fx:vine>The ancient dragon roars</fx>\n")
+--lua decho("<144,144,0><fx:dust>The ancient dragon roars</fx>\n")
+--lua decho("<80,80,80><fx:needles>The ancient dragon roars</fx>\n")
+--lua decho("<192,192,192><fx:impact>The ancient dragon roars</fx>\n")
+--lua decho("<0,255,175><fx:waves>The ancient dragon roars</fx>\n")
+--lua decho("<95,95,215><fx:warp>The ancient dragon roars</fx>\n")
+
+local EFFECT_RULES = {
+  { "^You have scored (?:a|an) [\\w -]*CRITICAL hit!+$", { 255, 255, 120 }, "lightning" },
+  { "^You bleed \\d+ health\\.$", { 220, 30, 40 }, "bleeding" },
+  { "^You let loose a steady stream of cold air around", { 0, 255, 255 }, "frost" },
+}
+
 -- ── Apply ────────────────────────────────────────────────────────────────
 
 local function isGradient(color)
@@ -304,4 +334,20 @@ local function buildTriggers()
   end
 end
 
+local function buildEffectTriggers()
+  if not setTextEffect then return end -- stock Mudlet - nothing to wire up
+  for _, rule in ipairs(EFFECT_RULES) do
+    local pattern, color, effectName = rule[1], rule[2], rule[3]
+    PkCore.trackTrigger(tempRegexTrigger(pattern, PkCore.protected("colorize.effectRule", function()
+      if not PkCore.colorize.enabled then return end
+      selectCurrentLine()
+      setFgColor(color[1], color[2], color[3])
+      setTextEffect(effectName)
+      deselect()
+      resetFormat()
+    end)))
+  end
+end
+
 buildTriggers()
+buildEffectTriggers()

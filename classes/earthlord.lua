@@ -1,3 +1,37 @@
+----- AK OVERRIDES --------
+-- AK has no limb-tracking support at all for Earthlord's own attacks (no weapon
+-- entry anywhere in LimbHit's resolution chain) - route it through LimbHit ourselves
+-- using the server-reported percentage, under a weapon name AK has never seen.
+local WORD_TO_LIMB = {
+  ["right leg"] = "rightleg", ["left leg"] = "leftleg",
+  ["right arm"] = "rightarm", ["left arm"] = "leftarm",
+  ["head"] = "head", ["torso"] = "torso",
+}
+
+local lastRealEarthlordDamage = nil
+
+PkCore.onReady(function()
+  ak.limbs.myformulas = ak.limbs.myformulas or {}
+  ak.limbs.myformulas.earthfist = function(who, attacker, weapon, limb, augment, check)
+    local damage = lastRealEarthlordDamage or 0
+    lastRealEarthlordDamage = nil
+    return damage
+  end
+end)
+
+PkCore.trackTrigger(tempRegexTrigger(
+  "^As your blow lands with a crunch, you perceive that you have dealt ([\\d.]+)% damage to [\\w'\\-]+'s (.+)\\.$",
+  PkCore.protected("earthlord.onLimbHit", function()
+    local target = PkCore.room.targetName()
+    local limbKey = WORD_TO_LIMB[matches[3]]
+    if not target or not limbKey then return end
+    lastRealEarthlordDamage = tonumber(matches[2])
+    ak.limbs.LimbHit(target, "Me", "earthfist", limbKey, "percent")
+  end)))
+
+--- CLASS DATA ---
+
+
 return {
     name = "Earth Lord",
     basicAttack = "tp",
