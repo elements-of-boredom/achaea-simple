@@ -70,6 +70,9 @@ function F.squeeze()
     if not target then return end
     send("TERRAN SQUEEZE " .. target)
 end
+function F.crunch()
+    send("TERRAN CRUNCH " .. target)
+end
 
 local function evaluate()
     if PkCore.isHindered() then return end
@@ -89,14 +92,21 @@ local function evaluate()
     if calcifyPending("head") or calcifyPending("torso") then F.legBroken = false end
     -- Head is mangled with calcify still pending. Technically we are done
     -- but lots could still happen.
-    if headMangled() and calcifyPending("head") then
-        PkCore.note("Rockboy: HEAD MANGLED, CALCIFY RUNNING! MAYBE ABOUT TO GET YOUR KILL!!")
-        if shaping >= 3 then
+    if headDamaged() and calcifyPending("head") then
+        PkCore.note("Rockboy: HEAD DAMAGED, CALCIFY RUNNING - escalating to mangled")
+        if targetProne() and shaping >= 2 then
+            F.avalanche()
+            kickEvaluateSoon()
+            return
+        elseif not targetProne() and shaping >= 3 then
             F.quake()
             F.avalanche()
-        end
-        if shaping >= 2 then
-            F.avalanche()
+            kickEvaluateSoon()
+            return
+        elseif shaping < 4 then
+            F.crunch()
+            kickEvaluateSoon()
+            return
         end
         return
     end
@@ -107,28 +117,6 @@ local function evaluate()
         F.squeeze()
         kickEvaluateSoon()
         return
-    end
-
-    -- Head is damaged (first tier) with calcify pending, torso is mild
-    -- (first tier) with calcify pending, escalate via Quake+Avalanche.
-    -- Avalanche unconditionally pushes damagedhead->mangledhead; torso just
-    -- gets a bigger hit, not a guaranteed tier jump, so it may need more
-    -- Powderise afterward (handled below on a later tick)
-    if headDamaged() and calcifyPending("head") and torsoMild() and calcifyPending("torso") then
-        if targetProne() and shaping >= 2 then
-            F.avalanche()
-            kickEvaluateSoon()
-            return
-        elseif not targetProne() and shaping >= 3 then
-            F.quake()
-            F.avalanche()
-            kickEvaluateSoon()
-            return
-        else
-            -- not enough shaping yet. This sucks and is bad timing. Just look to ramp torso
-            F.powderise(F.torsoKey)
-        end
-        return 
     end
 
     if headDamaged() and calcifyPending("head") and PkCore.limbPrep.ready(F.headKey, currentDamagePerHit()) then
@@ -158,14 +146,11 @@ local function evaluate()
         elseif not torsoMild() and PkCore.limbPrep.ready(F.torsoKey, currentDamagePerHit()) then
             F.powderise(F.torsoKey)
         else
-            -- everything's mid-cycle, but neither limb 
-             -- Free quake if available, and keep grinding anyway.
-            if shaping >= 2 then
-                F.quake()
-                shaping = shaping - 1
+            -- not sure we should do this, its a weird fall through
+            if shaping < 4 then
+                PkCore.note("RB: Crunch for Shape charges")
+                F.crunch()
             end
-            local limb = PkCore.limbPrep.nextUnprepared({F.headKey, F.torsoKey}, currentDamagePerHit()) or F.headKey
-            F.powderise(limb)
         end
         kickEvaluateSoon()
         return
