@@ -11,6 +11,7 @@ local LIMB_TRAUMA = {
   head  = { [100] = "damagedhead", [200] = "mangledhead" },
   torso = { [100] = "mildtrauma",  [200] = "serioustrauma" },
 }
+local EARTHLORD_SALVE_BALANCE = 4.0
 
 local function isCurrentTarget(name)
   return type(target) == "string" and name:lower() == target:lower()
@@ -107,19 +108,24 @@ PkCore.trackTrigger(tempRegexTrigger(
 -- derive the resulting affliction; only touch the pending calcify marker if
 -- there's no real damage left to cure instead
 PkCore.trackTrigger(tempRegexTrigger(
-  "^([\\w'\\-]+) takes some salve from a vial and rubs it on (?:his|her|their) (head|body)\\.$",
-  PkCore.protected("earthlord.onSalveApplied", function()
-    if not isCurrentTarget(matches[2]) then return end
-    local limb = matches[3] == "head" and "head" or "torso"
-    local calcifyAff = limb == "head" and "calcifiedskull" or "calcifiedtorso"
-    local score = affstrack.score[limb] or 0
-    if score > 0 then
-      affstrack.score[limb] = score - 100
-      syncLimbTrauma(limb)
-    elseif (affstrack.score[calcifyAff] or 0) > 0 then
-      affstrack.score[calcifyAff] = 0
-      raiseEvent("AK lost aff", calcifyAff)
+  "^\\s*-- Target Cured (\\w+) --\\s*$",
+  PkCore.protected("earthlord.onAkConfirmedCure", function()
+    local limb = matches[2]:lower()
+    if limb == "head" or limb == "torso" then
+      syncLimbTrauma(limb)  -- affstrack.score[limb] is already cleared by AK itself by this point
     end
+  end)))
+
+  -- Handle AirLord specifically here
+local function isEarthlord()
+  local classData = PkCore.classes.current()
+  return classData ~= nil and classData.name == "Earth Lord"
+end
+  PkCore.trackTrigger(tempRegexTrigger(
+  "^([\\w'\\-]+) points an imperious finger at you, a wall of air manifesting beneath you and sending you streaking upwards\\.$",
+  PkCore.protected("earthlord.onThrownAirborne", function()
+    if not isEarthlord() then return end
+    send("TERRAN PASTE " .. matches[2])
   end)))
 
 

@@ -33,9 +33,10 @@ local function targetProne()
     return (affstrack.score.prone or 0) > 0
 end
 
-local function currentDamagePerHit()
-    local shaping = PkCore.playerStatus.shaping or 0
-    return shaping >= 4 and 43 or F.damagePerHit
+local function currentDamagePerHit(upcomingSculptingReduction)
+    local reduction = upcomingSculptingReduction or 0
+    local shaping = (PkCore.playerStatus.shaping - reduction) or 0
+    return shaping >= 4 and 43 or R.damagePerHit
 end
 
 local function kickEvaluateSoon()
@@ -102,8 +103,8 @@ local function evaluate()
         R.legBroken = true
     end
 
-    local headPrimed = PkCore.limbPrep.ready(F.headKey, currentDamagePerHit()) or PkCore.limbPrep.broken(F.headKey)
-    local legPrimed = PkCore.limbPrep.ready(F.legKey, currentDamagePerHit()) or PkCore.limbPrep.broken(F.legKey)
+    local headPrimed = PkCore.limbPrep.ready(R.headKey, currentDamagePerHit()) or PkCore.limbPrep.broken(R.headKey)
+    local legPrimed = PkCore.limbPrep.ready(R.legKey, currentDamagePerHit()) or PkCore.limbPrep.broken(R.legKey)
 
     -- 1. Head is broken - finish
     if PkCore.limbPrep.broken(R.headKey) then
@@ -121,6 +122,7 @@ local function evaluate()
     -- 2. Calcify already pending - head should already be primed from step 4,
     -- so this powderise actually breaks it now instead of landing a wasted first hit
     if calcifyPending() then
+        R.legBroken = false
         R.powderise(R.headKey)
         kickEvaluateSoon()
         return
@@ -128,13 +130,22 @@ local function evaluate()
 
     -- 3. Leg has broken (ever) and head is primed - calcify the head
     if R.legBroken and headPrimed and not R.calcifyInFlight then
-        if shaping >= 4 then
-            R.calcifyHead()
+        -- need to make sure if we are going to send calcify & powderise together we are truly primed
+        -- as calcify will drop the limb damage
+        if PkCore.limbPrep.ready(R.headKey, currentDamagePerHit(2)) then
+            if shaping >= 4 then
+                R.calcifyHead()
+                R.powderise(R.headKey)
+            else
+                R.calcifyHead()
+            end
+            kickEvaluateSoon()
+        else 
+            if shaping >= 2 then
+                R.quake()
+            end
             R.powderise(R.headKey)
-        else
-            R.calcifyHead()
         end
-        kickEvaluateSoon()
         return
     end
 
@@ -146,7 +157,7 @@ local function evaluate()
     end
 
     -- 5. Prep whichever of leg/head isn't primed yet
-    local limb = PkCore.limbPrep.nextUnprepared(prepLimbs(), R.damagePerHit) or R.legKey
+    local limb = PkCore.limbPrep.nextUnprepared(prepLimbs(), currentDamagePerHit()) or R.legKey
     R.powderise(limb)
     kickEvaluateSoon()
 end

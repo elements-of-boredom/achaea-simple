@@ -29,8 +29,9 @@ local function headDamaged() return (affstrack.score.damagedhead or 0) > 0 end
 local function torsoSerious() return (affstrack.score.serioustrauma or 0) > 0 end
 local function torsoMild() return (affstrack.score.mildtrauma or 0) > 0 end
 local function kickEvaluateSoon() tempTimer(0, function() PkCore.reactor.evaluate() end) end
-local function currentDamagePerHit()
-    local shaping = PkCore.playerStatus.shaping or 0
+local function currentDamagePerHit(upcomingSculptingReduction)
+    local reduction = upcomingSculptingReduction or 0
+    local shaping = (PkCore.playerStatus.shaping - reduction) or 0
     return shaping >= 4 and 43 or F.damagePerHit
 end
 
@@ -84,6 +85,8 @@ local function evaluate()
     local torsoPrimed = PkCore.limbPrep.ready(F.torsoKey, currentDamagePerHit()) or PkCore.limbPrep.broken(F.torsoKey)
     local legPrimed = PkCore.limbPrep.ready(F.legKey, currentDamagePerHit()) or PkCore.limbPrep.broken(F.legKey)
 
+    -- We've send a calcify, reset the broken leg state.
+    if calcifyPending("head") or calcifyPending("torso") then F.legBroken = false end
     -- Head is mangled with calcify still pending. Technically we are done
     -- but lots could still happen.
     if headMangled() and calcifyPending("head") then
@@ -92,7 +95,7 @@ local function evaluate()
             F.quake()
             F.avalanche()
         end
-        if shaping > 2 then
+        if shaping >= 2 then
             F.avalanche()
         end
         return
@@ -128,9 +131,16 @@ local function evaluate()
         return 
     end
 
+    if headDamaged() and calcifyPending("head") and PkCore.limbPrep.ready(F.headKey, currentDamagePerHit()) then
+        F.powderise(F.headKey)
+        kickEvaluateSoon()
+        return
+    end
+
+
     -- Torso is still mild (not yet serious) with calcify pending, and is
     -- ready for another hit - keep hitting it (covers the case where Avalanche's boosted hit wasn't enough on its own to cross 200)
-    if torsoMild() and calcifyPending("torso") and PkCore.limbPrep.ready(F.torsoKey, F.damagePerHit) then
+    if torsoMild() and calcifyPending("torso") and PkCore.limbPrep.ready(F.torsoKey, currentDamagePerHit()) then
         F.powderise(F.torsoKey)
         kickEvaluateSoon()
         return
@@ -143,10 +153,19 @@ local function evaluate()
             F.calcify("head")
         elseif not calcifyPending("torso") and not F.calcifyInFlight.torso then
             F.calcify("torso")
-        elseif not headDamaged() and PkCore.limbPrep.ready(F.headKey, F.damagePerHit) then
+        elseif not headDamaged() and PkCore.limbPrep.ready(F.headKey, currentDamagePerHit()) then
             F.powderise(F.headKey)
-        elseif not torsoMild() and PkCore.limbPrep.ready(F.torsoKey, F.damagePerHit) then
+        elseif not torsoMild() and PkCore.limbPrep.ready(F.torsoKey, currentDamagePerHit()) then
             F.powderise(F.torsoKey)
+        else
+            -- everything's mid-cycle, but neither limb 
+             -- Free quake if available, and keep grinding anyway.
+            if shaping >= 2 then
+                F.quake()
+                shaping = shaping - 1
+            end
+            local limb = PkCore.limbPrep.nextUnprepared({F.headKey, F.torsoKey}, currentDamagePerHit()) or F.headKey
+            F.powderise(limb)
         end
         kickEvaluateSoon()
         return
@@ -161,8 +180,7 @@ local function evaluate()
 
     -- Prep whichever of the three isn't primed yet
     -- TODO : We need parry tracking... 
-    local limb = PkCore.limbPrep.nextUnprepared(prepLimbs(), F.damagePerHit) or F.legKey
-    -- There are probably reasons NOT to do this. during the prep phase though I'm less worried.
+    local limb = PkCore.limbPrep.nextUnprepared(prepLimbs(), currentDamagePerHit()) or F.legKey
     F.powderise(limb)
     kickEvaluateSoon()
 end

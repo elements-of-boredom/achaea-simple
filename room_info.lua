@@ -88,6 +88,11 @@ function PkCore.room.isTargetPlayer()
   return true
 end
 
+function PkCore.room.isFlying()
+  local info = gmcp and gmcp.Room and gmcp.Room.Info
+  return info ~= nil and type(info.name) == "string" and info.name:match("^Flying above ") ~= nil
+end
+
 
 -- Tab Key Binding call
 function PkCore.room.cycleTarget()

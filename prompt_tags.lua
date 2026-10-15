@@ -152,6 +152,7 @@ PkCore.registerPromptTag("target", function() return PkCore.room.targetName() or
 PkCore.registerPromptTag("targethpperc", function() return PkCore.room.targetHpPercent or "" end)
 PkCore.registerPromptTag("rage", function() return tostring(PkCore.playerStatus.rage or 0) end)
 PkCore.registerPromptTag("shaping", function() return tostring(PkCore.playerStatus.shaping or 0) end)
+PkCore.registerPromptTag("flying", function() return PkCore.room.isFlying() and "FLYING" or "" end)
 PkCore.registerPromptTag("afflictions", function()
   local names = {}
   for name in pairs(PkCore.afflictions.list) do
@@ -238,10 +239,11 @@ PkCore.registerPromptTagColor("shapingcolour", function()
   if value >= 1 then return theme.decimal(theme.good) end
   return theme.decimal(theme.text)
 end)
+PkCore.registerPromptTagColor("flyingcolour", function() return "255,0,255" end)
 
 
 PkCore.promptFormat = PkCore.promptFormat or
-  "{paused:#pausedcolour(@paused)<r>}[@timestamp] #hcolour@hp<r>h #mcolour@mp<r>m #ecolour@epperc<r>e #wcolour@wpperc<r>w @eq@bal@defenses {shaping:#shapingcolour S:@shaping<r>} {rage:R:@rage<r>}{target: [@target(@targethpperc)]}{targetafflictions:T[@targetafflictions]} {afflictions:M[@afflictions]} {hpdelta:(#hpdeltacolour@hpdelta<r>)} {mpdelta:(#mpdeltacolour@mpdelta<r>)} {epdelta:(#epdeltacolour@epdelta<r>)} {wpdelta:(#wpdeltacolour@wpdelta<r>)}"
+  "{paused:#pausedcolour(@paused)<r>}{flying:#flyingcolour(@flying)<r>}[@timestamp] #hcolour@hp<r>h #mcolour@mp<r>m #ecolour@epperc<r>e #wcolour@wpperc<r>w @eq@bal@defenses {shaping:#shapingcolour S:@shaping<r>} {rage:R:@rage<r>}{target: [@target(@targethpperc)]}{targetafflictions:T[@targetafflictions]} {afflictions:M[@afflictions]} {hpdelta:(#hpdeltacolour@hpdelta<r>)} {mpdelta:(#mpdeltacolour@mpdelta<r>)} {epdelta:(#epdeltacolour@epdelta<r>)} {wpdelta:(#wpdeltacolour@wpdelta<r>)}"
 
 local function substituteColors(template)
   return (template:gsub("#(%w+)", function(tag)
