@@ -12,7 +12,7 @@ function PkCore.iht()
   if ak and ak.oresetparse then
     ak.oresetparse()
   end
-  PkCore.reactor.evaluate()
+  PkCore.hunt_mode.evaluate()
 end
 
 PkCore.registerAlias("PkCore iht", [[^iht$]], [[PkCore.iht()]])

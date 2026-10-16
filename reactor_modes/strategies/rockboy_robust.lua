@@ -1,16 +1,20 @@
 PkCore.rockboyfork = PkCore.rockboyfork or {}
 local F = PkCore.rockboyfork
 
-F.legKey = F.legKey or "rightleg"
+F.legKey = F.legKey or "leftleg"
 F.headKey = "head"
 F.torsoKey = "torso"
 F.damagePerHit = F.damagePerHit or 21
 F.legBroken = F.legBroken or false
 F.calcifyInFlight = F.calcifyInFlight or {}
+F.pendingQuake = false
 
 function F.resetTracking()
     F.legBroken = false
     F.calcifyInFlight = {}
+    F.pendingQuake = false
+    PkCore.limbPrep.parryStreak = {}
+    PkCore.limbPrep.lastAttemptedLimb = nil
 end
 
 local function prepLimbs() return {F.legKey, F.headKey, F.torsoKey} end
@@ -52,7 +56,19 @@ function F.powderise(key)
     if not target then return end
     local word = (key == "rightleg" or key == "leftleg") and (key == "rightleg" and "right leg" or "left leg")
         or (key == "torso" and "torso" or "head")
-    send("TERRAN POWDERISE " .. target .. " " .. word)
+    PkCore.limbPrep.recordAttempt(key)
+
+    local shaping = PkCore.playerStatus.shaping or 0
+    if (PkCore.limbPrep.parryStreak[key] or 0) >= 1 and shaping >= 2 then
+        F.pendingQuake = true
+    end
+    
+    local prefix = ""
+    if F.pendingQuake then
+        prefix = "MANIFEST QUAKE|"
+        F.pendingQuake = false
+    end
+    send(prefix .. "TERRAN POWDERISE " .. target .. " " .. word)
 end
 
 function F.calcify(limb)
@@ -75,7 +91,7 @@ function F.crunch()
 end
 
 local function evaluate()
-    if PkCore.isHindered() then return end
+    if not PkCore.canAct() then return end
     if not isEarthlord() then return end
     local target = liveTarget()
     if not target then return end
@@ -90,22 +106,22 @@ local function evaluate()
 
     -- We've send a calcify, reset the broken leg state.
     if calcifyPending("head") or calcifyPending("torso") then F.legBroken = false end
+    local chasingHeadOrTorso = calcifyPending("head") or calcifyPending("torso")
+        or F.calcifyInFlight.head or F.calcifyInFlight.torso
+        or headDamaged() or torsoMild()
     -- Head is mangled with calcify still pending. Technically we are done
     -- but lots could still happen.
     if headDamaged() and calcifyPending("head") then
         PkCore.note("Rockboy: HEAD DAMAGED, CALCIFY RUNNING - escalating to mangled")
         if targetProne() and shaping >= 2 then
             F.avalanche()
-            kickEvaluateSoon()
             return
         elseif not targetProne() and shaping >= 3 then
             F.quake()
             F.avalanche()
-            kickEvaluateSoon()
             return
         elseif shaping < 4 then
             F.crunch()
-            kickEvaluateSoon()
             return
         end
         return
@@ -115,30 +131,22 @@ local function evaluate()
     if torsoSerious() and calcifyPending("torso") then
         PkCore.note("Rockboy: TORSO MANGLED, CALCIFY RUNNING! MAYBE ABOUT TO GET YOUR SQUUUUEEEZE!!")
         F.squeeze()
-        kickEvaluateSoon()
         return
     end
-
-    if headDamaged() and calcifyPending("head") and PkCore.limbPrep.ready(F.headKey, currentDamagePerHit()) then
-        F.powderise(F.headKey)
-        kickEvaluateSoon()
-        return
-    end
-
 
     -- Torso is still mild (not yet serious) with calcify pending, and is
     -- ready for another hit - keep hitting it (covers the case where Avalanche's boosted hit wasn't enough on its own to cross 200)
     if torsoMild() and calcifyPending("torso") and PkCore.limbPrep.ready(F.torsoKey, currentDamagePerHit()) then
         F.powderise(F.torsoKey)
-        kickEvaluateSoon()
         return
     end
 
     -- Leg broken, head and torso both primed, neither calcified yet, calcify head first (free at 4 Shaping), 
     -- then torso (costs balance Shaping has dropped), then break each once to get to first tier
-    if F.legBroken and headPrimed and torsoPrimed then
+    if (F.legBroken or chasingHeadOrTorso) and headPrimed and torsoPrimed then
         if not calcifyPending("head") and not F.calcifyInFlight.head then
             F.calcify("head")
+            kickEvaluateSoon()
         elseif not calcifyPending("torso") and not F.calcifyInFlight.torso then
             F.calcify("torso")
         elseif not headDamaged() and PkCore.limbPrep.ready(F.headKey, currentDamagePerHit()) then
@@ -152,14 +160,12 @@ local function evaluate()
                 F.crunch()
             end
         end
-        kickEvaluateSoon()
         return
     end
 
     -- Leg is ready to break
-    if legPrimed and headPrimed and torsoPrimed and not F.legBroken then
+    if legPrimed and headPrimed and torsoPrimed and not F.legBroken and not chasingHeadOrTorso then
         F.powderise(F.legKey)
-        kickEvaluateSoon()
         return
     end
 
@@ -167,7 +173,6 @@ local function evaluate()
     -- TODO : We need parry tracking... 
     local limb = PkCore.limbPrep.nextUnprepared(prepLimbs(), currentDamagePerHit()) or F.legKey
     F.powderise(limb)
-    kickEvaluateSoon()
 end
 
 PkCore.pk_mode.registerStrategy("rockboyfork", { evaluate = evaluate })
@@ -177,3 +182,4 @@ PkCore.registerAlias("PkCore rockboyfork leg", [[^rockboyfork\s+leg\s+(rightleg|
 PkCore.registerAlias("PkCore rockboyfork damageperhit", [[^rockboyfork\s+damageperhit\s+(\d+)$]],
     [[PkCore.rockboyfork.damagePerHit = tonumber(matches[2])]])
 PkCore.registerAlias("PkCore rockboyfork reset", [[^rockboyfork\s+reset$]], [[PkCore.rockboyfork.resetTracking() ]])
+PkCore.registerAlias("PkCore rockboyfork mmq", [[^mmq$]], [[PkCore.rockboyfork.pendingQuake = true]])

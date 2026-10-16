@@ -1,6 +1,28 @@
 -- Shared limb prep/break tracking for PK strategies that bait restorations by
 -- priming multiple limbs toward "next hit breaks it" (heartseed, rockboy, etc.)
 PkCore.limbPrep = PkCore.limbPrep or {}
+PkCore.limbPrep.parryStreak = PkCore.limbPrep.parryStreak or {}
+PkCore.limbPrep.lastAttemptedLimb = PkCore.limbPrep.lastAttemptedLimb or nil
+
+function PkCore.limbPrep.recordAttempt(limb)
+  PkCore.limbPrep.lastAttemptedLimb = limb
+end
+
+function PkCore.limbPrep.recordParry()
+  local limb = PkCore.limbPrep.lastAttemptedLimb
+  if not limb then return end
+  PkCore.limbPrep.parryStreak[limb] = (PkCore.limbPrep.parryStreak[limb] or 0) + 1
+end
+
+function PkCore.limbPrep.recordHit(limb)
+  PkCore.limbPrep.parryStreak[limb] = 0
+end
+
+PkCore.trackTrigger(tempRegexTrigger(
+  "^[\\w'\\-]+ parries the attack with a deft manoeuvre\\.$",
+  PkCore.protected("generic.onAttackParried", function()
+    PkCore.limbPrep.recordParry()
+  end)))
 
 -- Would the next hit of `damagePerHit` push this limb's AK-tracked damage over 100?
 function PkCore.limbPrep.ready(key, damagePerHit)

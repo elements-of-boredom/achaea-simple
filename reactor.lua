@@ -13,6 +13,7 @@ local function evaluate()
         mode.evaluate()
     end
 end
+PkCore.reactor.evaluate = evaluate
 
 function PkCore.reactor.set(mode)
     if not VALID_MODES[mode] then
