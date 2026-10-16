@@ -34,7 +34,7 @@ PkCore.loadModule("tasks.lua")
 PkCore.loadModule("rift.lua")
 
 -- Reactor Modes --
-PkCore.loadModule("reactor.lua")
+PkCore.loadModule("reactor_modes/reactor.lua")
 PkCore.loadModule("reactor_modes/hunt.lua")
 PkCore.loadModule("reactor_modes/pk.lua")
 -- All pk stragies must go after pk.lua

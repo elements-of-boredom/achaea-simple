@@ -65,6 +65,7 @@ PkCore.trackTrigger(tempRegexTrigger(
     lastRealEarthlordDamage = tonumber(matches[2])
     ak.limbs.LimbHit(resolvedTarget, "Me", "earthfist", limbKey, "percent")
     syncLimbTrauma(limbKey)
+    PkCore.limbPrep.recordHit(limbKey)
   end)))
 
 --calcify
@@ -116,12 +117,14 @@ PkCore.trackTrigger(tempRegexTrigger(
     end
   end)))
 
-  -- Handle AirLord specifically here
+
 local function isEarthlord()
   local classData = PkCore.classes.current()
   return classData ~= nil and classData.name == "Earth Lord"
 end
-  PkCore.trackTrigger(tempRegexTrigger(
+
+  -- Handle AirLord specifically here with a good ol paste
+PkCore.trackTrigger(tempRegexTrigger(
   "^([\\w'\\-]+) points an imperious finger at you, a wall of air manifesting beneath you and sending you streaking upwards\\.$",
   PkCore.protected("earthlord.onThrownAirborne", function()
     if not isEarthlord() then return end

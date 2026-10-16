@@ -266,6 +266,23 @@ local function onTargetInfo()
   PkCore.stateChanged()
 end
 
+function PkCore.room.clearTarget()
+    PkCore.room.targetId = nil
+    PkCore.room.targetHpPercent = nil
+    target = nil
+    target2 = nil
+    PkCore.stateChanged()
+end
+PkCore.trackTrigger(tempRegexTrigger(
+    "^You have been victorious and leave the Arena in triumph!$",
+    PkCore.protected("room.onLeaveArenaVictory", PkCore.room.clearTarget)))
+PkCore.trackTrigger(tempRegexTrigger(
+    "^You have been slain by ",
+    PkCore.protected("room.onOwnDeath", PkCore.room.clearTarget)))
+PkCore.trackTrigger(tempRegexTrigger(
+    "^You have been defeated and are thrown out of the Arena[.!]?$",
+    PkCore.protected("room.onLeaveArenaDefeat", PkCore.room.clearTarget)))
+
 PkCore.trackHandler(registerAnonymousEventHandler("gmcp.Room.Info", PkCore.protected("room.onRoomInfo", onRoomInfo)))
 PkCore.trackHandler(registerAnonymousEventHandler("gmcp.Char.Items.List", PkCore.protected("room.onItemsList", onItemsList)))
 PkCore.trackHandler(registerAnonymousEventHandler("gmcp.Char.Items.Add", PkCore.protected("room.onItemAdd", onItemAdd)))
