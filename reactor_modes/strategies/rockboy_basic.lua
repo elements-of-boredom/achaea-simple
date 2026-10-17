@@ -1,7 +1,6 @@
 -- Prep a leg and the head. Prone and break leg, calcify head break head, 
 -- then prone avalanche on balance. Guaranteed dead.. Their only block is standing and shielding 
 -- to block the avalanche hit.
-
 -- 2nd route option is squeeze , usually two legs and torso prepped, 
 -- break both legs, powderise/calcify torso. to put into mild, then serious crunch to get back to 4 shaping
 -- and calcify/squeeze for instant kill. 
@@ -10,56 +9,111 @@ local R = PkCore.rockboy
 
 R.pendingQuake = R.pendingQuake or false
 R.legBroken = R.legBroken or false
+R.leg1Broken = R.leg1Broken or false
+R.leg2Broken = R.leg2Broken or false
 R.legKey = R.legKey or "rightleg"
 R.headKey = "head"
+R.torsoKey = "torso"
 R.damagePerHit = R.damagePerHit or 21
-R.calcifyInFlight = R.calcifyInFlight or false
-R.routeChoice = R.routeChoice or "headonly"
+R.calcifyInFlight = R.calcifyInFlight or {}
+R.routeChoice = R.routeChoice or "basic"
 R.missedRouteWarned = R.missedRouteWarned or false
 R.calcifyCommitted = R.calcifyCommitted or false
 
 function R.resetTracking()
     R.legBroken = false
+    R.leg1Broken = false
+    R.leg2Broken = false
     R.pendingQuake = false
-    R.calcifyInFlight = false
+    R.calcifyInFlight = {}
     R.missedRouteWarned = false
     R.calcifyCommitted = false
     PkCore.limbPrep.parryStreak = {}
     PkCore.limbPrep.lastAttemptedLimb = nil
 end
 
-local function prepLimbs() return {R.legKey, R.headKey} end
-local function liveTarget() return PkCore.room.targetName() end
+local CALCIFY_AFF = {
+    head = "calcifiedskull",
+    torso = "calcifiedtorso"
+}
+local LIMB_TRAUMA_AFFS = {
+    head = {"damagedhead", "mangledhead"},
+    torso = {"mildtrauma", "serioustrauma"}
+}
+local ROUTE_LIMBS = {
+    basic = {R.legKey, R.headKey},
+    squeeze = {"rightleg", "leftleg", "torso"}
+}
+
+local function liveTarget()
+    return PkCore.room.targetName()
+end
 local function isEarthlord()
     local classData = PkCore.classes.current()
     return classData ~= nil and classData.name == "Earth Lord"
 end
-local function calcifyPending() return (affstrack.score.calcifiedskull or 0) > 0 end
-local function targetProne() return (affstrack.score.prone or 0) > 0 end
-local function currentShaping() return PkCore.playerStatus.shaping or 0 end
+
+-- temporary generic aff checker (look to move this higher for all reactors)
+local function hasAff(name)
+    return (affstrack.score[name] or 0) > 0
+end
+
+local function currentShaping()
+    return PkCore.playerStatus.shaping or 0
+end
 local function currentDamagePerHit(upcomingSculptingReduction)
     local reduction = upcomingSculptingReduction or 0
     local shaping = currentShaping() - reduction
     return shaping >= 4 and 43 or R.damagePerHit
 end
-local function headPrimed() return PkCore.limbPrep.ready(R.headKey, currentDamagePerHit()) or PkCore.limbPrep.broken(R.headKey) end
-local function legPrimed() return PkCore.limbPrep.ready(R.legKey, currentDamagePerHit()) or PkCore.limbPrep.broken(R.legKey) end
-local function headSafeForCombo() return PkCore.limbPrep.ready(R.headKey, currentDamagePerHit(2)) end
-local function chasingHead() return calcifyPending() or R.calcifyInFlight or PkCore.limbPrep.broken(R.headKey) end
 
--- Mirrors exactly what powderiseCmd below decides, so we can predict the
--- shaping outcome of a Powderise BEFORE sending it
+-- will we break, or is it broken already
+local function primed(key)
+    return PkCore.limbPrep.ready(key, currentDamagePerHit()) or PkCore.limbPrep.broken(key)
+end
+
+-- will we break even if we have to quake?
+local function safeForCombo(key)
+    return PkCore.limbPrep.ready(key, currentDamagePerHit(2))
+end
+
+-- true once calcify's touched this limb in any way, stays true
+-- through cast -> pending -> completion, until the limb is fully clean again.
+local function chasingLimb(key)
+    if CALCIFY_AFF[key] and hasAff(CALCIFY_AFF[key]) then
+        return true
+    end -- calcify already landed
+    if R.calcifyInFlight[key] then
+        return true
+    end -- calcify cast
+    if PkCore.limbPrep.broken(key) then
+        return true
+    end -- is a limb broken
+    for _, aff in iparis(LIMB_TRAUMA_AFFS[key] or {}) do -- head/torso trauma checks
+        if hasAff(aff) then
+            return true
+        end
+    end
+    return false
+end
+
+-- They cannot parry while prone, so never trust a parry-streak reading then.
 local function willPrefixQuake(key)
-    if targetProne() then return R.pendingQuake end
+    -- Don't quake if they aren't prone. (this may end up being a problem in groups? idk)
+    if targetProne() then
+        return false
+    end
     return R.pendingQuake or ((PkCore.limbPrep.parryStreak[key] or 0) >= 1 and currentShaping() >= 2)
 end
 
 local function powderiseCmd(key)
     local target = liveTarget()
-    if not target then return nil end
+    if not target then
+        return nil
+    end
     PkCore.limbPrep.recordAttempt(key)
 
-    local word = (key == "rightleg" or key == "leftleg") and (key == "rightleg" and "right leg" or "left leg") or "head"
+    local word = (key == "rightleg" or key == "leftleg") and (key == "rightleg" and "right leg" or "left leg") or key
     local cmd = "TERRAN POWDERISE " .. target .. " " .. word
 
     if willPrefixQuake(key) then
@@ -69,11 +123,15 @@ local function powderiseCmd(key)
     return cmd
 end
 
-local function calcifyHeadCmd()
+local function calcifyCmd(limb)
     local target = liveTarget()
-    if not target then return nil end
-    R.calcifyInFlight = true
-    tempTimer(4, function() R.calcifyInFlight = false end)
+    if not target then
+        return nil
+    end
+    R.calcifyInFlight[limb] = true
+    tempTimer(4, function()
+        R.calcifyInFlight[limb] = false
+    end)
     return "TERRAN CALCIFY " .. target .. " head"
 end
 
@@ -87,83 +145,173 @@ local ACTIONS = {
     finish_quake_avalanche = {
         -- default/preferred finish whenever affordable - always re-prone via
         -- Quake rather than trusting our own prone-tracking isn't stale
-        can = function() return R.calcifyCommitted and PkCore.limbPrep.broken(R.headKey) and currentShaping() >= 3 end,
-        build = function() return "MANIFEST QUAKE|MANIFEST AVALANCHE" end,
+        can = function()
+            return R.calcifyCommitted and PkCore.limbPrep.broken(R.headKey) and currentShaping() >= 3
+        end,
+        build = function()
+            return "MANIFEST QUAKE|MANIFEST AVALANCHE"
+        end
     },
     finish_avalanche_fallback = {
         -- shaping fell to exactly 2 (e.g. the combo's hit got quake-prefixed
         -- for parry) - can't afford Quake first, only works if still prone
-        can = function() return R.calcifyCommitted and PkCore.limbPrep.broken(R.headKey) and currentShaping() == 2 and targetProne() end,
-        build = function() return "MANIFEST AVALANCHE" end,
+        can = function()
+            return R.calcifyCommitted and PkCore.limbPrep.broken(R.headKey) and currentShaping() == 2 and
+                       hasAff("prone")
+        end,
+        build = function()
+            return "MANIFEST AVALANCHE"
+        end
     },
-    finish_missed_route = {
-        can = function() return PkCore.limbPrep.broken(R.headKey) and not R.missedRouteWarned end,
+    finish_missed_head_route = {
+        can = function()
+            return PkCore.limbPrep.broken(R.headKey) and not R.missedRouteWarned
+        end,
         build = function()
             PkCore.note("!!! ROCKBOY: MISSED KILL ROUTE !!!")
             PkCore.note("!!! Target not prone / shaping too low to finish - likely a skilled cure !!!")
             PkCore.note("!!! Consider: rbr <name> to pivot to something more robust !!!")
             R.missedRouteWarned = true
             R.legBroken = false
+            R.calcifyCommitted = false
             return nil
-        end,
+        end
     },
     ramp_head_while_calcifying = {
-        can = function() return calcifyPending() end,
+        can = function()
+            return hasAff(CALCIFY_AFF.head)
+        end,
         build = function()
             R.legBroken = false
             return powderiseCmd(R.headKey)
-        end,
+        end
     },
     calcify_and_hit_head = {
         can = function()
-            return (R.legBroken or chasingHead()) and currentShaping() >= 4 and headSafeForCombo()
+            return (R.legBroken or chasingLimb("head")) and currentShaping() >= 4 and safeForCombo(R.headKey)
         end,
         build = function()
             R.missedRouteWarned = false
             R.calcifyCommitted = true
-            local calcifyCmd = calcifyHeadCmd()
-            local hitCmd = powderiseCmd(R.headKey)
-            if calcifyCmd and hitCmd then return calcifyCmd .. "|" .. hitCmd end
-            return calcifyCmd or hitCmd
-        end,
+            local cCmd, hCmd = calcifyCmd("head"), powderiseCmd(R.headKey)
+            if cCmd and hCmd then
+                -- TODO: Add separator to global config
+                return cCmd .. "|" .. hCmd
+            end
+            -- we shouldn't ever hit this...
+            return cCmd or hCmd
+        end
     },
     ramp_head_for_combo = {
         -- unconditional priority on head unt
-        can = function() return not headSafeForCombo() end,
-        build = function() return powderiseCmd(R.headKey) end,
+        can = function()
+            return not safeForCombo(R.headKey)
+        end,
+        build = function()
+            return powderiseCmd(R.headKey)
+        end
     },
     build_shaping_for_break = {
         can = function()
-            if not legPrimed() or not headSafeForCombo() then return false end
+            if not primed(R.legKey) or not safeForCombo(R.headKey) then
+                return false
+            end
             local needed = willPrefixQuake(R.legKey) and 4 or 3
             return currentShaping() < needed
         end,
-        build = function() return crunchCmd() end,
+        build = function()
+            return crunchCmd()
+        end
     },
     break_leg = {
         can = function()
-            if not legPrimed() or not headSafeForCombo() or R.legBroken or chasingHead() then return false end
+            if not primed(R.legKey) or not safeForCombo(R.headKey) or R.legBroken or chasingLimb(R.headKey) then
+                return false
+            end
             local needed = willPrefixQuake(R.legKey) and 4 or 3
             return currentShaping() >= needed
         end,
-        build = function() return powderiseCmd(R.legKey) end,
+        build = function()
+            return powderiseCmd(R.legKey)
+        end
     },
     prep = {
-        can = function() return true end,
-        build = function() return powderiseCmd(R.legKey) end,
+        can = function()
+            return true
+        end,
+        build = function()
+            local limb = PkCore.limbPrep.nextUnprepared(ROUTE_LIMBS[R.routeChoice] or ROUTE_LIMBS.basic, currentDamagePerHit()) or R.legKey
+            return powderiseCmd(limb)
+        end
     },
+
+    -- squeeze
+    break_leg1 = {
+        can = function() return primed("rightleg") and primed("leftleg") and safeForCombo(R.torsoKey) 
+            and not R.leg1Broken and not chasingLimb(R.torsoKey) 
+        end,
+        build = function() return powderiseCmd("rightleg") end,
+    },
+    break_leg2_and_calcify_torso = {
+        can = function()
+            return R.leg1Broken and primed("leftleg") and currentShaping() >= 4
+                and safeForCombo(R.torsoKey) and not chasingLimb(R.torsoKey)
+        end,
+        build = function()
+            local cCmd, hCmd = calcifyCmd("torso"), powderiseCmd("leftleg")
+            if cCmd and hCmd then return cCmd .. "|" .. hCmd end
+            return cCmd or hCmd
+        end,
+    },
+    ramp_torso_for_combo = {
+        can = function() return not safeForCombo(R.torsoKey) end,
+        build = function() powderiseCmd(R.torsoKey) end,
+    },
+    ramp_torso_while_calcifying = {
+        can = function() return hasAff(CALCIFY_AFF.torso) and not PkCore.limbPrep.broken(R.torsoKey) end,
+        build = function() return powderiseCmd(R.torsoKey) end,
+    },
+    rebuild_shaping_for_kill = {
+        can = function() return hasAff("serioustrauama") and not hasAff(CALCIFY_AFF.torso) and currentShaping() < 4 end,
+        build = function() return crunchCmd() end,
+    },
+    calcify_squeeze_kill = {
+        can = function() return hasAff("serioustrauma") and not hasAff(CALCIFY_AFF.torso) and currentShaping() >= 4 end,
+        build = function()
+            local target = liveTarget()
+            if not target then return nil end
+            return calcifyCmd("torso") .. "|TERRAN SQUEEZE" .. target
+        end,
+    },
+    squeeze_kill = {
+        can = function() return hasAff("serioustrauama") and hasAff(CALCIFY_AFF.torso) end,
+        build = function() 
+            local target = liveTarget()
+            if not target then return nil end
+            return "TERRAN SQUEEZE" .. target
+        end,
+    }
 }
 
 local ROUTES = {
-    headonly = {
-        "finish_quake_avalanche",
-        "finish_avalanche_fallback",
-        "finish_missed_route",
-        "ramp_head_while_calcifying",
-        "calcify_and_hit_head",
-        "ramp_head_for_combo",
+    basic = {
+        "finish_quake_avalanche", 
+        "finish_avalanche_fallback", 
+        "finish_missed_head_route",
+        "ramp_head_while_calcifying", 
+        "calcify_and_hit_head", 
+        "ramp_head_for_combo", 
         "build_shaping_for_break",
-        "break_leg",
+        "break_leg", 
+        "prep"
+    },
+    squeeze = {
+        "calcify_squeeze_kill", 
+        "rebuild_shaping_for_kill", 
+        "ramp_torso_while_calcifying",
+        "break_leg2_and_calcify_torso", 
+        "ramp_torso_for_combo",
+        "break_leg1", 
         "prep",
     },
 }
@@ -181,7 +329,9 @@ end
 function R.selectRoute(name)
     if not ROUTES[name] then
         local names = {}
-        for k in pairs(ROUTES) do table.insert(names, k) end
+        for k in pairs(ROUTES) do
+            table.insert(names, k)
+        end
         PkCore.note("rockboy: unknown route '" .. tostring(name) .. "' (known: " .. table.concat(names, ", ") .. ")")
         return
     end
@@ -202,19 +352,34 @@ PkCore.trackHandler(registerAnonymousEventHandler("PkCore state changed",
 PkCore.trackTrigger(tempRegexTrigger("^You have slain ", PkCore.protected("rockboy.onTargetSlain", R.resetTracking)))
 
 local function evaluate()
-    if not isEarthlord() then return end
-    if not liveTarget() then return end
+    if not isEarthlord() then
+        return
+    end
+    if not liveTarget() then
+        return
+    end
 
-    if PkCore.limbPrep.broken(R.legKey) then R.legBroken = true end
+    if PkCore.limbPrep.broken(R.legKey) then
+        R.legBroken = true
+    end
+    if PkCore.limbPrep.broken("rightleg") then 
+        R.leg1Broken = true 
+    end
+    if PkCore.limbPrep.broken("leftleg") then
+        R.leg2Broken = true
+    end
 
-    local cmd = pickAction(ROUTES[R.routeChoice] or ROUTES.headonly)
-    if cmd then PkCore.reactor.submitQueue({cmd}) end
+    local cmd = pickAction(ROUTES[R.routeChoice] or ROUTES.basic)
+    if cmd then
+        PkCore.reactor.submitQueue({cmd})
+    end
 end
 
-PkCore.pk_mode.registerStrategy("rockboy", { evaluate = evaluate })
+PkCore.pk_mode.registerStrategy("rockboy", {
+    evaluate = evaluate
+})
 
-PkCore.registerAlias("PkCore rockboy leg", [[^rb\s+leg\s+(rightleg|leftleg)$]],
-    [[PkCore.rockboy.legKey = matches[2] ]])
+PkCore.registerAlias("PkCore rockboy leg", [[^rb\s+leg\s+(rightleg|leftleg)$]], [[PkCore.rockboy.legKey = matches[2] ]])
 PkCore.registerAlias("PkCore rockboy reset", [[^rb\s+reset$]], [[PkCore.rockboy.resetTracking() ]])
 PkCore.registerAlias("PkCore rockboy mmq", [[^mmq$]], [[PkCore.rockboy.pendingQuake = true]])
 PkCore.registerAlias("PkCore rockboy route", [[^rbr\s+(\w+)$]], [[PkCore.rockboy.selectRoute(matches[2])]])
