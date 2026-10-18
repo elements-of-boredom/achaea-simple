@@ -119,7 +119,7 @@ function PkCore.room.targetName()
   for _, entry in ipairs(PkCore.room.mobEntries()) do
     if tostring(entry.id) == PkCore.room.targetId then return entry.name end
   end
-  if type(target) == "string" and target ~= "" then return target end
+  if PkCore.room.targetDisplayName then return PkCore.room.targetDisplayName end
   return PkCore.room.targetId
 end
 
@@ -262,6 +262,7 @@ local function onTargetInfo()
   if id then
     PkCore.room.targetId = id
   end
+  PkCore.room.targetDisplayName = info.name
   PkCore.room.targetHpPercent = tonumber(tostring(info.hpperc or ""):match("%d+"))
   PkCore.stateChanged()
 end

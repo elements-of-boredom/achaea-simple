@@ -29,7 +29,8 @@ end
 function PkCore.reactor.submitQueue(actions)
     if #actions == 0 then return end
     local queueStr = "queue addclear free " .. table.concat(actions, "|")
-    
+    if queueStr == PkCore.reactor.lastQueueSent then return end
+    PkCore.reactor.lastQueueSent = queueStr
     send(queueStr)
 end
 
@@ -59,6 +60,13 @@ end
 
 PkCore.registerAlias("PkCore mode report", [[^mode$]], [[PkCore.reactor.report()]])
 PkCore.registerAlias("PkCore mode set", [[^mode\s+(\w+)$]], [[PkCore.reactor.set(matches[2])]])
+
+-- Clear queue when we spend balance/eq, small chance this isn't 100% but timer is 0.3 so prolly ok
+PkCore.trackTrigger(tempRegexTrigger(
+  "^(?:Balance|Equilibrium) used: [\\d.]+s\\.$",
+  PkCore.protected("reactor.clearQueueDedup", function()
+    PkCore.reactor.lastQueueSent = ""
+  end)))
 
 -- Start our engine, mostly useful if `reload` is called.
 PkCore.reactor.pollGeneration = PkCore.reactor.pollGeneration + 1

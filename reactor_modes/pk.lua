@@ -24,9 +24,6 @@ end
 
 local function evaluate()
     if PkCore.reactor.mode ~= "pk" then return end
-    if not PkCore.canAct() then
-        return
-    end
     local strategy = PkCore.pk_mode.strategy and PkCore.pk_mode.strategies[PkCore.pk_mode.strategy]
     if not strategy or not strategy.evaluate then return end
     strategy.evaluate()

@@ -17,21 +17,15 @@ local function evaluate()
         --PkCore.note("hunt.lua - Target not in room")
         return
     end
+    -- Rage is outside the queue, has no balance reqs
     PkCore.rage.attemptUse()
-    if not PkCore.canAct() then
-        --PkCore.note("hunt: canAct=false (bal=" .. tostring(PkCore.balance.balance) ..
-        --" eq=" .. tostring(PkCore.balance.equilibrium) ..
-        --" stunned=" .. tostring(PkCore.status.stunned) .. ")")
-      return
-    end
-
+    
     local classData = PkCore.classes.current()
     if not classData or not classData.basicAttack then
         PkCore.note("hunt.lua - No basic attack found for current class:".. classData.name)
         return
     end
-
-    send(classData.basicAttack)
+    PkCore.reactor.submitQueue({classData.basicAttack})
 end
 -- add this so we can leverage it from aliases
 PkCore.hunt_mode.evaluate = evaluate

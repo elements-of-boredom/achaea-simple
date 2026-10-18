@@ -290,6 +290,20 @@ local EFFECT_RULES = {
   { "^You let loose a steady stream of cold air around", { 0, 255, 255 }, "frost" },
 }
 
+-- One off/special behaviors:
+PkCore.trackTrigger(tempRegexTrigger(
+  "^A starburst tattoo flares and bathes ([\\w'\\-]+) in red light\\.?$",
+  PkCore.protected("colorize.starburstTattoo", function()
+    if not PkCore.colorize.enabled then return end
+    selectCurrentLine()
+    setBgColor(180, 0, 0)
+    setFgColor(255, 255, 0)
+    if setTextEffect then setTextEffect("lightning") end
+    deselect()
+    resetFormat()
+    PkCore.decho("\n<255,0,0>!!! STARBURST TATTOO on " .. matches[2] .. " !!!<reset>\n")
+  end)))
+
 -- ── Apply ────────────────────────────────────────────────────────────────
 
 local function isGradient(color)

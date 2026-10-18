@@ -89,7 +89,7 @@ local function chasingLimb(key)
     if PkCore.limbPrep.broken(key) then
         return true
     end -- is a limb broken
-    for _, aff in iparis(LIMB_TRAUMA_AFFS[key] or {}) do -- head/torso trauma checks
+    for _, aff in ipairs(LIMB_TRAUMA_AFFS[key] or {}) do -- head/torso trauma checks
         if hasAff(aff) then
             return true
         end
@@ -100,7 +100,7 @@ end
 -- They cannot parry while prone, so never trust a parry-streak reading then.
 local function willPrefixQuake(key)
     -- Don't quake if they aren't prone. (this may end up being a problem in groups? idk)
-    if targetProne() then
+    if hasAff("prone") then
         return false
     end
     return R.pendingQuake or ((PkCore.limbPrep.parryStreak[key] or 0) >= 1 and currentShaping() >= 2)
@@ -245,7 +245,7 @@ local ACTIONS = {
         end
     },
 
-    -- squeeze
+    -- squeeze kill actions
     break_leg1 = {
         can = function() return primed("rightleg") and primed("leftleg") and safeForCombo(R.torsoKey) 
             and not R.leg1Broken and not chasingLimb(R.torsoKey) 
@@ -280,7 +280,7 @@ local ACTIONS = {
         build = function()
             local target = liveTarget()
             if not target then return nil end
-            return calcifyCmd("torso") .. "|TERRAN SQUEEZE" .. target
+            return calcifyCmd("torso") .. "|TERRAN SQUEEZE " .. target
         end,
     },
     squeeze_kill = {
@@ -288,9 +288,19 @@ local ACTIONS = {
         build = function() 
             local target = liveTarget()
             if not target then return nil end
-            return "TERRAN SQUEEZE" .. target
+            return "TERRAN SQUEEZE " .. target
         end,
-    }
+    },
+
+    -- general
+    squeeze_spam = {
+        can = function() return true end,
+        build = function() 
+            local target = liveTarget()
+            if not target then return nil end
+            return "TERRAN SQUEEZE " .. target
+        end,
+    },
 }
 
 local ROUTES = {
@@ -313,6 +323,9 @@ local ROUTES = {
         "ramp_torso_for_combo",
         "break_leg1", 
         "prep",
+    },
+    group = {
+        "squeeze_spam",
     },
 }
 

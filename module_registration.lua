@@ -45,6 +45,9 @@ PkCore.loadModule("reactor_modes/strategies/sylvan_lock.lua")
 PkCore.loadModule("reactor_modes/strategies/fireguy.lua")
 PkCore.loadModule("reactor_modes/strategies/rockboy.lua")
 
+-- Party modules
+PkCore.loadModule("party/party_target.lua")
+
 -- Utility / Aliases --
 PkCore.loadModule("gold_pickup.lua")
 PkCore.loadModule("aliases/stats.lua")
