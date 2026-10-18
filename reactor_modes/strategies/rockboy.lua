@@ -33,7 +33,7 @@ function R.resetTracking()
 end
 
 local CALCIFY_AFF = {
-    head = "calcifiedskull",
+    head = "calcifiedhead",
     torso = "calcifiedtorso"
 }
 local LIMB_TRAUMA_AFFS = {
@@ -132,7 +132,7 @@ local function calcifyCmd(limb)
     tempTimer(4, function()
         R.calcifyInFlight[limb] = false
     end)
-    return "TERRAN CALCIFY " .. target .. " head"
+    return "TERRAN CALCIFY " .. target .. " " .. limb
 end
 
 local function crunchCmd()
@@ -236,11 +236,14 @@ local ACTIONS = {
         end
     },
     prep = {
-        can = function()
-            return true
-        end,
+        can = function() return true end,
         build = function()
-            local limb = PkCore.limbPrep.nextUnprepared(ROUTE_LIMBS[R.routeChoice] or ROUTE_LIMBS.basic, currentDamagePerHit()) or R.legKey
+            local limbs = ROUTE_LIMBS[R.routeChoice] or ROUTE_LIMBS.basic
+            if R.routeChoice == "squeeze" and R.leg1Broken then
+                limbs = {"leftleg", "torso"}
+            end
+            local limb = PkCore.limbPrep.nextUnprepared(limbs, currentDamagePerHit())
+            if not limb then return nil end
             return powderiseCmd(limb)
         end
     },
@@ -265,14 +268,14 @@ local ACTIONS = {
     },
     ramp_torso_for_combo = {
         can = function() return not safeForCombo(R.torsoKey) end,
-        build = function() powderiseCmd(R.torsoKey) end,
+        build = function() return powderiseCmd(R.torsoKey) end,
     },
     ramp_torso_while_calcifying = {
         can = function() return hasAff(CALCIFY_AFF.torso) and not PkCore.limbPrep.broken(R.torsoKey) end,
         build = function() return powderiseCmd(R.torsoKey) end,
     },
     rebuild_shaping_for_kill = {
-        can = function() return hasAff("serioustrauama") and not hasAff(CALCIFY_AFF.torso) and currentShaping() < 4 end,
+        can = function() return hasAff("serioustrauma") and not hasAff(CALCIFY_AFF.torso) and currentShaping() < 4 end,
         build = function() return crunchCmd() end,
     },
     calcify_squeeze_kill = {
@@ -284,7 +287,7 @@ local ACTIONS = {
         end,
     },
     squeeze_kill = {
-        can = function() return hasAff("serioustrauama") and hasAff(CALCIFY_AFF.torso) end,
+        can = function() return hasAff("serioustrauma") and hasAff(CALCIFY_AFF.torso) end,
         build = function() 
             local target = liveTarget()
             if not target then return nil end
@@ -320,7 +323,7 @@ local ROUTES = {
         "rebuild_shaping_for_kill", 
         "ramp_torso_while_calcifying",
         "break_leg2_and_calcify_torso", 
-        "ramp_torso_for_combo",
+        --"ramp_torso_for_combo",
         "break_leg1", 
         "prep",
     },
@@ -333,6 +336,7 @@ local function pickAction(routeList)
     for _, name in ipairs(routeList) do
         local action = ACTIONS[name]
         if action and action.can() then
+            PkCore.note("DB:RB: chose ".. name)
             return action.build()
         end
     end

@@ -17,23 +17,6 @@ local function isCurrentTarget(name)
   return type(target) == "string" and name:lower() == target:lower()
 end
 
-local lastRealEarthlordDamage = nil
-
-PkCore.onReady(function()
-  ak.limbs.myformulas = ak.limbs.myformulas or {}
-  ak.limbs.myformulas.earthfist = function(who, attacker, weapon, limb, augment, check)
-    local damage = lastRealEarthlordDamage or 0
-    lastRealEarthlordDamage = nil
-    return damage
-  end
-  -- Calcify completing is modeled as "another hit" through the same pipeline -
-  -- flat 100 guarantees exactly one tier crossing, same cap-and-reset AK already
-  -- does correctly for Powderise.
-  ak.limbs.myformulas.earthcalcify = function(who, attacker, weapon, limb, augment, check)
-    return 100
-  end
-end)
-
 local function syncLimbTrauma(limb)
   local tiers = LIMB_TRAUMA[limb]
   if not tiers then return end
@@ -52,6 +35,31 @@ local function syncLimbTrauma(limb)
     end
   end
 end
+
+
+local lastRealEarthlordDamage = nil
+
+PkCore.onReady(function()
+  ak.limbs.myformulas = ak.limbs.myformulas or {}
+  ak.limbs.myformulas.earthfist = function(who, attacker, weapon, limb, augment, check)
+    local damage = lastRealEarthlordDamage or 0
+    lastRealEarthlordDamage = nil
+    return damage
+  end
+  local originalCalculateSalve = AKcalculateSalve
+  AKcalculateSalve = function(...)
+    originalCalculateSalve(...)
+    syncLimbTrauma("torso")
+    syncLimbTrauma("head")
+  end
+  -- Calcify completing is modeled as "another hit" through the same pipeline -
+  -- flat 100 guarantees exactly one tier crossing, same cap-and-reset AK already
+  -- does correctly for Powderise.
+  ak.limbs.myformulas.earthcalcify = function(who, attacker, weapon, limb, augment, check)
+    return 100
+  end
+end)
+
 -- powderise
 PkCore.trackTrigger(tempRegexTrigger(
   "^As your blow lands with a crunch, you perceive that you have dealt ([\\d.]+)% damage to [\\w'\\-]+'s (.+)\\.$",
@@ -68,14 +76,13 @@ PkCore.trackTrigger(tempRegexTrigger(
     PkCore.limbPrep.recordHit(limbKey)
   end)))
 
---calcify
+
 PkCore.trackTrigger(tempRegexTrigger(
-  "^Reaching out, you press a single stone digit to the (head|torso) of ([\\w'\\-]+), beginning the transformation of the calcium within\\.$",
-  PkCore.protected("earthlord.onCalcify", function()
-    local aff = matches[2] == "head" and "calcifiedskull" or "calcifiedtorso"
-    if not isCurrentTarget(matches[3]) then return end
-    affstrack.score[aff] = 100
-    raiseEvent("AK got aff", aff)
+  "^Reaching out, you press a single stone digit to the torso of ([\\w'\\-]+), beginning the transformation of the calcium within\\.$",
+  PkCore.protected("earthlord.onCalcifyTorsoCast", function()
+    if not isCurrentTarget(matches[2]) then return end
+    affstrack.score.calcifiedtorso = 100
+    raiseEvent("AK got aff", "calcifiedtorso")
   end)))
 
 -- Head completion calcifiedskull -> damagedhead, or damagedhead -> mangledhead
@@ -83,8 +90,8 @@ PkCore.trackTrigger(tempRegexTrigger(
   "^A look of pain comes over ([\\w'\\-]+) and the bones seem to shift beneath the skin stretched across (?:his|her|their) skull\\.$",
   PkCore.protected("earthlord.onCalcifySkullComplete", function()
     if not isCurrentTarget(matches[2]) then return end
-    affstrack.score.calcifiedskull = 0
-    raiseEvent("AK lost aff", "calcifiedskull")
+    affstrack.score.calcifiedhead = 0
+    raiseEvent("AK lost aff", "calcifiedhead")
     if (affstrack.score.head or 0) < 200 then
       ak.limbs.LimbHit(matches[2], "Me", "earthcalcify", "head", "percent")
       syncLimbTrauma("head")
@@ -112,8 +119,19 @@ PkCore.trackTrigger(tempRegexTrigger(
   "^\\s*-- Target Cured (\\w+) --\\s*$",
   PkCore.protected("earthlord.onAkConfirmedCure", function()
     local limb = matches[2]:lower()
+    PkCore.note("We are in here")
     if limb == "head" or limb == "torso" then
       syncLimbTrauma(limb)  -- affstrack.score[limb] is already cleared by AK itself by this point
+    end
+  end)))
+
+PkCore.trackTrigger(tempRegexTrigger(
+  "^([\\w'\\-]+) takes some salve from a vial and rubs it on (?:his|her|their) body\\.$",
+  PkCore.protected("earthlord.onBodyRestorationCuresCalcify", function()
+    if not isCurrentTarget(matches[2]) then return end
+    if (affstrack.score.calcifiedtorso or 0) > 0 then
+      affstrack.score.calcifiedtorso = 0
+      raiseEvent("AK lost aff", "calcifiedtorso")
     end
   end)))
 

@@ -283,6 +283,11 @@ PkCore.trackTrigger(tempRegexTrigger(
 PkCore.trackTrigger(tempRegexTrigger(
     "^You have been defeated and are thrown out of the Arena[.!]?$",
     PkCore.protected("room.onLeaveArenaDefeat", PkCore.room.clearTarget)))
+PkCore.trackTrigger(tempRegexTrigger(
+  "^Your target is now: ([\\w'\\-]+)",
+  PkCore.protected("room.onTargetNameConfirmed", function()
+    PkCore.room.targetDisplayName = matches[2]
+  end)))
 
 PkCore.trackHandler(registerAnonymousEventHandler("gmcp.Room.Info", PkCore.protected("room.onRoomInfo", onRoomInfo)))
 PkCore.trackHandler(registerAnonymousEventHandler("gmcp.Char.Items.List", PkCore.protected("room.onItemsList", onItemsList)))

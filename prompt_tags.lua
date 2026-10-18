@@ -8,7 +8,7 @@ PkCore.afflictionShort = {
   amnesia = "amns", anorexia = "ano", asphyxiating = "asph", asthma = "ast", blackout = "BLKOUT",
   bleeding = "bld", blindness = "blnd", blistered = "blst", bloodfire = "bldfr", bound = "bound",
   brokenleftarm = "la1", brokenleftleg = "ll1", brokenrightarm = "ra1", brokenrightleg = "rl1",
-  bruisedribs = "tt1", burning = "burn", cadmuscurse = "cadmus", calcifiedskull = "CAL-SKLL",
+  bruisedribs = "tt1", burning = "burn", cadmuscurse = "cadmus", calcifiedhead = "CAL-HEAD",
   calcifiedtorso = "CAL-TT", claustrophobia = "clau", clumsiness = "clum", coldfate = "cfate",
   concussion = "conc", conflagration = "cnflg", confusion = "conf", corruption = "corr",
   cremated = "crem", crushedthroat = "CRTHROAT", daeggerimpale = "DAEG-IMP", damagedhead = "H2",
