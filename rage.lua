@@ -35,6 +35,56 @@ local function armFallback(ability, seq)
   end)
 end
 
+local function canSend()
+  if PkCore.isHindered() then return false end
+  return getEpoch() - R.lastGlobalSend >= GLOBAL_COOLDOWN
+end
+
+local function canUse(ability)
+  return ability.known and isReady(ability.name) and (ability.cost or 0) <= (PkCore.playerStatus.rage or 0)
+end
+
+local function use(ability)
+  send(ability.command)
+  setReady(ability.name, false)
+  R.lastGlobalSend = getEpoch()
+  armFallback(ability, nextSendSeq(ability.name))
+end
+
+-- fire one specific ability (e.g. the class shield breaker) if it's usable right now
+function R.tryUse(name)
+  if not canSend() then return false end
+  local ability = R.find(PkCore.classes.current(), name)
+  if not ability or not canUse(ability) then return false end
+  use(ability)
+  return true
+end
+
+function R.attemptUse()
+  if not canSend() then return end
+
+  local classData = PkCore.classes.current()
+  if not classData or not classData.auto then return end
+
+  local targetPercent = PkCore.room.targetHpPercent
+  local reserved = classData.rageReserve
+  local reserving = reserved and targetPercent and targetPercent <= reserved.targetPercentAtOrBelow
+
+  for _, index in ipairs(classData.auto) do
+    local ability = classData.abilities[index]
+    if canUse(ability) and (not reserving or ability.name == reserved.ability) then
+      use(ability)
+      return
+    end
+  end
+end
+
+function R.find(classData, name)
+  for _, ability in ipairs(classData and classData.abilities or {}) do
+    if ability.name == name then return ability end
+  end
+end
+
 -- Tier 1: authoritative list
 PkCore.trackTrigger(tempRegexTrigger(
   "^Available abilities: (.+)\\.$",
@@ -64,31 +114,6 @@ local function registerAbilityTriggers(ability)
       PkCore.protected("rage.recovery." .. ability.name, function()
         setReady(ability.name, true)
       end)))
-  end
-end
-
-function R.attemptUse()
-  if PkCore.isHindered() then return end
-  if getEpoch() - R.lastGlobalSend < GLOBAL_COOLDOWN then return end
-
-  local classData = PkCore.classes.current()
-  if not classData or not classData.auto then return end
-
-  local targetPercent = PkCore.room.targetHpPercent
-  local reserved = classData.rageReserve
-  local reserving = reserved and targetPercent and targetPercent <= reserved.targetPercentAtOrBelow
-
-  for _, index in ipairs(classData.auto) do
-    local ability = classData.abilities[index]
-    if ability.known and isReady(ability.name) and (ability.cost or 0) <= (PkCore.playerStatus.rage or 0) then
-      if not reserving or ability.name == reserved.ability then
-        send(ability.command)
-        setReady(ability.name, false)
-        R.lastGlobalSend = getEpoch()
-        armFallback(ability, nextSendSeq(ability.name))
-        return
-      end
-    end
   end
 end
 

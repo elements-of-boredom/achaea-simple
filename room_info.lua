@@ -1,10 +1,20 @@
 PkCore.room = PkCore.room or { items = {}, players = {}, number = nil, name = nil, exits = {}, targetHpPercent = nil }
+PkCore.room.ignoreNames = PkCore.room.ignoreNames or {
+  "a swarm of bees",
+}
 
 PkCore.registerKey = function(name, modifier, key, fn)
   if exists(name, "keybind") == 0 then
     permKey(name, "", modifier, key, fn)
   end
   enableKey(name)
+end
+
+local function isIgnoredName(name)
+  for _, pat in ipairs(PkCore.room.ignoreNames) do
+    if name:find(pat, 1, true) then return true end
+  end
+  return false
 end
 
 local function isLiveMobItem(item)
@@ -15,6 +25,7 @@ local function isLiveMobItem(item)
   if attrib:find("x", 1, true) then return false end
   local icon = tostring(item.icon or ""):lower()
   local name = tostring(item.name or ""):lower()
+  if isIgnoredName(name) then return false end
   return icon ~= "deadbody" and not name:find("corpse", 1, true)
 end
 

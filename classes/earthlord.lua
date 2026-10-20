@@ -149,6 +149,14 @@ PkCore.trackTrigger(tempRegexTrigger(
     send("TERRAN PASTE " .. matches[2])
   end)))
 
+--  Help AK properly track calcification
+  local originalCalculateSalve = AKcalculateSalve
+  AKcalculateSalve = function(...)
+    originalCalculateSalve(...)
+    PkCore.note("DB: AKcalculateSalve ran, torso score=" .. tostring(affstrack.score.torso))
+    syncLimbTrauma("torso")
+    syncLimbTrauma("head")
+  end
 
 --- CLASS DATA ---
 

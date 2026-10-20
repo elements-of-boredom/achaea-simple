@@ -22,6 +22,7 @@ PkCore.loadModule("colorize.lua")
 PkCore.loadModule("ui/header.lua")
 PkCore.loadModule("ui/topbar.lua")
 PkCore.loadModule("ui/map.lua")
+PkCore.loadModule("ui/ripple.lua")
 PkCore.loadModule("ui/chat.lua")
 PkCore.loadModule("ui/room.lua")
 PkCore.loadModule("ui/vitals.lua")
@@ -57,3 +58,6 @@ PkCore.loadModule("aliases/st.lua")
 
 -- Compatabiilty fixes --
 PkCore.loadModule("wundersys_compat.lua")
+
+-- One offs --
+PkCore.loadModule("pvp_warnings/burrow_escape.lua")

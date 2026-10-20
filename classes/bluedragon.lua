@@ -31,7 +31,7 @@ return {
         cost = 17,
         cooldown = 0,
         known = true,
-        success = "",
+        success = "^.+ translucent shield cracks and fades away as you breathe an icy blast at it",
         description = "Breathe cold air at a denizen, freezing the shield around it until the shield cracks, leaving the denizen defenseless."
     }, {
         name = "Override",

@@ -19,6 +19,7 @@ R.calcifyInFlight = R.calcifyInFlight or {}
 R.routeChoice = R.routeChoice or "basic"
 R.missedRouteWarned = R.missedRouteWarned or false
 R.calcifyCommitted = R.calcifyCommitted or false
+R.torsoCommitted = R.torsoCommitted or false
 
 function R.resetTracking()
     R.legBroken = false
@@ -28,6 +29,7 @@ function R.resetTracking()
     R.calcifyInFlight = {}
     R.missedRouteWarned = false
     R.calcifyCommitted = false
+    R.torsoCommitted = false
     PkCore.limbPrep.parryStreak = {}
     PkCore.limbPrep.lastAttemptedLimb = nil
 end
@@ -261,9 +263,24 @@ local ACTIONS = {
                 and safeForCombo(R.torsoKey) and not chasingLimb(R.torsoKey)
         end,
         build = function()
+            R.torsoCommitted = true
             local cCmd, hCmd = calcifyCmd("torso"), powderiseCmd("leftleg")
             if cCmd and hCmd then return cCmd .. "|" .. hCmd end
             return cCmd or hCmd
+        end,
+    },
+    press_torso = {
+        -- committed to the torso: leg cures no longer matter, drive it to serious trauma
+        can = function()
+            return (R.torsoCommitted or chasingLimb(R.torsoKey)) and not hasAff("serioustrauma")
+        end,
+        build = function()
+            local calcifyPending = hasAff(CALCIFY_AFF.torso) or R.calcifyInFlight[R.torsoKey]
+            if calcifyPending and currentShaping() < 4 then
+                -- calcify will finish the trauma tier for us; be at 4 shaping for calcify|squeeze
+                return crunchCmd()
+            end
+            return powderiseCmd(R.torsoKey)
         end,
     },
     ramp_torso_for_combo = {
@@ -319,9 +336,11 @@ local ROUTES = {
         "prep"
     },
     squeeze = {
+        "squeeze_kill",
         "calcify_squeeze_kill", 
         "rebuild_shaping_for_kill", 
         "ramp_torso_while_calcifying",
+        "press_torso",
         "break_leg2_and_calcify_torso", 
         --"ramp_torso_for_combo",
         "break_leg1", 

@@ -6,6 +6,7 @@ local MAP_TAB_ACTIVE_CSS   = "background-color: #" .. t.tabBg .. "; border: 1px 
 local MAP_TABS = { "Mudlet", "ASCII", "Ripple" }
 
 local function selectMapTab(key)
+  PkCore.ui.map.activeTab = key
   if not PkCore.ui.map.tabs then return end
   for _, tab in ipairs(PkCore.ui.map.tabs) do
     local active = tab.key == key
@@ -16,6 +17,7 @@ local function selectMapTab(key)
   for viewKey, view in pairs(PkCore.ui.map.views) do
     if viewKey == key then view:show() else view:hide() end
   end
+  if key == "Ripple" and PkCore.ui.ripple then PkCore.ui.ripple.render() end
 end
 
 function PkCore.ui.map.cleanup()
@@ -49,6 +51,18 @@ if PkCore.ui.map.widget then return end
         label:hide()
         return label
     end
+    local function rippleConsole()
+        local console = Geyser.MiniConsole:new({
+            name = "PkCore_map_ripple_console",
+            x = "1%", y = belowTabs, width = "98%", height = "100%-" .. (belowTabs + 2),
+            autoWrap = false,
+        }, PkCore.ui.sections.map)
+        setFont(console.name, getFont("main"))
+        setFontSize(console.name, getFontSize("main"))
+        setBackgroundColor(console.name, 0, 0, 0, 0)
+        console:hide()
+        return console
+    end
 
   local tabsRowBg = Geyser.Label:new({
     name = "PkCore_map_tabsrow_bg",
@@ -81,7 +95,7 @@ if PkCore.ui.map.widget then return end
     PkCore.ui.map.views = {
         Mudlet = PkCore.ui.map.widget,
         ASCII  = placeholder("ASCII", "ASCII view — coming soon"),
-        Ripple = placeholder("Ripple", "Ripple view — coming soon"),
+        Ripple = rippleConsole(),
     }
     selectMapTab("Mudlet")
 end
