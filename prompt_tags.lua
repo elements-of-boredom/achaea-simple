@@ -150,8 +150,8 @@ PkCore.registerPromptTag("bal", function() return PkCore.balance.balance and "x"
 PkCore.registerPromptTag("eq", function() return PkCore.balance.equilibrium and "e" or "-" end)
 PkCore.registerPromptTag("target", function() return PkCore.room.targetName() or "" end)
 PkCore.registerPromptTag("targethpperc", function() return PkCore.room.targetHpPercent or "" end)
-PkCore.registerPromptTag("rage", function() return tostring(PkCore.playerStatus.rage or 0) end)
-PkCore.registerPromptTag("shaping", function() return tostring(PkCore.playerStatus.shaping or 0) end)
+PkCore.registerPromptTag("rage", function() return tostring(PkCore.playerStatus.rage or "") end)
+PkCore.registerPromptTag("shaping", function() return tostring(PkCore.playerStatus.shaping or "") end)
 PkCore.registerPromptTag("flying", function() return PkCore.room.isFlying() and "FLYING" or "" end)
 PkCore.registerPromptTag("sunlight", function()
   local sun = PkCore.playerStatus.sunlight

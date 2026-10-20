@@ -19,12 +19,14 @@ end
 local function onVitalsStats()
   local charstats = gmcp and gmcp.Char and gmcp.Char.Vitals and gmcp.Char.Vitals.charstats
   if not charstats then return end
+  local fresh = {}
   for _, entry in ipairs(charstats) do
     local key, value = entry:match("^(%a+):%s*(%-?%d+)$")
     if key then
-      PkCore.playerStatus[key:lower()] = tonumber(value)
+      fresh[key:lower()] = tonumber(value)
     end
   end
+  PkCore.playerStatus = fresh
 end
 
 PkCore.trackHandler(registerAnonymousEventHandler("gmcp.Char.Status", PkCore.protected("player.onStatus", onStatus)))

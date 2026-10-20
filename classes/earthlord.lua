@@ -163,7 +163,7 @@ PkCore.trackTrigger(tempRegexTrigger(
 
 return {
     name = "Earth Lord",
-    basicAttack = "tp",
+    basicAttack = "tpul",
     requiredBalances = {"bal", "eq"},
     blockingAfflictions = {},
     auto = {2, 1, 4},
