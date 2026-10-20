@@ -20,6 +20,13 @@ R.routeChoice = R.routeChoice or "basic"
 R.missedRouteWarned = R.missedRouteWarned or false
 R.calcifyCommitted = R.calcifyCommitted or false
 R.torsoCommitted = R.torsoCommitted or false
+--Fissure
+R.buried = R.buried or false
+R.buriedName = R.buriedName or nil
+R.buryCount = R.buryCount or 0
+R.entombed = R.entombed or false
+R.fissureLegsNeeded = R.fissureLegsNeeded or 1
+R.fissureLegsReached = R.fissureLegsReached or false
 
 function R.resetTracking()
     R.legBroken = false
@@ -32,6 +39,13 @@ function R.resetTracking()
     R.torsoCommitted = false
     PkCore.limbPrep.parryStreak = {}
     PkCore.limbPrep.lastAttemptedLimb = nil
+    --Fissure
+    R.buried = false
+    R.buriedName = nil
+    R.buryCount = 0
+    R.entombed = false
+    R.fissureLegsNeeded = 1
+    R.fissureLegsReached = false
 end
 
 local CALCIFY_AFF = {
@@ -142,6 +156,29 @@ local function crunchCmd()
     return target and ("TERRAN CRUNCH " .. target) or nil
 end
 
+-- which legs need to be broken
+local function fissureLegs()
+    return R.fissureLegsNeeded >= 2 and {"rightleg", "leftleg"} or {R.legKey}
+end
+local function brokenCount(limbs)
+    local n = 0
+    for _, key in ipairs(limbs) do
+        if PkCore.limbPrep.broken(key) then n = n + 1 end
+    end
+    return n
+end
+-- Only lose that if they cure every leg.
+local function fissureReady()
+    local legs = fissureLegs()
+    local anyBroken = brokenCount({"rightleg", "leftleg"})
+    if brokenCount(legs) >= #legs then
+        R.fissureLegsReached = true
+    elseif anyBroken == 0 then
+        R.fissureLegsReached = false
+    end
+    return R.fissureLegsReached and anyBroken >= 1
+end
+
 -- ACTIONS: all things rockboy can do
 local ACTIONS = {
     finish_quake_avalanche = {
@@ -243,6 +280,8 @@ local ACTIONS = {
             local limbs = ROUTE_LIMBS[R.routeChoice] or ROUTE_LIMBS.basic
             if R.routeChoice == "squeeze" and R.leg1Broken then
                 limbs = {"leftleg", "torso"}
+            elseif R.routeChoice == "bury" then
+                limbs = fissureLegs()
             end
             local limb = PkCore.limbPrep.nextUnprepared(limbs, currentDamagePerHit())
             if not limb then return nil end
@@ -312,6 +351,58 @@ local ACTIONS = {
         end,
     },
 
+    -- BURY/Entomb
+    entomb = {
+        can = function() return R.buried and R.buryCount >= 2 and not R.entombed end,
+        build = function() return "TERRAN ENTOMB" end,
+    },
+    bury = {
+        can = function() return R.buried end,
+        build =  function() return "TERRAN BURY" end
+    },
+    fissure = {
+        can = function() return hasAff("prone") and fissureReady() end,
+        build = function()
+            local target = liveTarget()
+            return target and ("MANIFEST FISSURE " .. target) or nil
+        end,
+    },
+    fissure_needs_prone = {
+        can = function() return not hasAff("prone") and currentShaping() >= 2 and fissureReady() end,
+        build = function()
+            local target = liveTarget()
+            if not target then return nil end
+            return "MANIFEST QUAKE | MANIFEST FISSURE ".. target
+        end,
+    },
+    shaping_for_fissure = {
+        can = function() return not hasAff("prone") and fissureReady() end,
+        build = function() return crunchCmd() end,
+    },
+    break_leg_for_fissure = {
+        can = function()
+            if fissureReady() then return false end
+            for _, key in ipairs(fissureLegs()) do
+                if not primed(key) then return false end
+            end
+            return true
+        end,
+        build = function()
+            local legs = fissureLegs()
+            local leg
+            for _, key in ipairs(legs) do
+                if not PkCore.limbPrep.broken(key) then leg = key; break end
+            end
+            local cmd = powderiseCmd(leg)
+            local lastLeg = brokenCount(legs) == #legs - 1
+            if cmd and lastLeg and not hasAff("prone") and currentShaping() >= 2
+                and not cmd:find("^MANIFEST QUAKE") then
+                cmd = "MANIFEST QUAKE|" .. cmd
+            end
+            return cmd
+        end,
+    },
+
     -- general
     squeeze_spam = {
         can = function() return true end,
@@ -349,6 +440,15 @@ local ROUTES = {
     group = {
         "squeeze_spam",
     },
+    bury = {
+        "entomb",
+        "bury",
+        "fissure",
+        "fissure_needs_prone",
+        "shaping_for_fissure",
+        "break_leg_for_fissure",
+        "prep"
+    }
 }
 
 local function pickAction(routeList)
@@ -386,6 +486,50 @@ PkCore.trackHandler(registerAnonymousEventHandler("PkCore state changed",
         end
     end)))
 PkCore.trackTrigger(tempRegexTrigger("^You have slain ", PkCore.protected("rockboy.onTargetSlain", R.resetTracking)))
+
+-- fissure landed: they're under us
+PkCore.trackTrigger(tempRegexTrigger(
+    "^With a rumble of stone a great fissure opens beneath ([\\w'\\-]+), (?:his|her|their) body plunging out of sight\\.$",
+    PkCore.protected("rockboy.onFissure", function()
+        local target = liveTarget()
+        if not target or matches[2]:lower() ~= target:lower() then return end
+        R.buried = true
+        R.buriedName = matches[2]:lower()
+        R.buryCount = 0
+        R.entombed = false
+    end)))
+
+-- generic bury line; only means progress while someone's actually under us
+PkCore.trackTrigger(tempRegexTrigger(
+    "^You dig your hands into the ground at your feet, manipulating seismic forces to damage the underlying terrain\\.$",
+    PkCore.protected("rockboy.onBury", function()
+        if R.buried then R.buryCount = R.buryCount + 1 end
+    end)))
+PkCore.trackTrigger(tempRegexTrigger(
+    "^Commanding the earth to feast, you clench a great stone hand to form a fist\\.$",
+    PkCore.protected("rockboy.onEntomb", function()
+        if R.buried then R.entombed = true end
+    end)))
+-- they climbed out before the kill: alert, drop the queue, restart needing both legs
+function R.onEscapedBury()
+    local who = R.buriedName or "target"
+    R.buried, R.buriedName, R.buryCount, R.entombed = false, nil, 0, false
+    R.fissureLegsNeeded = 2
+    R.fissureLegsReached = false
+    R.legBroken, R.leg1Broken, R.leg2Broken = false, false, false
+    send("cq all")
+    PkCore.reactor.lastQueueSent = ""
+    wsys.boxDisplay(who:upper() .. " SURFACED - need both legs for fissure", "white:red")
+end
+
+-- Track if the target re-enters the room. We can't bury/entomb if they are in our room.
+PkCore.trackHandler(registerAnonymousEventHandler("gmcp.Room.AddPlayer",
+    PkCore.protected("rockboy.onSurface", function()
+        if not R.buried then return end
+        local p = gmcp.Room.AddPlayer
+        local name = tostring(type(p) == "table" and p.name or p or ""):lower()
+        if name == R.buriedName then R.onEscapedBury() end
+    end)))
 
 local function evaluate()
     if not isEarthlord() then
