@@ -23,8 +23,8 @@ local G = {
 PkCore.ui.layout.geometry = G
 
 -- Content registration
-function PkCore.ui.layout.setContent(key, htmlFn)
-  PkCore.ui.layout.content[key] = htmlFn
+function PkCore.ui.layout.setContent(key, htmlFn, onBuilt)
+  PkCore.ui.layout.content[key] = { html = htmlFn, onBuilt = onBuilt }
 end
 
 local function heading(title)
@@ -194,9 +194,10 @@ function PkCore.ui.layout.build()
     -- createWidget's appearance is only a default for a new widget; this also updates one that already exists.
     setWidgetAppearance(id, CHROME)
 
-    local contentFn = PkCore.ui.layout.content[panel.key]
-    local html = contentFn and contentFn() or panel.html
+    local panel_ = PkCore.ui.layout.content[panel.key]
+    local html = panel_ and panel_.html() or panel.html
     setWidgetProperty(id, "content", PkCore.ui.theme.page(html))
+    if panel_ and panel_.onBuilt then panel_.onBuilt(id) end
   end
 
   -- Mock: terminal backing is black at 15% opacity. Unverified that the terminal accepts this.

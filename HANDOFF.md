@@ -69,6 +69,12 @@ The AI guide `~/Downloads/mud-client-ai-plugin-guide.md` is **out of date in pla
 - **Widgets are at least 80 px tall.** MudForge draws anything shorter at 80 px, which overlaps whatever sits below it. The header is therefore 80 px, not the mock's 60, and the HUD is safe at 116.
 - **The App Background can't be set by a plugin.** The user uploads `design/forest.jpg` in MudForge's settings.
 - **Achaea GMCP `Char.Vitals`:** values arrive as **strings**. Parse them with `tonumber` and guard against nil or empty.
+- **`sendGMCP(pkg, luaList)` sends a JSON object, not an array** (`{"1":"IRE.Time 1",...}`), despite the guide. Achaea ignores that. `pk_ui/gmcp.lua` sends `Core.Supports.Add` as a prebuilt JSON array string; this was confirmed working after a restart.
+- **GMCP debugging:**
+  - MudForge's GMCP debug widget shows incoming messages only.
+  - `getGMCPData()` root keys are lowercase and nested (`char`, `client`, `room`, `ire`, …).
+  - The Lua console (Ctrl+I) can't see plugin globals like `PkCore`; client APIs work there.
+  - `tprint(t)` is the equivalent of Mudlet's `display`.
 
 **Runtime quirks.** Lua 5.1 is transpiled to JS by luaparse; there is no real Lua VM.
 - Not available: metatables, coroutines, `next`.

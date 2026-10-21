@@ -15,4 +15,4 @@ loadModule("ui/layout.lua")
 -- sub ui modules
 
 loadModule("ui/header.lua")
-
+loadModule("ui/chat.lua")
