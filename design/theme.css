@@ -1,0 +1,1001 @@
+/*
+ * Vector Woodland — reusable theme reference
+ * Entry point: START-HERE.md
+ * Scope: .mf-theme. No global resets, imports, IDs, or !important rules.
+ * Native terminal/map contents are host-owned; only their slots are themed.
+ */
+
+/* 1. Theme tokens: override these on the theme root in your integration. */
+.mf-theme {
+  --mf-font-game: "SF Mono", "SFMono-Regular", ui-monospace, Menlo, Monaco, Consolas, monospace;
+  --mf-font-ui: "DM Sans", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --mf-text: #cbd5d8;
+  --mf-text-strong: #e6edf0;
+  --mf-text-muted: #8fa1a9;
+  --mf-border: #92a6b436;
+  --mf-accent: #aabdb5;
+  --mf-health: #a0bf89;
+  --mf-mana: #a2b8d6;
+  --mf-endurance: #c9b581;
+  --mf-willpower: #bc9ec1;
+  --mf-affliction: #ce9c96;
+  --mf-speech: #80b9c4;
+  --mf-surface: #142129eb;
+  --mf-surface-raised: #25333fdf;
+  --mf-surface-inset: #11202bea;
+  --mf-background-image: url("assets/forest.jpg");
+  --mf-background-tint: linear-gradient(90deg, #06131ad6, #0816236b);
+  --mf-terminal-background: rgb(0 0 0 / 15%);
+  --mf-gap: 10px;
+  --mf-sidebar-width: 180px;
+  --mf-dock-width: 348px;
+  --mf-header-height: 60px;
+  --mf-hud-height: 116px;
+  --mf-limb-row-height: 42px;
+  --mf-self-lamp-width: 46px;
+  --mf-affliction-row-height: 14px;
+  --mf-affliction-visible-rows: 10;
+  --mf-affliction-heading-height: 32px;
+  --mf-map-share: 30fr;
+  --mf-room-share: 30fr;
+  --mf-chat-share: 40fr;
+  --mf-min-width: 1280px;
+  --mf-min-height: 840px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  isolation: isolate;
+  min-width: var(--mf-min-width);
+  min-height: var(--mf-min-height);
+  width: 100%;
+  height: 100%;
+  padding: 0 12px;
+  overflow: hidden;
+  color: var(--mf-text);
+  background-color: #0b1820;
+  background-image: var(--mf-background-tint), var(--mf-background-image);
+  background-position: center;
+  background-size: cover;
+  font: 12px var(--mf-font-ui);
+  color-scheme: dark;
+}
+
+/* 2. Shared primitives. Host-owned widget descendants are excluded from resets. */
+.mf-theme :where(*, *::before, *::after):not(:where(.mf-terminal-slot *, .mf-map-slot *)) {
+  box-sizing: border-box;
+}
+.mf-theme :where(h1, h2, h3, p, dl, dd):not(:where(.mf-terminal-slot *, .mf-map-slot *)) {
+  margin: 0;
+}
+.mf-theme :where(button):not(:where(.mf-terminal-slot *, .mf-map-slot *)) {
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.mf-theme :where(button:hover):not(:where(.mf-terminal-slot *, .mf-map-slot *)) {
+  background-color: #ffffff08;
+  color: var(--mf-text-strong);
+}
+.mf-theme :where(button:disabled):not(:where(.mf-terminal-slot *, .mf-map-slot *)) {
+  cursor: default;
+}
+.mf-theme :where(button:focus-visible, a:focus-visible):not(:where(.mf-terminal-slot *, .mf-map-slot *)) {
+  outline: 1px solid var(--mf-accent);
+  outline-offset: -1px;
+}
+.mf-theme :where([hidden]) {
+  display: none;
+}
+.mf-theme .mf-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.mf-theme .mf-panel-heading h2 {
+  font: 600 8px var(--mf-font-ui);
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+}
+.mf-theme .mf-panel-heading > span {
+  color: var(--mf-text-muted);
+  font: 8px var(--mf-font-game);
+}
+
+/* 3. Shell: right dock spans the header; header ends at the terminal edge. */
+.mf-theme .mf-workspace {
+  display: grid;
+  grid-template-columns: var(--mf-sidebar-width) minmax(0, 1fr) var(--mf-dock-width);
+  grid-template-rows: var(--mf-header-height) minmax(0, 1fr);
+  gap: var(--mf-gap);
+  flex: 1;
+  min-height: 0;
+}
+.mf-theme .mf-header {
+  grid-area: 1 / 1 / 2 / 3;
+}
+.mf-theme .mf-sidebar {
+  grid-area: 2 / 1 / 3 / 2;
+}
+.mf-theme .mf-main {
+  grid-area: 2 / 2 / 3 / 3;
+}
+.mf-theme .mf-right-dock {
+  grid-area: 1 / 3 / 3 / 4;
+}
+.mf-theme .mf-sidebar,
+.mf-theme .mf-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mf-gap);
+  min-width: 0;
+  min-height: 0;
+}
+.mf-theme .mf-right-dock {
+  display: grid;
+  grid-template-rows: minmax(0, var(--mf-map-share)) minmax(0, var(--mf-room-share)) minmax(0, var(--mf-chat-share));
+  gap: var(--mf-gap);
+  min-width: 0;
+  min-height: 0;
+}
+.mf-theme .mf-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 17px;
+  padding: 0 2px;
+  flex-shrink: 0;
+  color: var(--mf-text-muted);
+  font: 6px var(--mf-font-game);
+  letter-spacing: 1px;
+}
+.mf-theme .mf-footer i {
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  margin: 0 4px;
+  border-radius: 50%;
+  background: var(--mf-health);
+}
+
+/* 4. Compact header. Stats fill down three rows, then across two columns. */
+.mf-theme .mf-header {
+  display: grid;
+  grid-template-columns: var(--mf-sidebar-width) max-content minmax(0, 1fr);
+  align-items: center;
+  gap: var(--mf-gap);
+  height: var(--mf-header-height);
+  border-top: 1px solid #a6b7c017;
+  border-bottom: 1px solid #a6b7c052;
+  background: linear-gradient(90deg, #101d27e8, #101d27c7);
+}
+.mf-theme .mf-brand {
+  display: flex;
+  align-items: center;
+  height: 39px;
+  padding-left: 9px;
+  border-right: 1px solid #a6b7c036;
+}
+.mf-theme .mf-brand strong {
+  display: block;
+  color: #e1e9eb;
+  font: 600 17px var(--mf-font-ui);
+  letter-spacing: 2.3px;
+}
+.mf-theme .mf-brand small {
+  display: block;
+  margin-top: 5px;
+  color: #a7bab4;
+  font: 9px var(--mf-font-game);
+  letter-spacing: 1.5px;
+}
+.mf-theme .mf-stats {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-columns: max-content max-content;
+  grid-template-rows: repeat(3, 14px);
+  gap: 2px 24px;
+  padding: 0 4px;
+  justify-self: start;
+}
+.mf-theme .mf-stats > div {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  white-space: nowrap;
+}
+.mf-theme .mf-stats dt {
+  color: #b7c5cc;
+  font: 11px/14px var(--mf-font-game);
+}
+.mf-theme .mf-stats dd {
+  color: #e2e9e9;
+  font: 11px/14px var(--mf-font-game);
+}
+.mf-theme .mf-location {
+  padding: 0 12px 0 15px;
+  text-align: right;
+}
+.mf-theme .mf-location h1 {
+  color: #e5ebed;
+  font: 500 18px/1.2 var(--mf-font-game);
+}
+.mf-theme .mf-location > div > span {
+  display: block;
+  margin-top: 5px;
+  color: #a9bac4;
+  font: 10px/1.3 var(--mf-font-game);
+  letter-spacing: .2px;
+}
+.mf-theme .mf-location b {
+  font-weight: 400;
+}
+
+/* 5. Waypoints and recovery. Unused waypoint height stays above recovery. */
+.mf-theme .mf-controls {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding: 9px;
+  border-top: 2px solid var(--mf-accent);
+  background: var(--mf-surface);
+}
+.mf-theme .mf-waypoints-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.mf-theme .mf-waypoints {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-content: start;
+  gap: 4px;
+  min-height: 0;
+  margin-top: 4px;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--mf-border) transparent;
+}
+.mf-theme .mf-waypoints button {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  height: 28px;
+  padding: 0 4px;
+  border: 1px solid #9eafbc1c;
+  border-radius: 2px;
+  background: #0d1922a8;
+  font: 9px/1.15 var(--mf-font-game);
+  text-align: left;
+}
+.mf-theme .mf-waypoints i {
+  color: var(--mf-text-muted);
+  font-size: 9px;
+  font-style: normal;
+}
+.mf-theme .mf-waypoints [aria-current="true"] {
+  border-color: #acc2bd69;
+  background: #9dafba17;
+  color: var(--mf-accent);
+}
+.mf-theme .mf-recovery {
+  flex-shrink: 0;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid var(--mf-border);
+}
+.mf-theme .mf-recovery-primary,
+.mf-theme .mf-recovery-secondary {
+  display: grid;
+  gap: 4px;
+}
+.mf-theme .mf-recovery-primary {
+  grid-template-columns: 1fr;
+  margin-top: 4px;
+}
+.mf-theme .mf-recovery-secondary {
+  grid-template-columns: 1fr 1fr;
+  margin-top: 5px;
+}
+.mf-theme .mf-recovery-secondary > :last-child {
+  grid-column: 1 / -1;
+}
+
+/* One meter component: --mf-progress is a percentage; data-state is ready/cooling. */
+.mf-theme .mf-cooldown {
+  --mf-progress: 100%;
+  --mf-meter-fill: linear-gradient(90deg, #566d49ed, #718562d9);
+  display: flex;
+  position: relative;
+  isolation: isolate;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  height: 23px;
+  min-width: 0;
+  padding: 0 6px;
+  overflow: hidden;
+  border: 1px solid #9ab0bb8c;
+  border-radius: 2px;
+  background: #08141e;
+  box-shadow: inset 0 0 0 1px #0002;
+  color: #e0e6e4;
+}
+.mf-theme .mf-cooldown[data-kind="equilibrium"] {
+  --mf-meter-fill: linear-gradient(90deg, #526d87ed, #6b849bd9);
+}
+.mf-theme .mf-cooldown-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: -1;
+  width: var(--mf-progress);
+  background: var(--mf-meter-fill);
+  pointer-events: none;
+}
+.mf-theme .mf-cooldown > span {
+  color: #f0f3ee;
+  font: 9px var(--mf-font-game);
+  text-shadow: 0 1px 1px #0008;
+  white-space: nowrap;
+}
+.mf-theme .mf-cooldown-value {
+  color: #eff4e9;
+  font: 500 8px var(--mf-font-game);
+  text-shadow: 0 1px 1px #0008;
+  white-space: nowrap;
+}
+.mf-theme .mf-cooldown[data-state="cooling"] {
+  --mf-meter-fill: linear-gradient(90deg, color-mix(in srgb, var(--mf-affliction) 58%, #2c171c), color-mix(in srgb, var(--mf-affliction) 70%, #2c171c));
+  border-color: var(--mf-affliction);
+  background: color-mix(in srgb, var(--mf-affliction) 14%, #08141e);
+  box-shadow: inset 3px 0 0 var(--mf-affliction);
+}
+.mf-theme .mf-cooldown[data-state="cooling"] > :where(span, b) {
+  color: #fff2ed;
+  text-shadow: 0 1px 1px #0009;
+}
+
+/* 6. Fixed ten-row affliction monitors and binary lock tracking. */
+.mf-theme .mf-trackers {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  gap: var(--mf-gap);
+}
+.mf-theme .mf-affliction-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  height: calc(var(--mf-affliction-heading-height) + var(--mf-affliction-row-height) * var(--mf-affliction-visible-rows) + 2px);
+  flex-shrink: 0;
+}
+.mf-theme .mf-afflictions {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border-top: 2px solid var(--mf-affliction);
+  background: var(--mf-surface-inset);
+}
+.mf-theme .mf-afflictions[data-side="target"] {
+  border-top-color: var(--mf-accent);
+}
+.mf-theme .mf-afflictions .mf-panel-heading {
+  height: var(--mf-affliction-heading-height);
+  padding: 4px 6px;
+}
+.mf-theme .mf-afflictions h2 {
+  max-width: 50px;
+  font-size: 7px;
+  line-height: 1.6;
+  letter-spacing: .2px;
+}
+.mf-theme .mf-afflictions .mf-panel-heading > span {
+  color: var(--mf-affliction);
+  font: 14px var(--mf-font-game);
+}
+.mf-theme .mf-afflictions[data-side="target"] .mf-panel-heading > span {
+  color: var(--mf-accent);
+}
+.mf-theme .mf-affliction-list {
+  flex: 1;
+  min-height: 0;
+  padding: 0 6px;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--mf-border) transparent;
+  font: 8px/14px var(--mf-font-game);
+}
+.mf-theme .mf-affliction-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  height: var(--mf-affliction-row-height);
+  min-height: var(--mf-affliction-row-height);
+  border-bottom: 1px solid var(--mf-border);
+  color: var(--mf-affliction);
+  line-height: 13px;
+}
+.mf-theme .mf-affliction-row[aria-hidden="true"] {
+  border-bottom-color: #91a3ae12;
+}
+.mf-theme .mf-afflictions[data-side="target"] .mf-affliction-row {
+  color: var(--mf-accent);
+}
+.mf-theme .mf-locks {
+  padding: 3px 9px 8px;
+  background: var(--mf-surface);
+}
+.mf-theme .mf-prone {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--mf-border);
+  font: 7px var(--mf-font-game);
+  letter-spacing: 1px;
+}
+.mf-theme .mf-prone i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--mf-text-muted);
+  opacity: .5;
+}
+.mf-theme .mf-prone[data-active="true"] i {
+  background: var(--mf-affliction);
+  opacity: 1;
+}
+.mf-theme .mf-prone b {
+  margin-left: auto;
+  color: var(--mf-affliction);
+  font-size: 7px;
+  font-weight: 400;
+}
+.mf-theme .mf-lock-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.mf-theme .mf-lock {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 17px;
+  color: var(--mf-text-muted);
+}
+.mf-theme .mf-lock > span {
+  width: 32px;
+  font: 7px var(--mf-font-game);
+  letter-spacing: .6px;
+}
+.mf-theme .mf-lock > b {
+  width: 24px;
+  margin: 0;
+  font: 7px var(--mf-font-game);
+  text-align: right;
+  letter-spacing: .5px;
+}
+.mf-theme .mf-lock-light {
+  width: 6px;
+  height: 6px;
+  margin-left: auto;
+  flex-shrink: 0;
+  border: 1px solid var(--mf-text-muted);
+  border-radius: 50%;
+  background: transparent;
+  opacity: .5;
+}
+.mf-theme .mf-lock[data-active="true"] {
+  color: var(--mf-affliction);
+}
+.mf-theme .mf-lock[data-active="true"] .mf-lock-light {
+  border-color: var(--mf-affliction);
+  background: var(--mf-affliction);
+  opacity: 1;
+  box-shadow: 0 0 6px color-mix(in srgb, var(--mf-affliction), transparent 80%);
+}
+
+/* 7. Terminal slot: host owns the text renderer and its input. */
+.mf-theme .mf-terminal {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid #8397a340;
+  background: var(--mf-terminal-background);
+  font-family: var(--mf-font-game);
+}
+.mf-theme .mf-terminal-slot {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* 8. HUD: fractional tracks subtract their gap; neither panel overlaps the dock. */
+.mf-theme .mf-hud {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
+  gap: var(--mf-gap);
+  height: var(--mf-hud-height);
+  min-height: 0;
+  flex-shrink: 0;
+}
+.mf-theme .mf-self,
+.mf-theme .mf-target-panel {
+  min-width: 0;
+  border-top: 2px solid var(--mf-accent);
+  background: var(--mf-surface);
+}
+.mf-theme .mf-self {
+  border-top-color: var(--mf-health);
+}
+.mf-theme .mf-self-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: var(--mf-limb-row-height);
+  min-width: 0;
+  padding-right: 8px;
+  border-bottom: 1px solid var(--mf-border);
+}
+.mf-theme .mf-limbs {
+  display: grid;
+  align-items: center;
+  justify-content: start;
+  grid-template-columns: max-content repeat(6, max-content);
+  column-gap: 5px;
+  height: var(--mf-limb-row-height);
+  padding: 0 9px;
+  border-bottom: 1px solid var(--mf-border);
+  font-family: var(--mf-font-game);
+}
+.mf-theme .mf-self-topbar > .mf-limbs {
+  grid-template-columns: var(--mf-self-lamp-width) repeat(6, max-content);
+  column-gap: 8px;
+  padding: 0 8px 0 0;
+  border-bottom: 0;
+  flex-shrink: 0;
+}
+.mf-theme .mf-limb-owner {
+  margin-right: 3px;
+  color: var(--mf-text-muted);
+  font: 8px var(--mf-font-ui);
+  letter-spacing: .3px;
+}
+.mf-theme .mf-self-topbar .mf-limb-owner {
+  width: var(--mf-self-lamp-width);
+  margin: 0;
+  padding-left: 6px;
+}
+.mf-theme .mf-limb {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 20px;
+  padding: 0;
+  color: var(--mf-health);
+  text-align: left;
+}
+.mf-theme .mf-self .mf-limb {
+  min-width: 24px;
+}
+.mf-theme .mf-limb b {
+  color: var(--mf-text);
+  font-size: 11px;
+  line-height: 13px;
+  font-weight: 500;
+}
+.mf-theme .mf-limb em {
+  font-size: 13px;
+  line-height: 16px;
+  font-style: normal;
+  font-weight: 600;
+}
+.mf-theme .mf-limb[data-damaged="true"] {
+  color: var(--mf-endurance);
+}
+.mf-theme .mf-limb i {
+  display: block;
+  position: relative;
+  width: 18px;
+  height: 2px;
+  overflow: hidden;
+  background: var(--mf-border);
+}
+.mf-theme .mf-self .mf-limb i {
+  width: 22px;
+}
+.mf-theme .mf-limb i::after {
+  display: block;
+  content: "";
+  width: var(--mf-damage, 0%);
+  height: 100%;
+  background: var(--mf-endurance);
+}
+.mf-theme .mf-combat-status {
+  display: grid;
+  grid-template-columns: 54px 78px 72px;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+.mf-theme .mf-status-field {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.mf-theme .mf-status-field > span {
+  color: #a9bac4;
+  font: 8px/10px var(--mf-font-game);
+}
+.mf-theme .mf-status-field > strong {
+  color: #e1e9e9;
+  font: 500 11px/15px var(--mf-font-game);
+  white-space: nowrap;
+}
+.mf-theme .mf-self-vitals {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 72px;
+}
+.mf-theme .mf-readiness-lights {
+  padding: 0 6px;
+  border-right: 1px solid var(--mf-border);
+  flex: 0 0 var(--mf-self-lamp-width);
+}
+.mf-theme .mf-readiness-indicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  color: #a7b8a0;
+  font: 8px var(--mf-font-game);
+}
+.mf-theme .mf-readiness-indicator i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #96bd85;
+  flex-shrink: 0;
+}
+.mf-theme .mf-readiness-indicator[data-kind="equilibrium"] {
+  color: #a9bbcc;
+}
+.mf-theme .mf-readiness-indicator[data-kind="equilibrium"] i {
+  background: #94b3cf;
+}
+.mf-theme .mf-readiness-indicator[data-ready="false"] i {
+  opacity: .25;
+  box-shadow: 0 0 0 1px #aebec255;
+}
+.mf-theme .mf-vitals {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  gap: 10px;
+  padding: 10px 8px;
+}
+.mf-theme .mf-vital {
+  --mf-vital-color: var(--mf-health);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  flex: 1;
+  min-width: 0;
+  gap: 7px 1px;
+  font-family: var(--mf-font-game);
+}
+.mf-theme .mf-vital[data-vital="MP"] {
+  --mf-vital-color: var(--mf-mana);
+}
+.mf-theme .mf-vital[data-vital="EP"] {
+  --mf-vital-color: var(--mf-endurance);
+}
+.mf-theme .mf-vital[data-vital="WP"] {
+  --mf-vital-color: var(--mf-willpower);
+}
+.mf-theme .mf-vital-label {
+  color: var(--mf-vital-color);
+  font-size: 11px;
+  font-weight: 500;
+}
+.mf-theme .mf-vital-track {
+  position: relative;
+  grid-area: 2 / 1 / 3 / 3;
+  height: 20px;
+  border-bottom: 3px solid #ffffff13;
+}
+.mf-theme .mf-vital-track > i {
+  position: absolute;
+  inset: auto auto -3px 0;
+  width: var(--mf-progress, 100%);
+  height: 3px;
+  background: var(--mf-vital-color);
+}
+.mf-theme .mf-vital-track > b {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  color: var(--mf-text);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.mf-theme .mf-vital > em {
+  grid-area: 1 / 2 / 2 / 3;
+  color: var(--mf-vital-color);
+  font-size: 10px;
+  font-style: normal;
+  text-align: right;
+}
+.mf-theme .mf-target {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 66px;
+  padding: 10px 9px;
+}
+.mf-theme .mf-target-symbol {
+  color: var(--mf-accent);
+  font-size: 20px;
+  line-height: 1;
+}
+.mf-theme .mf-target-data {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--mf-font-game);
+}
+.mf-theme .mf-target-data > div:first-child {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.mf-theme .mf-target-data span {
+  color: var(--mf-text-muted);
+  font-size: 6px;
+  text-transform: uppercase;
+}
+.mf-theme .mf-target-data strong {
+  grid-area: 2 / 1 / 3 / 3;
+  overflow: hidden;
+  color: var(--mf-text-strong);
+  font-size: 8px;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mf-theme .mf-target-data small {
+  grid-area: 1 / 2 / 2 / 3;
+  color: var(--mf-text-strong);
+  font-size: 16px;
+  line-height: 1;
+  font-weight: 600;
+}
+.mf-theme .mf-target-track {
+  height: 3px;
+  background: #ffffff0c;
+}
+.mf-theme .mf-target-track i {
+  display: block;
+  width: var(--mf-progress, 0%);
+  height: 100%;
+  background: var(--mf-accent);
+}
+
+/* 9. Right dock: map slot, dense room lists, and chat. */
+.mf-theme .mf-map,
+.mf-theme .mf-room,
+.mf-theme .mf-chat {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.mf-theme .mf-map {
+  background: transparent;
+}
+.mf-theme .mf-map-modes {
+  display: flex;
+  gap: 8px;
+  height: 26px;
+  padding: 3px 7px;
+  flex-shrink: 0;
+}
+.mf-theme .mf-map-modes button {
+  flex: 1;
+  height: 20px;
+  border-bottom: 1px solid transparent;
+  color: var(--mf-text-muted);
+  font: 7px var(--mf-font-ui);
+}
+.mf-theme .mf-map-modes [aria-pressed="true"] {
+  border-bottom-color: var(--mf-accent);
+  color: var(--mf-text-strong);
+  background: #afbec316;
+}
+.mf-theme .mf-map-slot {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  background: transparent;
+}
+.mf-theme .mf-room,
+.mf-theme .mf-chat {
+  background: #12212bcc;
+}
+.mf-theme .mf-room > .mf-panel-heading,
+.mf-theme .mf-chat > .mf-panel-heading {
+  height: 28px;
+  padding: 0 10px;
+  border-bottom: 1px solid #acc0cc26;
+  background: var(--mf-surface-raised);
+}
+.mf-theme .mf-room > .mf-panel-heading h2 {
+  font-size: 10px;
+}
+.mf-theme .mf-room > .mf-panel-heading > span {
+  font-size: 8px;
+}
+.mf-theme .mf-room-columns {
+  display: grid;
+  grid-template-columns: 58% minmax(0, 1fr);
+  gap: 9px;
+  flex: 1;
+  min-height: 0;
+  padding: 8px 10px;
+  overflow: hidden;
+}
+.mf-theme .mf-room-items,
+.mf-theme .mf-room-occupants,
+.mf-theme .mf-room-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.mf-theme .mf-room-items {
+  padding-right: 8px;
+  border-right: 1px solid var(--mf-border);
+}
+.mf-theme .mf-room-occupants {
+  gap: 8px;
+}
+.mf-theme .mf-room-group {
+  flex: 1;
+  overflow: hidden;
+}
+.mf-theme .mf-room-group:last-child {
+  flex: 1.5;
+}
+.mf-theme .mf-room {
+  font-family: var(--mf-font-game);
+}
+
+.mf-theme .mf-room h3 {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 4px;
+  color: var(--mf-text-muted);
+  font: 500 9px var(--mf-font-game);
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+.mf-theme .mf-room h3 b {
+  color: var(--mf-accent);
+  font-size: 8px;
+  font-weight: 400;
+}
+.mf-theme .mf-room-list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--mf-border) transparent;
+}
+.mf-theme .mf-room-list button {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  width: 100%;
+  min-height: 12px;
+  padding: 0;
+  border-bottom: 1px solid #ffffff06;
+  color: var(--mf-text);
+  font: 10px/1.5 var(--mf-font-game);
+  text-align: left;
+}
+.mf-theme .mf-room-list button span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.mf-theme .mf-room-list code {
+  margin-left: auto;
+  color: var(--mf-text-muted);
+  font: 8px var(--mf-font-game);
+  white-space: nowrap;
+}
+.mf-theme .mf-player-list {
+  font: 10px/1.5 var(--mf-font-game);
+}
+.mf-theme .mf-player-list button {
+  display: inline;
+  width: auto;
+  min-height: 0;
+  border: 0;
+  font: inherit;
+}
+.mf-theme .mf-room-exits {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.mf-theme .mf-room-exits button {
+  padding: 0;
+  color: var(--mf-health);
+  font: 10px var(--mf-font-game);
+}
+.mf-theme .mf-empty {
+  color: var(--mf-text-muted);
+  font: 10px var(--mf-font-game);
+}
+.mf-theme .mf-chat-filters {
+  display: flex;
+  gap: 20px;
+  height: 29px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--mf-border);
+  flex-shrink: 0;
+}
+.mf-theme .mf-chat-filters button {
+  height: 29px;
+  padding: 0 1px;
+  border-bottom: 2px solid transparent;
+  color: var(--mf-text-muted);
+  font-size: 8px;
+}
+.mf-theme .mf-chat-filters [aria-pressed="true"] {
+  border-bottom-color: var(--mf-accent);
+  color: var(--mf-accent);
+}
+.mf-theme .mf-chat-log {
+  flex: 1;
+  min-height: 0;
+  padding: 9px 10px;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--mf-border) transparent;
+  font: 9px/1.4 var(--mf-font-game);
+}
+.mf-theme .mf-chat-log > div {
+  margin-bottom: 7px;
+  color: var(--mf-speech);
+  overflow-wrap: anywhere;
+}
+.mf-theme .mf-chat-log [data-channel="channels"] {
+  color: var(--mf-health);
+}
+.mf-theme .mf-chat-log [data-channel="tells"] {
+  color: var(--mf-endurance);
+}
