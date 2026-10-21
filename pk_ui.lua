@@ -18,3 +18,7 @@ function init()
   PkCore.ui.layout.build()
   echo("[pk_ui] v" .. plugin.version .. " loaded at " .. formatTime(getCurrentTime()), "#a5d3ba")
 end
+
+function onConnect()
+  PkCore.gmcp.refreshSupport()
+end
