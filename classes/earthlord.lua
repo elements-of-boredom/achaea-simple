@@ -159,7 +159,8 @@ PkCore.trackTrigger(tempRegexTrigger(
   end
 
 --- CLASS DATA ---
-
+--47% SQueeze with mild trauma , 55% in titan
+--27% Squeeze with no trauma
 
 return {
     name = "Earth Lord",

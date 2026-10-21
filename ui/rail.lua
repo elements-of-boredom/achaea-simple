@@ -106,6 +106,10 @@ local LOCK_HEIGHT = 70
 local LOCK_GAP = 4
 local BLOCK_GAP = 6
 
+PkCore.ui.rail.pad = PAD
+PkCore.ui.rail.targetConsoleOffset = (PRONE_HEIGHT + BLOCK_GAP + LOCK_HEIGHT) + CONSOLE_GAP + CONSOLE_HEIGHT
+    + CONSOLE_GAP + TARGET_CONSOLE_HEIGHT + PAD
+
 local function statusStyle(hexfg, hexbg)
     return "background-color: " .. PkCore.ui.theme.rgba(hexbg, 90) .. "; border: 1px solid #" .. hexfg .. ";"
 end

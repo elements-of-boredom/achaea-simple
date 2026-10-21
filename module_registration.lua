@@ -28,6 +28,7 @@ PkCore.loadModule("ui/room.lua")
 PkCore.loadModule("ui/vitals.lua")
 PkCore.loadModule("ui/rail.lua")
 PkCore.loadModule("ui/limbs.lua")
+PkCore.loadModule("ui/balances.lua")
 
 -- Task System 
 PkCore.loadModule("taskrunner.lua")
