@@ -9,6 +9,7 @@
 PkCore.ui = PkCore.ui or {}
 PkCore.ui.layout = PkCore.ui.layout or {}
 PkCore.ui.layout.widgets = PkCore.ui.layout.widgets or {}
+PkCore.ui.layout.content = PkCore.ui.layout.content or {}
 
 -- Sizes from the mock's tokens (design/theme.css section 1). getWindowSize() includes
 -- MudForge's own top and bottom bars, so insetTop/insetBottom keep panels clear of them.
@@ -20,6 +21,11 @@ local G = {
   insetTop = 0, insetBottom = 95,
 }
 PkCore.ui.layout.geometry = G
+
+-- Content registration
+function PkCore.ui.layout.setContent(key, htmlFn)
+  PkCore.ui.layout.content[key] = htmlFn
+end
 
 local function heading(title)
   return '<div class="mf-panel-heading"><h2>' .. title .. "</h2></div>"
@@ -74,7 +80,7 @@ end
 
 -- Region skeletons: the mock's outer markup with the content left out.
 local PANELS = {
-  { key = "header", title = "Header",
+   { key = "header", title = "Header",
     html = '<header class="mf-header">' .. scaffold("HEADER") .. "</header>" },
   { key = "sidebar", title = "Sidebar",
     html = '<aside class="mf-sidebar">'
@@ -187,7 +193,10 @@ function PkCore.ui.layout.build()
     PkCore.ui.layout.widgets[panel.key] = id
     -- createWidget's appearance is only a default for a new widget; this also updates one that already exists.
     setWidgetAppearance(id, CHROME)
-    setWidgetProperty(id, "content", PkCore.ui.theme.page(panel.html))
+
+    local contentFn = PkCore.ui.layout.content[panel.key]
+    local html = contentFn and contentFn() or panel.html
+    setWidgetProperty(id, "content", PkCore.ui.theme.page(html))
   end
 
   -- Mock: terminal backing is black at 15% opacity. Unverified that the terminal accepts this.
