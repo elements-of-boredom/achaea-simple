@@ -1,17 +1,51 @@
 PkCore.ui = PkCore.ui or {}
 PkCore.ui.chat = PkCore.ui.chat or {}
 local chat = PkCore.ui.chat
+local SAVE_KEY = "chatHistory" -- for saveTable
 
-chat.lines = chat.lines or {}      -- { { c = "tells"|"channels", t = ansi segments }, ... } oldest first
+chat.lines = chat.lines or {} -- { { c = "tells"|"channels", t = ansi segments }, ... } oldest first
 chat.unread = chat.unread or {}
 chat.active = chat.active or "all"
 
+local function restore()
+    if chat.restored or storageStatus() ~= "ready" then
+        return
+    end
+    local saved = loadTable(SAVE_KEY) or {}
+    -- Lines that arrived before storage was ready go after the restored history.
+    local lines = saved.lines or {}
+    for _, line in ipairs(chat.lines) do
+        table.insert(lines, line)
+    end
+    chat.lines = lines
+    chat.unread = saved.unread or chat.unread
+    chat.active = saved.active or chat.active
+    chat.restored = true
+end
+
+local function save()
+    if not chat.restored then
+        return
+    end
+    saveTable(SAVE_KEY, {
+        lines = chat.lines,
+        unread = chat.unread,
+        active = chat.active
+    })
+end
+restore()
+
 local MAX_LINES = 600
-local TABS = {
-  { key = "all", label = "All" },
-  { key = "tells", label = "Tells" },
-  { key = "channels", label = "Channels" },
-}
+local TABS = {{
+    key = "all",
+    label = "All"
+}, {
+    key = "tells",
+    label = "Tells"
+}, {
+    key = "channels",
+    label = "Channels"
+}}
 
 -- Filtering is pure CSS: the log's data-filter hides other families' lines; "all" hides nothing.
 local CSS = [[
@@ -57,80 +91,101 @@ local SCRIPT = [[
 ]]
 
 function chat.html()
-  local buttons = {}
-  for _, tab in ipairs(TABS) do
-    buttons[#buttons + 1] = '<button data-channel="' .. tab.key .. '"'
-      .. ' data-mud-action="chatFilter" data-mud-data="' .. tab.key .. '"'
-      .. ' data-mud-bind-attr="aria-pressed:chatOn_' .. tab.key .. '">'
-      .. tab.label .. '<span data-mud-bind="chatUnread_' .. tab.key .. '"></span></button>'
-  end
-  return "<style>" .. CSS .. "</style>"
-    .. '<section class="mf-chat" data-field="chat">'
-    .. '<div class="mf-panel-heading"><h2>Chat</h2></div>'
-    .. '<div class="mf-chat-filters" role="group" aria-label="Chat filters">' .. table.concat(buttons) .. "</div>"
-    .. '<div class="mf-chat-log" role="log" aria-live="polite" data-mud-bind-attr="data-filter:chatFilter"></div>'
-    .. "</section>"
-    .. SCRIPT
+    local buttons = {}
+    for _, tab in ipairs(TABS) do
+        buttons[#buttons + 1] = '<button data-channel="' .. tab.key .. '"' ..
+                                    ' data-mud-action="chatFilter" data-mud-data="' .. tab.key .. '"' ..
+                                    ' data-mud-bind-attr="aria-pressed:chatOn_' .. tab.key .. '">' .. tab.label ..
+                                    '<span data-mud-bind="chatUnread_' .. tab.key .. '"></span></button>'
+    end
+    return "<style>" .. CSS .. "</style>" .. '<section class="mf-chat" data-field="chat">' ..
+               '<div class="mf-panel-heading"><h2>Chat</h2></div>' ..
+               '<div class="mf-chat-filters" role="group" aria-label="Chat filters">' .. table.concat(buttons) ..
+               "</div>" ..
+               '<div class="mf-chat-log" role="log" aria-live="polite" data-mud-bind-attr="data-filter:chatFilter"></div>' ..
+               "</section>" .. SCRIPT
 end
 
 local function widget()
-  return PkCore.ui.layout.widgets.chat
+    return PkCore.ui.layout.widgets.chat
 end
 
 local function push(lines)
-  local id = widget()
-  if id and #lines > 0 then sendWidgetMessage(id, json.encode(lines)) end
+    local id = widget()
+    if id and #lines > 0 then
+        sendWidgetMessage(id, json.encode(lines))
+    end
 end
 
 function chat.refreshTabs()
-  local id = widget()
-  if not id then return end
-  local values = { chatFilter = chat.active }
-  for _, tab in ipairs(TABS) do
-    local n = chat.unread[tab.key] or 0
-    local active = chat.active == tab.key
-    values["chatOn_" .. tab.key] = active and "true" or "false"
-    values["chatUnread_" .. tab.key] = (n > 0 and not active) and (" (" .. n .. ")") or ""
-  end
-  setBoundValues(id, values)
+    local id = widget()
+    if not id then
+        return
+    end
+    local values = {
+        chatFilter = chat.active
+    }
+    for _, tab in ipairs(TABS) do
+        local n = chat.unread[tab.key] or 0
+        local active = chat.active == tab.key
+        values["chatOn_" .. tab.key] = active and "true" or "false"
+        values["chatUnread_" .. tab.key] = (n > 0 and not active) and (" (" .. n .. ")") or ""
+    end
+    setBoundValues(id, values)
 end
 
 function chat.select(key)
-  chat.active = key
-  chat.unread[key] = 0
-  chat.refreshTabs()
+    chat.active = key
+    chat.unread[key] = 0
+    chat.refreshTabs()
+    save()
 end
 
 local function noteActivity(key)
-  if key == chat.active then return end
-  chat.unread[key] = (chat.unread[key] or 0) + 1
+    if key == chat.active then
+        return
+    end
+    chat.unread[key] = (chat.unread[key] or 0) + 1
 end
 
 function chat.onText(message)
-  if type(message) ~= "table" or type(message.text) ~= "string" then return end
-  local channel = type(message.channel) == "string" and string.lower(message.channel) or ""
-  local family = string.find(channel, "tell") and "tells" or "channels"
-  local line = { c = family, s = parseAnsiText(message.text) }
+    restore()
+    if type(message) ~= "table" or type(message.text) ~= "string" then
+        return
+    end
+    local channel = type(message.channel) == "string" and string.lower(message.channel) or ""
+    local family = string.find(channel, "tell") and "tells" or "channels"
+    local line = {
+        c = family,
+        s = parseAnsiText(message.text)
+    }
 
-  table.insert(chat.lines, line)
-  if #chat.lines > MAX_LINES then table.remove(chat.lines, 1) end
-  push({ line })
+    table.insert(chat.lines, line)
+    if #chat.lines > MAX_LINES then
+        table.remove(chat.lines, 1)
+    end
+    save()
+    push({line})
 
-  noteActivity("all")
-  noteActivity(family)
-  chat.refreshTabs()
+    noteActivity("all")
+    noteActivity(family)
+    chat.refreshTabs()
 end
 
 function chat.attach(id)
-  unregisterWidgetEvent(id, "luamsg")
-  unregisterWidgetEvent(id, "action")
-  registerWidgetEvent(id, "luamsg", function(m)
-    if m.event == "ready" then push(chat.lines) end   -- fresh document: replay history
-  end)
-  registerWidgetEvent(id, "action", function(e)
-    if e.action == "chatFilter" then chat.select(e.data) end
-  end)
-  chat.refreshTabs()
+    unregisterWidgetEvent(id, "luamsg")
+    unregisterWidgetEvent(id, "action")
+    registerWidgetEvent(id, "luamsg", function(m)
+        if m.event == "ready" then
+            push(chat.lines)
+        end -- fresh document: replay history
+    end)
+    registerWidgetEvent(id, "action", function(e)
+        if e.action == "chatFilter" then
+            chat.select(e.data)
+        end
+    end)
+    chat.refreshTabs()
 end
 
 onGMCPUpdate("Comm.Channel.Text", chat.onText)
