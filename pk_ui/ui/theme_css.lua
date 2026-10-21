@@ -5,10 +5,7 @@ PkCore.ui.theme = PkCore.ui.theme or {}
 
 PkCore.ui.theme.mockCss = [==[
 /*
- * Vector Woodland — reusable theme reference
- * Entry point: START-HERE.md
  * Scope: .mf-theme. No global resets, imports, IDs, or !important rules.
- * Native terminal/map contents are host-owned; only their slots are themed.
  */
 
 /* 1. Theme tokens: override these on the theme root in your integration. */

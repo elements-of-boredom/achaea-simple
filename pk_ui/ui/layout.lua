@@ -13,11 +13,11 @@ PkCore.ui.layout.widgets = PkCore.ui.layout.widgets or {}
 -- Sizes from the mock's tokens (design/theme.css section 1). getWindowSize() includes
 -- MudForge's own top and bottom bars, so insetTop/insetBottom keep panels clear of them.
 local G = {
-  padX = 12, padY = 10, gap = 10,
-  sidebar = 180, dock = 348, header = 60, hud = 116,
+  padX = 12, padTop = 0, padBottom = 10, gap = 10,   -- header and dock sit flush under the app bar
+  sidebar = 180, dock = 448, header = 80, hud = 116,
   hudSelfShare = 0.7,                                  -- mf-hud: 7fr / 3fr
   mapShare = 0.3, roomShare = 0.3,                     -- dock: 30 / 30 / 40 after gaps
-  insetTop = 65, insetBottom = 85,
+  insetTop = 0, insetBottom = 95,
 }
 PkCore.ui.layout.geometry = G
 
@@ -26,7 +26,50 @@ local function heading(title)
 end
 
 local function scaffold(label)
-  return '<div class="pk-scaffold">' .. label .. "</div>"
+  -- pkRect shows the rect apply() asked for, to compare against where the widget really lands.
+  return '<div class="pk-scaffold">' .. label .. ' <span data-mud-bind="pkRect"></span></div>'
+end
+
+-- Prone + lock rows, all off. The section's height comes from its rows (no fixed height in the CSS),
+-- so it needs them even while empty. The names are fixed labels, not data.
+local LOCKS = { "PARA", "IMP", "AST", "ANO", "SLICK" }
+
+local function locks()
+  local rows = {}
+  for _, name in ipairs(LOCKS) do
+    rows[#rows + 1] = '<div class="mf-lock" data-lock="' .. name .. '" data-active="false" role="img" aria-label="'
+      .. name .. ': off"><span>' .. name .. '</span><i class="mf-lock-light" aria-hidden="true"></i><b>OFF</b></div>'
+  end
+  return '<section class="mf-locks" data-field="locks">'
+    .. '<div class="mf-prone" data-field="prone" data-active="false"><i></i><span>PRONE</span><b>NO</b></div>'
+    .. '<div class="mf-lock-list">' .. table.concat(rows) .. "</div>"
+    .. "</section>"
+end
+
+-- Recovery meters, all ready (100%). Primary is full width; secondary is two columns, and
+-- the CSS stretches the last one across both, so an odd count looks intentional.
+local RECOVERY_PRIMARY = { { "balance", "Balance" }, { "equilibrium", "Equilibrium" } }
+local RECOVERY_SECONDARY = {
+  { "tree", "Tree" }, { "focus", "Focus" }, { "elixir", "Elixir" }, { "moss", "Moss" },
+  { "herb", "Herb" }, { "pipe", "Pipe" }, { "salve", "Salve" },
+}
+
+local function cooldowns(list)
+  local out = {}
+  for _, c in ipairs(list) do
+    local kind, label = c[1], c[2]
+    out[#out + 1] = '<div class="mf-cooldown" data-kind="' .. kind .. '" data-state="ready" role="progressbar"'
+      .. ' aria-label="' .. label .. ' recovery" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" aria-valuetext="Ready">'
+      .. '<i class="mf-cooldown-fill" aria-hidden="true"></i><span>' .. label .. '</span><b class="mf-cooldown-value">Ready</b></div>'
+  end
+  return table.concat(out)
+end
+
+local function recovery()
+  return '<section class="mf-recovery" data-field="recovery">' .. heading("Recovery")
+    .. '<div class="mf-recovery-primary">' .. cooldowns(RECOVERY_PRIMARY) .. "</div>"
+    .. '<div class="mf-recovery-secondary">' .. cooldowns(RECOVERY_SECONDARY) .. "</div>"
+    .. "</section>"
 end
 
 -- Region skeletons: the mock's outer markup with the content left out.
@@ -37,14 +80,14 @@ local PANELS = {
     html = '<aside class="mf-sidebar">'
       .. '<div class="mf-controls">'
       ..   '<section class="mf-waypoints-panel">' .. heading("Waypoints") .. scaffold("WAYPOINTS") .. "</section>"
-      ..   '<section class="mf-recovery">' .. heading("Recovery") .. scaffold("RECOVERY") .. "</section>"
+      ..   recovery()
       .. "</div>"
       .. '<div class="mf-trackers">'
       ..   '<div class="mf-affliction-pair">'
       ..     '<section class="mf-afflictions" data-side="self">' .. heading("Your afflictions") .. "</section>"
       ..     '<section class="mf-afflictions" data-side="target">' .. heading("Target afflictions") .. "</section>"
       ..   "</div>"
-      ..   '<section class="mf-locks">' .. scaffold("PRONE / LOCKS") .. "</section>"
+      ..   locks()
       .. "</div>"
       .. "</aside>" },
   { key = "hudSelf", title = "You",
@@ -77,7 +120,7 @@ end
 
 function PkCore.ui.layout.compute(width, height)
   local left, right = G.padX, width - G.padX
-  local top, bottom = G.insetTop + G.padY, height - G.insetBottom - G.padY
+  local top, bottom = G.insetTop + G.padTop, height - G.insetBottom - G.padBottom
 
   local dockX = right - G.dock
   local mainRight = dockX - G.gap
@@ -112,11 +155,19 @@ function PkCore.ui.layout.apply(width, height)
     local r = rects[key]
     moveWidget(id, r.x, r.y)
     resizeWidget(id, r.w, r.h)
+    setBoundValue(id, "pkRect", "@" .. r.x .. "," .. r.y .. " " .. r.w .. "x" .. r.h)
   end
   local t = rects.terminal
   moveWidget("terminal", t.x, t.y)
   resizeWidget("terminal", t.w, t.h)
 end
+
+-- Widget frame for every panel: no chrome, locked in place, square corners.
+local CHROME = {
+  showTitleBar = false, autoHideSettingsCog = true,
+  movable = false, resizable = false,
+  borderRadius = 0,
+}
 
 -- Safe to call repeatedly: createWidget returns the existing widget for a name it already made.
 function PkCore.ui.layout.build()
@@ -131,14 +182,16 @@ function PkCore.ui.layout.build()
       transparent = true,
       position    = { x = r.x, y = r.y },
       size        = { width = r.w, height = r.h },
-      appearance  = { showTitleBar = false, autoHideSettingsCog = true, movable = false, resizable = false },
+      appearance  = CHROME,
     })
     PkCore.ui.layout.widgets[panel.key] = id
+    -- createWidget's appearance is only a default for a new widget; this also updates one that already exists.
+    setWidgetAppearance(id, CHROME)
     setWidgetProperty(id, "content", PkCore.ui.theme.page(panel.html))
   end
 
   -- Mock: terminal backing is black at 15% opacity. Unverified that the terminal accepts this.
-  setWidgetAppearance("terminal", { backgroundColor = "#000000", backgroundOpacity = 0.15 })
+  setWidgetAppearance("terminal", { backgroundColor = "#000000", backgroundOpacity = 0.15, borderRadius = 0 })
 
   -- A saved layout overrides createWidget's position on later loads, so place everything explicitly.
   PkCore.ui.layout.apply(size.width, size.height)

@@ -65,7 +65,8 @@ The AI guide `~/Downloads/mud-client-ai-plugin-guide.md` is **out of date in pla
   - `loadModule` works even though the guide says file loading is blocked.
 - **First install:** a plugin needs a one-time Import (Plugin Manager → Import). The import accepts a zip containing `<name>.lua` next to a `<name>/` folder. After that, on-disk edits hot-reload. It is already imported.
 - **Libraries** (`~/MudForge/libraries`, loaded with `require`) are sandboxed with no host API. Don't use them for this.
-- **`getWindowSize()`** includes MudForge's own top and bottom bars, about 75 px each. `layout.lua` has `insetTop`/`insetBottom = 75`. Measure and tune them.
+- **Window size and bars:** widget y=0 is already just below MudForge's top bar, but `getWindowSize()` still counts the bars. `layout.lua` uses `insetTop = 0` and `insetBottom = 95`, tuned by eye.
+- **Widgets are at least 80 px tall.** MudForge draws anything shorter at 80 px, which overlaps whatever sits below it. The header is therefore 80 px, not the mock's 60, and the HUD is safe at 116.
 - **The App Background can't be set by a plugin.** The user uploads `design/forest.jpg` in MudForge's settings.
 - **Achaea GMCP `Char.Vitals`:** values arrive as **strings**. Parse them with `tonumber` and guard against nil or empty.
 
@@ -108,7 +109,7 @@ sidebar | terminal (native)     | room
   - is transparent, with no title bar, and can't be moved or resized
   - holds the mock's outer markup with dashed `.pk-scaffold` placeholder labels
 - **Geometry** is the `G` table in `layout.lua`, taken from the mock's tokens:
-  - sidebar 180, dock 348, header 60, HUD 116
+  - sidebar 180, dock 348, header 80 (mock: 60; raised to MudForge's minimum), HUD 116
   - HUD split 70/30; dock split 30/30/40 (map/room/chat)
   - gap 10
 - **`compute(w, h)`** returns the panel rectangles. **`apply(w, h)`** moves and resizes every widget plus `"terminal"`. `build()` runs from `init()`, and `windowResize` calls `apply`.
