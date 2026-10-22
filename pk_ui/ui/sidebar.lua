@@ -37,22 +37,6 @@ local function waypoints()
     .. "</section>"
 end
 
--- Prone + lock rows, all off. The section's height comes from its rows (no fixed height in the CSS),
--- so it needs them even while empty. The names are fixed labels, not data.
-local LOCKS = { "PARA", "IMP", "AST", "ANO", "SLICK" }
-
-local function locks()
-  local rows = {}
-  for _, name in ipairs(LOCKS) do
-    rows[#rows + 1] = '<div class="mf-lock" data-lock="' .. name .. '" data-active="false" role="img" aria-label="'
-      .. name .. ': off"><span>' .. name .. '</span><i class="mf-lock-light" aria-hidden="true"></i><b>OFF</b></div>'
-  end
-  return '<section class="mf-locks" data-field="locks">'
-    .. '<div class="mf-prone" data-field="prone" data-active="false"><i></i><span>PRONE</span><b>NO</b></div>'
-    .. '<div class="mf-lock-list">' .. table.concat(rows) .. "</div>"
-    .. "</section>"
-end
-
 -- Recovery meters, all ready (100%). Primary is full width; secondary is two columns, and
 -- the CSS stretches the last one across both, so an odd count looks intentional.
 local RECOVERY_PRIMARY = { { "balance", "Balance" }, { "equilibrium", "Equilibrium" } }
@@ -79,17 +63,31 @@ local function recovery()
     .. "</section>"
 end
 
+-- One onMessage per widget, so sections register handlers by kind and this routes to them.
+local DISPATCH = [[
+<script>
+(function () {
+  var handlers = window.pkHandlers = window.pkHandlers || {};
+  mudforge.onMessage(function (payload) {
+    var m = JSON.parse(payload);
+    if (handlers[m.kind]) handlers[m.kind](m);
+  });
+  mudforge.send("ready", {});
+})();
+</script>
+]]
+
 function sidebar.html()
   return '<aside class="mf-sidebar">'
     .. '<div class="mf-controls">' .. waypoints() .. recovery() .. "</div>"
     .. '<div class="mf-trackers">'
     ..   '<div class="mf-affliction-pair">'
-    ..     '<section class="mf-afflictions" data-side="self">' .. heading("Your afflictions") .. "</section>"
-    ..     '<section class="mf-afflictions" data-side="target">' .. heading("Target afflictions") .. "</section>"
+    ..     PkCore.ui.afflictions.box("self", "Your afflictions")
+    ..     PkCore.ui.afflictions.box("target", "Target afflictions")
     ..   "</div>"
-    ..   locks()
+    ..   PkCore.ui.afflictions.locks()
     .. "</div>"
-    .. "</aside>"
+    .. "</aside>" .. PkCore.ui.afflictions.script() .. DISPATCH
 end
 
 -- Current = the task that's running, or the location you're standing in.
@@ -109,6 +107,7 @@ function sidebar.render()
     values["wp" .. i] = isCurrent(wp) and "true" or "false"
   end
   setBoundValues(id, values)
+  PkCore.ui.afflictions.render(id)
 end
 
 local function go(index)
@@ -124,8 +123,12 @@ end
 -- Runs after every build. Unregister first: init() runs several times per save.
 function sidebar.attach(id)
   unregisterWidgetEvent(id, "action")
+  unregisterWidgetEvent(id, "luamsg")
   registerWidgetEvent(id, "action", function(e)
     if e.action == "waypoint" then go(e.data) end
+  end)
+  registerWidgetEvent(id, "luamsg", function(m)
+    if m.event == "ready" then PkCore.ui.afflictions.render(id, true) end   -- fresh document: always send
   end)
   sidebar.render()
 end

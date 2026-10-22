@@ -1,8 +1,4 @@
 /*
- * Vector Woodland — reusable theme reference
- * Entry point: START-HERE.md
- * Scope: .mf-theme. No global resets, imports, IDs, or !important rules.
- * Native terminal/map contents are host-owned; only their slots are themed.
  */
 
 /* 1. Theme tokens: override these on the theme root in your integration. */
@@ -19,6 +15,8 @@
   --mf-endurance: #c9b581;
   --mf-willpower: #bc9ec1;
   --mf-affliction: #ce9c96;
+  --mf-active-lock-background: var(--mf-affliction);
+  --mf-active-lock-text: #2a1a1e;
   --mf-speech: #80b9c4;
   --mf-surface: #142129eb;
   --mf-surface-raised: #25333fdf;
@@ -429,79 +427,75 @@
 .mf-theme .mf-afflictions[data-side="target"] .mf-affliction-row {
   color: var(--mf-accent);
 }
+/* Whole-tile binary signals: horizontal Prone, five upright lock columns. */
 .mf-theme .mf-locks {
-  padding: 3px 9px 8px;
+  padding: 6px;
   background: var(--mf-surface);
+}
+.mf-theme .mf-prone,
+.mf-theme .mf-lock {
+  border: 2px solid #637783;
+  background: #0d1922;
+  color: #c3cfd5;
 }
 .mf-theme .mf-prone {
   display: flex;
   align-items: center;
-  gap: 5px;
-  height: 24px;
+  gap: 8px;
+  height: 32px;
   margin-bottom: 6px;
-  border-bottom: 1px solid var(--mf-border);
-  font: 7px var(--mf-font-game);
-  letter-spacing: 1px;
-}
-.mf-theme .mf-prone i {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--mf-text-muted);
-  opacity: .5;
-}
-.mf-theme .mf-prone[data-active="true"] i {
-  background: var(--mf-affliction);
-  opacity: 1;
+  padding: 0 8px;
+  font: 700 12px var(--mf-font-game);
+  letter-spacing: .8px;
 }
 .mf-theme .mf-prone b {
   margin-left: auto;
-  color: var(--mf-affliction);
-  font-size: 7px;
-  font-weight: 400;
+  font-size: 11px;
+  font-weight: 700;
 }
-.mf-theme .mf-lock-list {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.mf-theme .mf-lock {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 17px;
-  color: var(--mf-text-muted);
-}
-.mf-theme .mf-lock > span {
-  width: 32px;
-  font: 7px var(--mf-font-game);
-  letter-spacing: .6px;
-}
-.mf-theme .mf-lock > b {
-  width: 24px;
-  margin: 0;
-  font: 7px var(--mf-font-game);
-  text-align: right;
-  letter-spacing: .5px;
-}
+.mf-theme .mf-prone i,
 .mf-theme .mf-lock-light {
-  width: 6px;
-  height: 6px;
-  margin-left: auto;
-  flex-shrink: 0;
-  border: 1px solid var(--mf-text-muted);
+  width: 8px;
+  height: 8px;
+  border: 1px solid currentColor;
   border-radius: 50%;
   background: transparent;
-  opacity: .5;
 }
+.mf-theme .mf-lock-list {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+}
+.mf-theme .mf-lock {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 8px 12px;
+  justify-items: center;
+  align-items: center;
+  gap: 4px;
+  height: 112px;
+  min-width: 0;
+  padding: 5px 0;
+}
+.mf-theme .mf-lock > span {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  font: 700 13px/1 var(--mf-font-game);
+  letter-spacing: .5px;
+}
+.mf-theme .mf-lock > b {
+  margin: 0;
+  font: 700 9px/12px var(--mf-font-game);
+  letter-spacing: .2px;
+}
+.mf-theme .mf-prone[data-active="true"],
 .mf-theme .mf-lock[data-active="true"] {
-  color: var(--mf-affliction);
+  border-color: var(--mf-active-lock-background);
+  background: var(--mf-active-lock-background);
+  color: var(--mf-active-lock-text);
 }
+.mf-theme .mf-prone[data-active="true"] i,
 .mf-theme .mf-lock[data-active="true"] .mf-lock-light {
-  border-color: var(--mf-affliction);
-  background: var(--mf-affliction);
-  opacity: 1;
-  box-shadow: 0 0 6px color-mix(in srgb, var(--mf-affliction), transparent 80%);
+  background: currentColor;
 }
 
 /* 7. Terminal slot: host owns the text renderer and its input. */

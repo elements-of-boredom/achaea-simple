@@ -8,6 +8,7 @@ loadModule("gmcp.lua")
 loadModule("state/player.lua")
 loadModule("state/room.lua")
 loadModule("state/vitals.lua")
+loadModule("state/afflictions.lua")
 
 -- UI: the theme first, every widget uses it. Layout builds the (empty) panels.
 loadModule("ui/theme_css.lua")
@@ -18,6 +19,7 @@ loadModule("ui/layout.lua")
 loadModule("ui/header.lua")
 loadModule("ui/chat.lua")
 loadModule("ui/room.lua")
+loadModule("ui/afflictions.lua")
 loadModule("ui/sidebar.lua")
 loadModule("ui/hud_self.lua")
 
