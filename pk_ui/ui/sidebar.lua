@@ -37,32 +37,6 @@ local function waypoints()
     .. "</section>"
 end
 
--- Recovery meters, all ready (100%). Primary is full width; secondary is two columns, and
--- the CSS stretches the last one across both, so an odd count looks intentional.
-local RECOVERY_PRIMARY = { { "balance", "Balance" }, { "equilibrium", "Equilibrium" } }
-local RECOVERY_SECONDARY = {
-  { "tree", "Tree" }, { "focus", "Focus" }, { "elixir", "Elixir" }, { "moss", "Moss" },
-  { "herb", "Herb" }, { "pipe", "Pipe" }, { "salve", "Salve" },
-}
-
-local function cooldowns(list)
-  local out = {}
-  for _, c in ipairs(list) do
-    local kind, label = c[1], c[2]
-    out[#out + 1] = '<div class="mf-cooldown" data-kind="' .. kind .. '" data-state="ready" role="progressbar"'
-      .. ' aria-label="' .. label .. ' recovery" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" aria-valuetext="Ready">'
-      .. '<i class="mf-cooldown-fill" aria-hidden="true"></i><span>' .. label .. '</span><b class="mf-cooldown-value">Ready</b></div>'
-  end
-  return table.concat(out)
-end
-
-local function recovery()
-  return '<section class="mf-recovery" data-field="recovery">' .. heading("Recovery")
-    .. '<div class="mf-recovery-primary">' .. cooldowns(RECOVERY_PRIMARY) .. "</div>"
-    .. '<div class="mf-recovery-secondary">' .. cooldowns(RECOVERY_SECONDARY) .. "</div>"
-    .. "</section>"
-end
-
 -- One onMessage per widget, so sections register handlers by kind and this routes to them.
 local DISPATCH = [[
 <script>
@@ -79,7 +53,7 @@ local DISPATCH = [[
 
 function sidebar.html()
   return '<aside class="mf-sidebar">'
-    .. '<div class="mf-controls">' .. waypoints() .. recovery() .. "</div>"
+    .. '<div class="mf-controls">' .. waypoints() .. PkCore.ui.recovery.html() .. "</div>"
     .. '<div class="mf-trackers">'
     ..   '<div class="mf-affliction-pair">'
     ..     PkCore.ui.afflictions.box("self", "Your afflictions")
