@@ -17,3 +17,7 @@ loadModule("ui/layout.lua")
 loadModule("ui/header.lua")
 loadModule("ui/chat.lua")
 loadModule("ui/room.lua")
+
+-- Task system
+loadModule("tasks/taskrunner.lua")
+loadModule("tasks/tasks.lua")
