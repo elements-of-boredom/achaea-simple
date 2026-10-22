@@ -16,6 +16,20 @@ loadModule("module_registration.lua")
 -- so everything it calls must be safe to repeat.
 function init()
   PkCore.ui.layout.build()
+  PkCore.ui.header.render()   -- "?" placeholders until real data arrives
+
+  -- Only a reload during a logged-in session has anything to restore. Before login,
+  -- onConnect and the GMCP handlers take care of everything as data arrives.
+  if getGMCPData("Char.Status") then
+    PkCore.gmcp.refreshSupport()
+    -- onGMCPUpdate only fires on the NEXT message, so refill the blackboard from what
+    -- MudForge already has. Room.Info before items/players: it resets them on a "new" room.
+    PkCore.player.onStatus(getGMCPData("Char.Status"))
+    PkCore.room.onInfo(getGMCPData("Room.Info"))
+    PkCore.room.onItemsList(getGMCPData("Char.Items.List"))
+    PkCore.room.onPlayers(getGMCPData("Room.Players"))
+  end
+
   echo("[pk_ui] v" .. plugin.version .. " loaded at " .. formatTime(getCurrentTime()), "#a5d3ba")
 end
 

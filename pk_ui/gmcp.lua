@@ -11,7 +11,6 @@ local PAYLOAD = '["' .. table.concat(MODULES, '","') .. '"]'
 -- Returns false when not connected (sendGMCP warns once per disconnection).
 function PkCore.gmcp.ensureSupport()
   return sendGMCP("Core.Supports.Add", PAYLOAD)
-  
 end
 
 --  The client sends its own Core.Supports.Set during login, which replaces the list

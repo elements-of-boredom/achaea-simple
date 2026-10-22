@@ -16,3 +16,4 @@ loadModule("ui/layout.lua")
 
 loadModule("ui/header.lua")
 loadModule("ui/chat.lua")
+loadModule("ui/room.lua")

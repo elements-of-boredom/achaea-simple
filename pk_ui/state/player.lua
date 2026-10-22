@@ -13,6 +13,7 @@ end
 
 function PkCore.player.onStatus(status)
   if not status then return end
+  set("name", status.name)                         -- room lists leave yourself out
   set("level", status.level)                       -- "106 (18.30%)": keep it as text
   set("lessons", status.lessons, true)
   set("boundCredits", status.boundcredits, true)
