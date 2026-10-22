@@ -25,6 +25,7 @@ function init()
     -- onGMCPUpdate only fires on the NEXT message, so refill the blackboard from what
     -- MudForge already has. Room.Info before items/players: it resets them on a "new" room.
     PkCore.player.onStatus(getGMCPData("Char.Status"))
+    PkCore.vitals.onVitals(getGMCPData("Char.Vitals"))
     PkCore.room.onInfo(getGMCPData("Room.Info"))
     PkCore.room.onItemsList(getGMCPData("Char.Items.List"))
     PkCore.room.onPlayers(getGMCPData("Room.Players"))

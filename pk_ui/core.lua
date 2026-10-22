@@ -1,15 +1,20 @@
 PkCore.listeners = PkCore.listeners or {}
+PkCore.vitalsListeners = PkCore.vitalsListeners or {}
 
-function PkCore.onStateChanged(name, fn)
-  PkCore.listeners[name] = fn
-end
-
-function PkCore.stateChanged()
-  for name, fn in pairs(PkCore.listeners) do
+local function notify(listeners)
+  for name, fn in pairs(listeners) do
     local ok, err = pcall(fn)
     if not ok then echo("[pk_ui] " .. name .. ": " .. tostring(err), "#ff6b6b") end
   end
 end
+
+-- Any blackboard change.
+function PkCore.onStateChanged(name, fn) PkCore.listeners[name] = fn end
+function PkCore.stateChanged() notify(PkCore.listeners) end
+
+-- Every Char.Vitals (each prompt): kept apart so per-prompt work stays small.
+function PkCore.onVitalsChanged(name, fn) PkCore.vitalsListeners[name] = fn end
+function PkCore.vitalsChanged() notify(PkCore.vitalsListeners) end
 
 function PkCore.note(msg)
   cecho("<cyan>[PkCore]<reset> ".. tostring(msg))
