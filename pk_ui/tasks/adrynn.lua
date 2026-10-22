@@ -12,6 +12,7 @@
 -- MAX_RETRIES is still a backstop in case fnCleanup itself never runs.
 local RETRY_INTERVAL = 2.5
 local MAX_RETRIES = 6
+local pathTrack = PkCore.task.pathTrack
 
 local function retryGreet(command, confirmPattern)
   return function()
@@ -37,30 +38,30 @@ end
 
 local function build()
   return {
-    PkCore.task.pathTrack(24621),
+    pathTrack(24621),
     { send = "get stick", wait = "You pick up a large stick.", timeout = 5 },
     { send = "put stick in wheel", wait = "You put a large stick into a massive copper wheel.", timeout = 5 },
-    PkCore.task.pathTrack(24619),
+    pathTrack(24619),
     { send = "get flour", wait = "You pick up a small pinch of flour.", timeout = 5 },
-    PkCore.task.pathTrack(25816),
+    pathTrack(25816),
     { send = "greet lord", wait = "\"A Missing Hound\"", timeout = 5 },
-    PkCore.task.pathTrack(25821),
+    pathTrack(25821),
     { send = "give flour to baker", wait = "\"Baking Needs\"", timeout = 15 },
-    PkCore.task.pathTrack(24664),
+    pathTrack(24664),
     { send = "give food to bailiff", wait = "\"A Sharper Axe\"", timeout = 25 },
-    PkCore.task.pathTrack(24583),
+    pathTrack(24583),
     { send = "give axe to logger", wait = "With a slight nod of his head, Isash", timeout = 15 },
-    PkCore.task.pathTrack(24761),
+    pathTrack(24761),
     { send = "give log to blacksmith", wait = "\"A Champion's Guard\"", timeout = 15 },
-    PkCore.task.pathTrack(25835),
+    pathTrack(25835),
     { send = "give shield185647 to champion", wait = "\"A Champion's Guard\"", timeout = 15 },
-    PkCore.task.pathTrack(25838),
+    pathTrack(25838),
     {
       fn = retryGreet("greet enula", "^Enula, the chambermaid says, \"Yes"),
       wait = "\"Calming the Crazy\"",
       timeout = 18,
     },
-    PkCore.task.pathTrack(25841),
+    pathTrack(25841),
     {
       fn = retryGreet("greet denod", "^Denod exclaims,"),
       waitPattern = "^Denod exclaims,",
@@ -68,37 +69,37 @@ local function build()
     },
     { send = "Beckon Denod", wait = "Denod falls into line behind you.", timeout = 15 },
     { send = "Beckon Radlar", wait = "Radlar falls into line behind you.", timeout = 15 },
-    PkCore.task.pathTrack(24593),
+    pathTrack(24593),
     { delay = 3.0 },
-    PkCore.task.pathTrack(25848), -- Go to the dog
+    pathTrack(25848), -- Go to the dog
     { delay = 1.0 },
-    PkCore.task.pathTrack(25816),
+    pathTrack(25816),
     { send = "put gold in pack", wait = "With a small wink", timeout = 15 },
-    PkCore.task.pathTrack(25819),
+    pathTrack(25819),
     { send = "give cup to Jehen", wait = "You give an empty china teacup to", timeout = 15 },
-    PkCore.task.pathTrack(25838),
+    pathTrack(25838),
     { send = "give cup to enula", wait = "Enula, the chambermaid lets out a long sigh", timeout = 15 },
-    PkCore.task.pathTrack(25824),
+    pathTrack(25824),
     {
       fn = retryGreet("greet adelo", "^Adelo says, \"Look"),
       wait = "After a quick check for witnesses, Adelo discreetly hands you an emerald ring",
       timeout = 18,
     },
-    PkCore.task.pathTrack(25816),
+    pathTrack(25816),
     { send = "give ring to lord", wait = "\"Happy Wife, Happy Life\"", timeout = 15 },
-    PkCore.task.pathTrack(25833),
+    pathTrack(25833),
     { send = "give 104950 to lady", wait = "You give a bulky letter to Lady", timeout = 15 },
-    PkCore.task.pathTrack(24851),
+    pathTrack(24851),
     {
       fn = retryGreet("greet ageysh", "^Ageysh, the stable keeper exclaims"),
       wait = "\"Aiding the Invalid\"",
       timeout = 18,
     },
-    PkCore.task.pathTrack(24761),
+    pathTrack(24761),
     { send = "give note to blacksmith", wait = "With a discriminating frown, Caurnn, the blacksmith pulls a new horseshoe", timeout = 20 },
-    PkCore.task.pathTrack(24288),
+    pathTrack(24288),
     { send = "", wait = "When you are finished attaching the horseshoe", timeout = 30},
-    PkCore.task.pathTrack(24664)
+    pathTrack(24664)
   }
 end
 

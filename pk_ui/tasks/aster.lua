@@ -22,10 +22,11 @@ local function build()
       -- Fishing net doesn't always land on the first pull - keep pulling
       -- every 2.5s until it does, or the step's own 120s timeout gives up.
       fn = function()
-        local tmr
+        local tmr, tid
         local function retry() send("pull net"); tmr = tempTimer(2.5, retry) end
-        tempTrigger("You quickly heft an old fishing net from the water", function() pcall(killTimer, tmr) end)
+        tid = tempTrigger("You quickly heft an old fishing net from the water", function() pcall(killTimer, tmr) end)
         retry()
+        return function() pcall(killTimer, tmr); pcall(killTrigger, tid) end
       end,
       wait = "You quickly heft an old fishing net from the water",
       timeout = 120,
@@ -79,7 +80,7 @@ local function build()
     {
       fn = function()
         cecho("\n<bold><yellow>FIND A HORSE, PET HORSE, ")
-        hyperlink("PATH TRACK 55425", [[send("path track 55425")]], "Send: path track 55425", true)
+        hyperlink("PATH TRACK 55425", "path track 55425", { hint = "Send: path track 55425" })
         echo("\n")
       end,
     },
