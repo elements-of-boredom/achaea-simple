@@ -29,6 +29,8 @@ function init()
     PkCore.room.onInfo(getGMCPData("Room.Info"))
     PkCore.room.onItemsList(getGMCPData("Char.Items.List"))
     PkCore.room.onPlayers(getGMCPData("Room.Players"))
+    PkCore.room.onTargetSet(getGMCPData("IRE.Target.Set"))
+    PkCore.room.onTargetInfo(getGMCPData("IRE.Target.Info"))
   end
 
   echo("[pk_ui] v" .. plugin.version .. " loaded at " .. formatTime(getCurrentTime()), "#a5d3ba")

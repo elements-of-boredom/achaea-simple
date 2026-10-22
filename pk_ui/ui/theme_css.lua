@@ -757,7 +757,7 @@ PkCore.ui.theme.mockCss = [==[
 }
 .mf-theme .mf-target-symbol {
   color: var(--mf-accent);
-  font-size: 20px;
+  font-size: 24px;
   line-height: 1;
 }
 .mf-theme .mf-target-data {

@@ -21,7 +21,9 @@ loadModule("ui/chat.lua")
 loadModule("ui/room.lua")
 loadModule("ui/afflictions.lua")
 loadModule("ui/sidebar.lua")
+loadModule("ui/limbs.lua")
 loadModule("ui/hud_self.lua")
+loadModule("ui/hud_target.lua")
 
 -- Task system
 loadModule("tasks/taskrunner.lua")

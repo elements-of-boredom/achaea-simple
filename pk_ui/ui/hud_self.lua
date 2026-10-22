@@ -3,7 +3,6 @@ PkCore.ui.hudSelf = PkCore.ui.hudSelf or {}
 local hud = PkCore.ui.hudSelf
 
 local VITALS = { { "HP", "hp" }, { "MP", "mp" }, { "EP", "ep" }, { "WP", "wp" } }
-local LIMBS = { "H", "T", "LA", "RA", "LL", "RL" }
 local STATUS = { { "Mode", "hudMode" }, { "Strategy", "hudStrategy" }, { "Route", "hudRoute" } }
 -- Percent sits on the numbers' row, pushed right (the theme puts it beside the label).
 local CSS = [[
@@ -13,17 +12,13 @@ local CSS = [[
 
 -- Limbs and Mode/Strategy/Route are static until AK and the reactor are ported.
 local function topbar()
-  local limbs, fields = {}, {}
-  for _, limb in ipairs(LIMBS) do
-    limbs[#limbs + 1] = '<span class="mf-limb" data-limb="' .. limb .. '" data-damaged="false">'
-      .. "<b>" .. limb .. '</b><em>0</em><i style="--mf-damage:0%"></i></span>'
-  end
+  local fields = {} 
   for _, f in ipairs(STATUS) do
     fields[#fields + 1] = '<div class="mf-status-field"><span>' .. f[1] .. "</span>"
       .. '<strong data-mud-bind="' .. f[2] .. '">&#x2014;</strong></div>'
   end
   return '<div class="mf-self-topbar">'
-    .. '<div class="mf-limbs" data-field="self-limbs"><span class="mf-limb-owner">YOU</span>' .. table.concat(limbs) .. "</div>"
+    .. PkCore.ui.limbs.row("YOU", "self-limbs")
     .. '<section class="mf-combat-status" data-field="combat-configuration">' .. table.concat(fields) .. "</section>"
     .. "</div>"
 end
