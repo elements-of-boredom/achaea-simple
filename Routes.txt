@@ -1,0 +1,67 @@
+
+0:00 Shaping : 4
+        calcify(head) = Free
+        Applies Restoration
+0:00:02 - Shaping : 2
+        calcify(torso)
+0:04:00 - Calcify Head cured
+0:04:00 - Applies Restoration torso
+0:04:00 - Torso breaks (mild trauma)
+4.2s
+    - Terran Squeeze (3.1) , Powderise is 2.9
+
+
+47% SQueeze with mild trauma , 55% in titan
+27% Squeeze with no trauma
+
+Torso is Prepped (88), Shaping 4
+
+0 - calicify head (free, shaping to 2)
+0.01 - Restoration to head, powderise torso (broken!) - Shaping 3, mild trauma, triggers sip, maybe moss.
+2.9. Terran Crunch - Shaping 4
+4.0 - Restoration to head completes, Applies to torso
+4.9 - Calcify torso (free, shaping to 2)
+4.9 - SQueeze (53%), They Sip, go to 70%
+5.5 - Eat moss, go to 78%
+8.0 - Squeeze (31%) 
+8.0 - Calcify torso cured
+8.0 - Applies torso for mild trauma
+9.4 - Sip health, 51%
+11.0 - Eat moss (+8%), 59%
+11.1 - Squeeze -> 12%
+12.0 - mild trauma healed
+13.9 - Sip - 29%
+14.2 - Squeeze - 2%
+16.5 - Eat moss 10%
+17.3 - Squeeze - Dead
+18.4 - Sip - 27%
+
+
+Leg is prepped (88), head is prepped , shaping 4
+0 - calcify torso
+    - wait for restoration apply, or key off calcify line
+    Shape: 2
+- Opp Applies restoration
+0.2 - quake, powderise leg, leg broken
+    Shape: 2
+3.1 - Powderise head , head broken
+    Shape 3 
+4.2 - OPP apply restoration to legs
+6.0 - Crunch
+    Shape 4
+8.0 - calcify head, avalance (should still be prone. If not prone, this flow just doesn't work)
+8.2 - OPP Apply Mending, Stand
+0 - quake, powderize leg (prone, broken leg, shaping 4)
+0 - Apply resto to legs
+2.9 , Calcify head (free, shaping to 2)
+2.9 - Calcify torso (not free)
+4.0 leg resto finish
+4.0 - apply torso
+5.0 - shaping -> 1
+6.9 - calcify head completes -> damaged head
+7.1 - calcify head 
+8.0 torso healed
+8.0 apply to head
+shaping -> 0
+11.3 - 
+12.0 - calcify healed 

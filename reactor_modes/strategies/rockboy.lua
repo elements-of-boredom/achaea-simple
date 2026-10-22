@@ -127,7 +127,6 @@ local function powderiseCmd(key)
     if not target then
         return nil
     end
-    PkCore.limbPrep.recordAttempt(key)
 
     local word = (key == "rightleg" or key == "leftleg") and (key == "rightleg" and "right leg" or "left leg") or key
     local cmd = "TERRAN POWDERISE " .. target .. " " .. word
@@ -399,7 +398,7 @@ local ACTIONS = {
                 and not cmd:find("^MANIFEST QUAKE") then
                 cmd = "MANIFEST QUAKE|" .. cmd
             end
-            return cmd
+            return "ASSESS " .. target .. " | " .. cmd
         end,
     },
 
@@ -484,6 +483,11 @@ PkCore.trackHandler(registerAnonymousEventHandler("PkCore state changed",
         if current ~= "" and previous ~= "" and current ~= previous then
             R.resetTracking()
         end
+    end)))
+PkCore.trackTrigger(tempRegexTrigger("^([\\w'\\-]+) has been slain by ",
+    PkCore.protected("rockboy.onTargetSlainByOther", function()
+        local target = liveTarget()
+        if target and matches[2]:lower() == target:lower() then R.resetTracking() end
     end)))
 PkCore.trackTrigger(tempRegexTrigger("^You have slain ", PkCore.protected("rockboy.onTargetSlain", R.resetTracking)))
 

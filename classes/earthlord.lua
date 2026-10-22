@@ -76,6 +76,20 @@ PkCore.trackTrigger(tempRegexTrigger(
     PkCore.limbPrep.recordHit(limbKey)
   end)))
 
+-- only a parry on the line right after our own swing is ours
+PkCore.trackTrigger(tempRegexTrigger(
+  "^With a roar you swing a colossal fist at the (.+) of [\\w'\\-]+\\.$",
+  PkCore.protected("earthlord.onSwing", function()
+    local limbKey = WORD_TO_LIMB[matches[2]]
+    if not limbKey then return end
+    PkCore.limbPrep.recordAttempt(limbKey)
+    PkCore.trackTrigger(tempLineTrigger(1, 1, function()
+      if line:match("^[%w'%-]+ parries the attack with a deft manoeuvre%.$") then
+        PkCore.limbPrep.recordParry()
+      end
+    end))
+  end)))
+
 
 PkCore.trackTrigger(tempRegexTrigger(
   "^Reaching out, you press a single stone digit to the torso of ([\\w'\\-]+), beginning the transformation of the calcium within\\.$",

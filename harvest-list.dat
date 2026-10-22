@@ -1,2 +1,2 @@
-return {{[ [[moss]] ] = true,[ [[kelp]] ] = true,[ [[goldenseal]] ] = true,[ [[bloodroot]] ] = true,[ [[pear]] ] = true,[ [[ginseng]] ] = true,},
+return {{[ [[moss]] ] = true,[ [[bellwort]] ] = true,[ [[goldenseal]] ] = true,[ [[pear]] ] = true,[ [[ash]] ] = true,[ [[bayberry]] ] = true,[ [[hawthorn]] ] = true,[ [[kelp]] ] = true,[ [[bloodroot]] ] = true,[ [[ginseng]] ] = true,},
 }

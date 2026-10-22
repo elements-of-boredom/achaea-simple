@@ -1,6 +1,6 @@
 PkCore.reactor = PkCore.reactor or { mode = "off" }
 PkCore.reactor.modes = PkCore.reactor.modes or {}
-PkCore.reactor.pollInterval = PkCore.reactor.pollInterval or 0.3
+PkCore.reactor.pollInterval = PkCore.reactor.pollInterval or 0.35
 PkCore.reactor.lastQueueSent = PkCore.reactor.lastQueueSent or ""
 PkCore.reactor.pollGeneration = PkCore.reactor.pollGeneration or 0
 
@@ -42,6 +42,7 @@ function PkCore.reactor.set(mode)
     if PkCore.reactor.mode == mode then return end
     local previousMode = PkCore.reactor.mode
     PkCore.reactor.mode = mode
+    PkCore.reactor.lastQueueSent = "" -- whatever we queued under the old mode may never have fired
     raiseEvent("PkCore mode changed", mode)
     PkCore.note("mode: " .. tostring(mode))
     if previousMode == "off" and mode ~= "off" then
@@ -65,6 +66,13 @@ PkCore.registerAlias("PkCore mode set", [[^mode\s+(\w+)$]], [[PkCore.reactor.set
 PkCore.trackTrigger(tempRegexTrigger(
   "^(?:Balance|Equilibrium) used: [\\d.]+s\\.$",
   PkCore.protected("reactor.clearQueueDedup", function()
+    PkCore.reactor.lastQueueSent = ""
+  end)))
+
+-- target gone (dead, moved, we flew): the queued attack failed without spending balance
+PkCore.trackTrigger(tempRegexTrigger(
+  "^You cannot see that being here\\.$",
+  PkCore.protected("reactor.clearQueueOnMissingTarget", function()
     PkCore.reactor.lastQueueSent = ""
   end)))
 

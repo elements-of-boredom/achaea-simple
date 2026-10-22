@@ -259,22 +259,41 @@ local function onRoomRemovePlayer()
   PkCore.stateChanged()
 end
 
+local function syncAKTarget()
+  local id = PkCore.room.targetId
+  if not id or id:match("^%d+$") then return end -- numeric ids are mobs; leave AK alone
+  local name = PkCore.room.targetDisplayName or id
+  if not name:match("^[%a'%-]+$") then return end
+  if type(target) == "string" and target:lower() == name:lower() then return end
+  target2 = name:lower()
+  target = target2:title()
+  if ak and ak.oresetparse then ak.oresetparse() end
+end
+
 local function onTargetSet()
   local id = gmcp and gmcp.IRE and gmcp.IRE.Target and gmcp.IRE.Target.Set
-  PkCore.room.targetId = (id ~= nil and id ~= "") and tostring(id) or nil
-  if not PkCore.room.targetId then PkCore.room.targetHpPercent = nil end
+  local newId = (id ~= nil and id ~= "") and tostring(id) or nil
+  if newId ~= PkCore.room.targetId then
+    PkCore.room.targetDisplayName = nil -- the old name would otherwise outlive the switch
+  end
+  PkCore.room.targetId = newId
+  if not newId then PkCore.room.targetHpPercent = nil end
+  syncAKTarget()
   PkCore.stateChanged()
 end
 
 local function onTargetInfo()
   local info = gmcp and gmcp.IRE and gmcp.IRE.Target and gmcp.IRE.Target.Info
   if not info then return end
+  -- players come through with id/hpperc "-1"; keep the name Target.Set gave us
   local id = info.id and tostring(info.id) or nil
-  if id then
+  if id and id ~= "-1" then
     PkCore.room.targetId = id
   end
-  PkCore.room.targetDisplayName = info.name
-  PkCore.room.targetHpPercent = tonumber(tostring(info.hpperc or ""):match("%d+"))
+  PkCore.room.targetDisplayName = info.name or info.short_desc or PkCore.room.targetDisplayName
+  local hp = tonumber(tostring(info.hpperc or ""):match("^%-?%d+"))
+  PkCore.room.targetHpPercent = (hp and hp >= 0) and hp or nil
+  syncAKTarget()
   PkCore.stateChanged()
 end
 

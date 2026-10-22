@@ -22,6 +22,7 @@ local function onTargetCall()
   end
   send("st " .. target, false)
   PkCore.note("target -> " .. target .. " (called by " .. caller .. ")")
+  tempTimer(0.15, function() PkCore.reactor.evaluate() end) -- Force a re-evaluation since our target changed.
 end
 
 PkCore.trackTrigger(tempRegexTrigger([[^\(Party\): (\w+) says, "Target(?: changed to|:) (\w+)\."$]],

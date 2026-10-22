@@ -1,0 +1,39 @@
+1:  agoraphobia
+2:  brokenrightarm, brokenleftarm
+3:  paralysis, unweavingspirit(2), icebound
+4:  aeon, entangled, peace, scytherus, anorexia, generosity, bound, sleeping, transfixation, voyria, webbed, prone, 
+disrupted, crescendo(5)
+5:  skullfractures(5), skullfractures(2), skullfractures(3), skullfractures(4), skullfractures(6), wristfractures(2), 
+wristfractures(3), wristfractures(4), wristfractures(5), wristfractures(6), crackedribs(2), crackedribs(3), 
+crackedribs(4), crackedribs(5), crackedribs(6), torntendons(2), torntendons(3), torntendons(4), torntendons(5), 
+torntendons(6), timeloop, unweavingbody(5), unweavingbody(4), unweavingmind(5), unweavingmind(4), unweavingspirit(5), 
+unweavingspirit(4)
+6:  burning(4), burning(5), hypochondria, shadowmadness, unweavingbody(3), unweavingbody(2), unweavingmind(3), 
+unweavingmind(2), unweavingspirit(3), pyramides, flushings, rebbies, mycalium, sandfever
+7:  brokenrightleg, brokenleftleg, hellsight, slickness, asthma, recklessness, impatience, shivering, whisperingmadness,
+daeggerimpale, impaled, heartseed, spiritburn, tenderskin, guilt, crushedthroat, calcifiedtorso
+8:  damagedrightleg, damagedleftleg, lovers, confusion, pacified, clumsiness, healthleech, stupidity, manaleech, frozen,
+sensitivity, disloyalty, dissonance, temperedmelancholic, temperedcholeric, temperedsanguine, temperedphlegmatic, 
+skullfractures, wristfractures, crackedribs, torntendons, retribution, calcifiedskull, grievouswounds, crescendo
+9:  mangledrightleg, mangledleftleg, epilepsy, nausea, weariness, addiction, deadening, lethargy, darkshade, 
+hypothermia, unweavingbody, unweavingmind, unweavingspirit, mindravaged
+10: itching, fear, damagedhead, mangledhead, concussion, dazed, justice, shyness, dizziness, haemophilia, dementia, 
+masochism, paranoia, vertigo, hypersomnia, scalded, horror, depression, kkractlebrand(2), kkractlebrand(3), 
+kkractlebrand(4), kkractlebrand(5), kkractlebrand, latched, pressure, tonguetied, pyre, frostbite, fratricide
+11: mildtrauma, damagedrightarm, damagedleftarm, serioustrauma, mangledrightarm, mangledleftarm, hallucinations, 
+loneliness, claustrophobia, burning(3), burning(2), burning, internalbleeding, tension, fulminated, earworm
+12: slashedthroat, laceratedthroat, parasite
+13: selarnia
+14: stuttering
+15: diminished
+16:
+17:
+18:
+19:
+20:
+21:
+22:
+23: indifference
+24: stridulating
+25:
+26:
