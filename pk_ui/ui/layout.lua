@@ -36,66 +36,12 @@ local function scaffold(label)
   return '<div class="pk-scaffold">' .. label .. ' <span data-mud-bind="pkRect"></span></div>'
 end
 
--- Prone + lock rows, all off. The section's height comes from its rows (no fixed height in the CSS),
--- so it needs them even while empty. The names are fixed labels, not data.
-local LOCKS = { "PARA", "IMP", "AST", "ANO", "SLICK" }
-
-local function locks()
-  local rows = {}
-  for _, name in ipairs(LOCKS) do
-    rows[#rows + 1] = '<div class="mf-lock" data-lock="' .. name .. '" data-active="false" role="img" aria-label="'
-      .. name .. ': off"><span>' .. name .. '</span><i class="mf-lock-light" aria-hidden="true"></i><b>OFF</b></div>'
-  end
-  return '<section class="mf-locks" data-field="locks">'
-    .. '<div class="mf-prone" data-field="prone" data-active="false"><i></i><span>PRONE</span><b>NO</b></div>'
-    .. '<div class="mf-lock-list">' .. table.concat(rows) .. "</div>"
-    .. "</section>"
-end
-
--- Recovery meters, all ready (100%). Primary is full width; secondary is two columns, and
--- the CSS stretches the last one across both, so an odd count looks intentional.
-local RECOVERY_PRIMARY = { { "balance", "Balance" }, { "equilibrium", "Equilibrium" } }
-local RECOVERY_SECONDARY = {
-  { "tree", "Tree" }, { "focus", "Focus" }, { "elixir", "Elixir" }, { "moss", "Moss" },
-  { "herb", "Herb" }, { "pipe", "Pipe" }, { "salve", "Salve" },
-}
-
-local function cooldowns(list)
-  local out = {}
-  for _, c in ipairs(list) do
-    local kind, label = c[1], c[2]
-    out[#out + 1] = '<div class="mf-cooldown" data-kind="' .. kind .. '" data-state="ready" role="progressbar"'
-      .. ' aria-label="' .. label .. ' recovery" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" aria-valuetext="Ready">'
-      .. '<i class="mf-cooldown-fill" aria-hidden="true"></i><span>' .. label .. '</span><b class="mf-cooldown-value">Ready</b></div>'
-  end
-  return table.concat(out)
-end
-
-local function recovery()
-  return '<section class="mf-recovery" data-field="recovery">' .. heading("Recovery")
-    .. '<div class="mf-recovery-primary">' .. cooldowns(RECOVERY_PRIMARY) .. "</div>"
-    .. '<div class="mf-recovery-secondary">' .. cooldowns(RECOVERY_SECONDARY) .. "</div>"
-    .. "</section>"
-end
-
 -- Region skeletons: the mock's outer markup with the content left out.
 local PANELS = {
    { key = "header", title = "Header",
     html = '<header class="mf-header">' .. scaffold("HEADER") .. "</header>" },
   { key = "sidebar", title = "Sidebar",
-    html = '<aside class="mf-sidebar">'
-      .. '<div class="mf-controls">'
-      ..   '<section class="mf-waypoints-panel">' .. heading("Waypoints") .. scaffold("WAYPOINTS") .. "</section>"
-      ..   recovery()
-      .. "</div>"
-      .. '<div class="mf-trackers">'
-      ..   '<div class="mf-affliction-pair">'
-      ..     '<section class="mf-afflictions" data-side="self">' .. heading("Your afflictions") .. "</section>"
-      ..     '<section class="mf-afflictions" data-side="target">' .. heading("Target afflictions") .. "</section>"
-      ..   "</div>"
-      ..   locks()
-      .. "</div>"
-      .. "</aside>" },
+    html = '<aside class="mf-sidebar">' .. scaffold("SIDEBAR") .. "</aside>" },
   { key = "hudSelf", title = "You",
     html = '<div class="mf-self">' .. scaffold("SELF: LIMBS / MODE / VITALS") .. "</div>" },
   { key = "hudTarget", title = "Target",
