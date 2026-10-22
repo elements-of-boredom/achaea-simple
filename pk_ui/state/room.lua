@@ -160,6 +160,16 @@ local function findItemIndex(id)
   return nil
 end
 
+function room.refresh()
+  room.players = {}
+  requestRoomItems()
+  if room.refreshTimer then clearTimeout(room.refreshTimer) end
+  room.refreshTimer = setTimeout(function()
+    room.refreshTimer = nil
+    send("ql")
+  end, 500)
+end
+
 -- Raw one-argument form: the package and its JSON payload in one string.
 local function requestRoomItems()
   sendGMCP('Char.Items.Room ""')
