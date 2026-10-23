@@ -49,5 +49,8 @@ loadModule("aliases/stats.lua")
 loadModule("aliases/hh.lua")
 loadModule("aliases/rift.lua")
 
+-- Misc
+loadModule("goldpickup.lua")
+
 -- PRETTY!
 loadModule("colorize.lua")
