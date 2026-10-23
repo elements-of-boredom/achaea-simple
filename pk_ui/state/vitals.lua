@@ -1,5 +1,6 @@
 PkCore.vitals = PkCore.vitals or {}
 PkCore.balance = PkCore.balance or {}
+PkCore.playerStatus = PkCore.playerStatus or {}
 
 local VITALS = { "hp", "mp", "ep", "wp" }
 
@@ -28,7 +29,21 @@ function PkCore.vitals.onVitals(data)
     PkCore.vitals[key] = num(data[key])
     PkCore.vitals["max" .. key] = num(data["max" .. key])
   end
+  PkCore.playerStatus = statsOf(data.charstats)
   PkCore.vitalsChanged()
 end
 
 onGMCPUpdate("Char.Vitals", PkCore.vitals.onVitals)
+
+-- charstats: { "Bleed: 0", "Rage: 12", ... } -> { bleed = 0, rage = 12 }
+local function statsOf(charstats)
+  local stats = {}
+  if type(charstats) ~= "table" then return stats end
+  for _, entry in ipairs(charstats) do
+    if type(entry) == "string" then
+      local key, value = entry:match("^(%a+):%s*(%-?%d+)$")
+      if key then stats[key:lower()] = tonumber(value) end
+    end
+  end
+  return stats
+end

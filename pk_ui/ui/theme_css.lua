@@ -5,10 +5,6 @@ PkCore.ui.theme = PkCore.ui.theme or {}
 
 PkCore.ui.theme.mockCss = [==[
 /*
- * Vector Woodland — reusable theme reference
- * Entry point: START-HERE.md
- * Scope: .mf-theme. No global resets, imports, IDs, or !important rules.
- * Native terminal/map contents are host-owned; only their slots are themed.
  */
 
 /* 1. Theme tokens: override these on the theme root in your integration. */
@@ -990,7 +986,7 @@ PkCore.ui.theme.mockCss = [==[
   overflow: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--mf-border) transparent;
-  font: 9px/1.4 var(--mf-font-game);
+  font: 11px/1.4 var(--mf-font-game);
 }
 .mf-theme .mf-chat-log > div {
   margin-bottom: 7px;

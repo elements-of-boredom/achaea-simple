@@ -46,7 +46,7 @@ end
 
 local function echoChange(text)
   local config = PkCore.config
-  if config and config.values and config.values.affEchos then cecho(text) end
+  if config.values.affEchos then cecho(text) end
 end
 
 function afflictions.onList(data)

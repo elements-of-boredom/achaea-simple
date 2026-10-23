@@ -2,6 +2,7 @@
 
 -- Core/Global registrations: the state-changed signal and other utilities everyone uses.
 loadModule("core.lua")
+loadModule("config.lua")
 loadModule("gmcp.lua")
 
 -- State: GMCP -> the PkCore blackboard.
@@ -10,6 +11,8 @@ loadModule("state/room.lua")
 loadModule("state/vitals.lua")
 loadModule("state/afflictions.lua")
 loadModule("state/balances.lua")
+
+loadModule("prompt_tags.lua")
 
 -- UI: the theme first, every widget uses it. Layout builds the (empty) panels.
 loadModule("ui/theme_css.lua")

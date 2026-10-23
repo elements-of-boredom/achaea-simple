@@ -980,7 +980,7 @@
   overflow: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--mf-border) transparent;
-  font: 9px/1.4 var(--mf-font-game);
+  font: 11px/1.4 var(--mf-font-game);
 }
 .mf-theme .mf-chat-log > div {
   margin-bottom: 7px;
