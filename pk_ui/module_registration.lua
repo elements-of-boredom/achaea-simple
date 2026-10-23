@@ -42,3 +42,10 @@ loadModule("tasks/tasks.lua")
 -- Reactor modes
 loadModule("reactor_modes/reactor.lua")
 loadModule("reactor_modes/hunt.lua")
+
+-- Alias stuff
+loadModule("aliases/iht.lua")
+loadModule("aliases/stats.lua")
+
+-- PRETTY!
+loadModule("colorize.lua")
