@@ -51,6 +51,7 @@ loadModule("aliases/rift.lua")
 
 -- Misc
 loadModule("goldpickup.lua")
+loadModule("party/party_target.lua")
 
 -- PRETTY!
 loadModule("colorize.lua")
