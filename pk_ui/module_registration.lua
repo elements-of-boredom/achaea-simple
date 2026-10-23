@@ -46,6 +46,8 @@ loadModule("reactor_modes/hunt.lua")
 -- Alias stuff
 loadModule("aliases/iht.lua")
 loadModule("aliases/stats.lua")
+loadModule("aliases/hh.lua")
+loadModule("aliases/rift.lua")
 
 -- PRETTY!
 loadModule("colorize.lua")
