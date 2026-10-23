@@ -8,6 +8,7 @@ local STATUS = { { "Mode", "hudMode" }, { "Strategy", "hudStrategy" }, { "Route"
 local CSS = [[
 .mf-theme .mf-vital-track > b { justify-content: space-between; align-items: baseline; }
 .mf-theme .mf-vital-track em { color: var(--mf-vital-color); font-size: 10px; font-style: normal; }
+.mf-theme .mf-status-field strong:empty::before { content: "\2014"; color: var(--mf-text-muted); }
 ]]
 
 -- Limbs and Mode/Strategy/Route are static until AK and the reactor are ported.
@@ -76,5 +77,16 @@ function hud.renderVitals()
   setBoundValues(id, values)
 end
 
+function hud.renderStatus()
+  local id = PkCore.ui.layout.widgets.hudSelf
+  if not id then return end
+  local mode = PkCore.reactor and PkCore.reactor.mode or "off"
+  setBoundValues(id, { hudMode = string.upper(mode) })
+end
+
 PkCore.onVitalsChanged("ui.hudSelf", hud.renderVitals)
-PkCore.ui.layout.setContent("hudSelf", hud.html, hud.renderVitals)
+PkCore.onStateChanged("ui.hudSelf", hud.renderStatus)
+PkCore.ui.layout.setContent("hudSelf", hud.html, function()
+  hud.renderVitals()
+  hud.renderStatus()
+end)

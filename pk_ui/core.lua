@@ -19,6 +19,7 @@ function PkCore.vitalsChanged() notify(PkCore.vitalsListeners) end
 function PkCore.note(msg)
   cecho("<cyan>[PkCore]<reset> ".. tostring(msg))
 end
+function PkCore.now() return getCurrentTime() / 1000 end
 
 function PkCore.protected(label, fn)
   return function()

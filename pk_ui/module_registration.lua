@@ -12,7 +12,12 @@ loadModule("state/vitals.lua")
 loadModule("state/afflictions.lua")
 loadModule("state/balances.lua")
 
+loadModule("readiness.lua")
 loadModule("prompt_tags.lua")
+
+-- Class systems
+loadModule("classes/class_loader.lua")
+loadModule("rage.lua")
 
 -- UI: the theme first, every widget uses it. Layout builds the (empty) panels.
 loadModule("ui/theme_css.lua")
@@ -33,3 +38,7 @@ loadModule("ui/hud_target.lua")
 -- Task system
 loadModule("tasks/taskrunner.lua")
 loadModule("tasks/tasks.lua")
+
+-- Reactor modes
+loadModule("reactor_modes/reactor.lua")
+loadModule("reactor_modes/hunt.lua")
