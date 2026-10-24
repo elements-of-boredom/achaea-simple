@@ -12,6 +12,7 @@ for _, marker in pairs(opponent.Model.DELAYED) do
 end
 opponent.RESTORATION_DELAY = 4.0
 opponent.SILERIS_DELAY = 9.0
+opponent.SENSE_WINDOW = { deaf = { 2.0, 4.2 } }
 opponent.classCures = loadModule("opponent/class_cures.lua")
 opponent.VENOMS = loadModule("opponent/offense/venoms.lua")
 
@@ -102,6 +103,14 @@ function opponent.apply(event)
         opponent.Model.proof(opponent.get(event.name), event.aff, event.present)
         return
     end
+    if event.kind == "sense" then
+        local target = opponent.get(event.name)
+        if event.ifUnknown and target[event.sense] ~= "unknown" then
+            return
+        end
+        target[event.sense] = event.value
+        return
+    end
     if event.kind == "land" then
         opponent.Model.land(opponent.get(event.name), event.key)
         return
@@ -137,7 +146,14 @@ function opponent.apply(event)
     if event.kind == "cure" then
         opponent.channelProof(target, event.cure)
         if event.sense then
-            target[event.sense] = event.sense
+            local window = opponent.SENSE_WINDOW[event.sense]
+            if window then
+                target[event.sense] = "no"
+                opponent.record(event.name, { kind = "sense", sense = event.sense, value = "unknown", due = event.time + window[1] })
+                opponent.record(event.name, { kind = "sense", sense = event.sense, value = event.sense, due = event.time + window[2], ifUnknown = true })
+            else
+                target[event.sense] = event.sense
+            end
         elseif event.announced then
             opponent.Model.proof(target, event.announced, true)
             opponent.Model.removeOne(target, event.announced)

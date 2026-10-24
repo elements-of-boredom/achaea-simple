@@ -11,12 +11,14 @@ opponent.EAT_ITEMS = {
     ["prickly pear"] = "pear",    ["calcite mote"] = "pear",
     ["ginger root"] = "ginger",    ["antimony flake"] = "ginger",
     ["bayberry bark"] = "bayberry",    ["arsenic pellet"] = "bayberry",
-    ["hawthorn berry"] = "hawthorn",    ["calamine crystal"] = "hawthorn"
+    ["hawthorn berry"] = "hawthorn",    ["calamine crystal"] = "hawthorn",
+    ["black cohosh root"] = "cohosh",   ["gypsum crystal"] = "cohosh"
 }
 
 opponent.EAT_SENSES = {
     bayberry = "blind",
-    hawthorn = "deaf"
+    hawthorn = "deaf",
+    cohosh = "insomnia",
 }
 opponent.FOCUS_GAP = 1.9
 opponent.TREE_GAP = 12.5
@@ -120,6 +122,20 @@ for _, pattern in ipairs(SILERIS_LINES) do
     end, { type = "regex" })
 end
 
+-- The Survival skill INSOMNIA; Puts the defence straight up.
+addTrigger([[^([\w'\-]+) clenches [\w'\-]+ fists and grits [\w'\-]+ teeth\.$]], function(_, _, w)
+    local name = w[1]
+    if not opponent.isTracked(name) then return end
+    opponent.record(name, { kind = "sense", sense = "insomnia", value = "insomnia" })
+end, { type = "regex" })
+-- Falling asleep: proof of sleep, and that nothing (insomnia) was up to stop it.
+addTrigger([[^([\w'\-]+)'s eyes close suddenly as [\w'\-]+ falls asleep\.$]], function(_, _, w)
+    local name = w[1]
+    if not opponent.isTracked(name) then return end
+    opponent.record(name, { kind = "gain", aff = "sleeping" })
+    opponent.record(name, { kind = "sense", sense = "insomnia", value = "no" })
+end, { type = "regex" })
+
 local SMOKE_LINES = {
     [[^([\w'\-]+) takes a long drag off [\w'\-]+ .+\.$]],
     [[^A great gurgling sound is heard as ([\w'\-]+) takes a long drag from .+$]],
@@ -141,7 +157,7 @@ opponent.SALVE_SPOTS = {
     head  = { "apply:mending.head", "apply:restoration.head", "apply:health.head", "apply:epidermal.head" },
     torso = { "apply:mending.body", "apply:restoration.body", "apply:health.torso", "apply:epidermal.body" },
     skin  = { "apply:caloric", "apply:mass" },
-    -- ears: a blademaster thing we haven't identified; still proves no slickness.
+    ears  = {},   -- epidermal: takes deafness down; cures nothing the model tracks
 }
 opponent.SALVE_SPOTS.body = opponent.SALVE_SPOTS.torso
 -- The elixir line is always the health salve, so the cure is known.
@@ -154,6 +170,9 @@ function opponent.applyLine(pattern, spots, known)
         local name, spot = w[1], w[2]
         if not opponent.isTracked(name) then return end
         if not opponent.acceptCure(name, "apply", opponent.SALVE_GAP) then return end
+        if spot == "ears" then -- Theres no BM cure here right????
+            opponent.record(name, { kind = "sense", sense = "deaf", value = "no" })
+        end
         if known then
             opponent.record(name, { kind = "cure", cure = spots[spot] or "apply" })
         else

@@ -28,6 +28,8 @@ Model.DEFAULT_WEIGHTS = {
     pk = 0.3,
     game = 0.2
 }
+-- How likely a defence we know nothing about is up, when a hit has to strip it first.
+Model.UNKNOWN_DEFENCE = 0.5
 Model.NOTHING = 0.01
 
 -- Restoration turns these into the next stage instead of curing them outright.
@@ -121,6 +123,7 @@ function Model.newTarget(name)
         weights = Model.DEFAULT_WEIGHTS,
         blind = "unknown",
         deaf = "unknown",
+        insomnia = "unknown",
         limbs = {}
     }
 end
@@ -215,6 +218,65 @@ function Model.gain(target, aff, count)
         state.affs[aff] = count or true
     end
     Model.settle(target)
+end
+
+-- An affliction that landed with chance p: each state splits into "got it" and "didn't".
+function Model.gainMaybe(target, aff, p)
+    local branched = {}
+    for _, state in ipairs(target.states) do
+        local with = Model.copyAffs(state.affs)
+        with[aff] = true
+        branched[#branched + 1] = { p = state.p * p, affs = with }
+        branched[#branched + 1] = { p = state.p * (1 - p), affs = state.affs }
+    end
+    target.states = branched
+    Model.settle(target)
+end
+
+-- A limb counts as hurt at any of the three levels; numbness doesn't count.
+function Model.limbHurt(affs, side, limb)
+    return affs["broken" .. side .. limb] or affs["damaged" .. side .. limb] or affs["mangled" .. side .. limb]
+end
+
+-- Epteth/epseth: the left limb breaks first, the right if the left is already hurt, nothing if both are.
+function Model.breakLimb(target, limb)
+    for _, state in ipairs(target.states) do
+        for _, side in ipairs({ "left", "right" }) do
+            if not Model.limbHurt(state.affs, side, limb) then
+                state.affs = Model.copyAffs(state.affs)
+                state.affs["broken" .. side .. limb] = true
+                break
+            end
+        end
+    end
+    Model.settle(target)
+end
+
+-- One delivery from offense data: { gives, strips, senses, breaks }.
+function Model.deliver(target, entry)
+    for _, sense in ipairs(entry.senses or {}) do
+        target[sense] = sense
+    end
+    if entry.breaks then
+        Model.breakLimb(target, entry.breaks)
+    end
+    if not entry.gives then
+        return
+    end
+    local defence = entry.strips
+    if entry.shown then
+        if defence then target[defence] = "no" end
+        return
+    end
+    if defence and target[defence] == defence then
+        target[defence] = "no"
+    elseif defence and target[defence] == "unknown" then
+        target[defence] = "no"
+        Model.gainMaybe(target, entry.gives, 1 - Model.UNKNOWN_DEFENCE)
+    else
+        if defence then target[defence] = "no" end
+        Model.gain(target, entry.gives)
+    end
 end
 
 -- A certain removal: the game told us, or a self-announcing cure.

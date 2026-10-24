@@ -23,7 +23,7 @@ return {
     scytherus   = { gives = "scytherus" },
     voyria      = { gives = "voyria" },
     prefarar    = { gives = "sensitivity", strips = "deaf" },
-    delphinium  = { gives = "sleeping", strips = "insomnia" },
+    delphinium  = { gives = "sleeping", strips = "insomnia", shown = true },
     colocasia   = { senses = { "blind", "deaf" } },
     epteth      = { breaks = "arm" },
     epseth      = { breaks = "leg" },

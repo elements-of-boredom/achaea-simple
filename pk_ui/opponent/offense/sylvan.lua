@@ -10,7 +10,7 @@ local ARMS = {
   goldenseal = { gives = "epilepsy" },
   valerian   = { gives = "slickness" },
   hawthorn   = { gives = "sensitivity", strips = "deaf" },
-  kola       = { gives = "sleeping", strips = "insomnia" },
+  kola       = { gives = "sleeping", strips = "insomnia", shown = true },
   bloodroot  = {},
   sileris    = {},
   skullcap   = {},

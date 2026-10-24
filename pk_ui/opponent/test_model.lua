@@ -2,6 +2,7 @@
 local Model = dofile("opponent/model.lua")
 Model.load(dofile("opponent/cures.lua"))
 local Queries = dofile("opponent/queries.lua")
+local VENOMS = dofile("opponent/offense/venoms.lua")
 
 local failures = 0
 local function check(label, got, want)
@@ -168,5 +169,43 @@ Model.gain(t, "asthma")
 Model.gain(t, "nofangbarrier")
 Model.cureRandom(t, 1)
 check("random cure never takes the barrier", Model.prob(t, "nofangbarrier"), 1)
+
+t = Model.newTarget("Bob")
+Model.deliver(t, VENOMS.curare)
+check("a plain venom lands", Model.prob(t, "paralysis"), 1)
+
+t = Model.newTarget("Bob")
+t.deaf = "deaf"
+Model.deliver(t, VENOMS.prefarar)
+check("prefarar on a deaf target gives nothing", Model.prob(t, "sensitivity"), 0)
+check("and strips deafness", t.deaf == "no" and 1 or 0, 1)
+
+t = Model.newTarget("Bob")
+Model.deliver(t, VENOMS.prefarar)
+check("prefarar on unknown deafness is a coin flip", Model.prob(t, "sensitivity"), 0.5)
+check("but deafness is known gone after", t.deaf == "no" and 1 or 0, 1)
+Model.deliver(t, VENOMS.prefarar)
+check("a second prefarar lands for sure", Model.prob(t, "sensitivity"), 1)
+
+t = Model.newTarget("Bob")
+Model.deliver(t, VENOMS.colocasia)
+check("colocasia gives the blind defence", t.blind == "blind" and 1 or 0, 1)
+
+t = Model.newTarget("Bob")
+Model.deliver(t, VENOMS.epteth)
+check("epteth breaks the left arm first", Model.prob(t, "brokenleftarm"), 1)
+Model.deliver(t, VENOMS.epteth)
+check("then the right arm", Model.prob(t, "brokenrightarm"), 1)
+
+t = Model.newTarget("Bob")
+t.states = { { p = 0.6, affs = { damagedleftarm = true } }, { p = 0.4, affs = {} } }
+Model.deliver(t, VENOMS.epteth)
+check("a maybe-hurt left arm puts the break right", Model.prob(t, "brokenrightarm"), 0.6)
+check("or left", Model.prob(t, "brokenleftarm"), 0.4)
+
+t = Model.newTarget("Bob")
+Model.deliver(t, VENOMS.delphinium)
+check("a shown venom leaves the gain to its line", Model.prob(t, "sleeping"), 0)
+check("but always settles the defence", t.insomnia == "no" and 1 or 0, 1)
 
 print(failures == 0 and "all passed" or (failures .. " failed"))
