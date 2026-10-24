@@ -13,6 +13,7 @@ end
 opponent.RESTORATION_DELAY = 4.0
 opponent.SILERIS_DELAY = 9.0
 opponent.classCures = loadModule("opponent/class_cures.lua")
+opponent.VENOMS = loadModule("opponent/offense/venoms.lua")
 
 opponent.targets = opponent.targets or {}
 opponent.pending = opponent.pending or {}
@@ -205,4 +206,8 @@ end
 PkCore.onVitalsChanged("opponent.flush", opponent.flush)
 loadModule("opponent/parse_cures.lua")
 loadModule("opponent/parse_class_cures.lua")
+-- classes
+loadModule("opponent/offense/sylvan.lua")
+
+-- commands/aliases
 loadModule("opponent/commands.lua")

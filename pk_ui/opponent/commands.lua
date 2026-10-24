@@ -37,5 +37,6 @@ addTrigger([[^([\w'\-]+) has been slain by [\w'\-]+\.$]], resetOnDeath, {
     type = "regex"
 })
 
+PkCore.registerAlias("PkCore opponent arms", [[^opparms$]], [[PkCore.opponent.showArms()]])
 PkCore.registerAlias("PkCore opponent show", [[^oppshow(?:\s+(\w+))?$]], [[PkCore.opponent.show(matches[2])]])
 PkCore.registerAlias("PkCore opponent reset", [[^oppreset(?:\s+(\w+))?$]], [[PkCore.opponent.reset(matches[2])]])

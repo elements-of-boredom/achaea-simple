@@ -93,7 +93,6 @@ local DENSITY_DOWN = {
 for _, pattern in ipairs(DENSITY_DOWN) do opponent.affLine(pattern, "gain", "nodensity") end
 
 local FANGBARRIER_DOWN = {
-    [[^The protective coating covering the skin of ([\w'\-]+) sloughs off\.$]],
     [[^You try to flay a non-existent sileris coating from ([\w'\-]+)\.$]],
     [[^You flay the metallic coating from ([\w'\-]+)\.$]],
 }
@@ -102,6 +101,10 @@ local FANGBARRIER_UP = {
 }
 for _, pattern in ipairs(FANGBARRIER_DOWN) do opponent.affLine(pattern, "gain", "nofangbarrier") end
 for _, pattern in ipairs(FANGBARRIER_UP) do opponent.affLine(pattern, "lose", "nofangbarrier") end
+
+local SLICKNESS_STRIP = [[^The protective coating covering the skin of ([\w'\-]+) sloughs off\.$]]
+opponent.affLine(SLICKNESS_STRIP, "gain", "nofangbarrier")
+opponent.affLine(SLICKNESS_STRIP, "gain", "slickness")
 
 local SILERIS_LINES = {
     [[^([\w'\-]+) applies a sileris berry to [\w'\-]+\.$]],

@@ -163,4 +163,10 @@ t.states = { { p = 0.5, affs = { brokenleftarm = true, brokenrightarm = true } }
 Model.proofNotAll(t, { "brokenleftarm", "brokenrightarm" })
 check("bloodboil proves not both arms", Model.prob(t, "brokenrightarm"), 0)
 
+t = Model.newTarget("Bob")
+Model.gain(t, "asthma")
+Model.gain(t, "nofangbarrier")
+Model.cureRandom(t, 1)
+check("random cure never takes the barrier", Model.prob(t, "nofangbarrier"), 1)
+
 print(failures == 0 and "all passed" or (failures .. " failed"))

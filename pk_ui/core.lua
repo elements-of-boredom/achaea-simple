@@ -36,3 +36,10 @@ function PkCore.registerAlias(name, pattern, code)
   end
   enableAlias(name)
 end
+
+-- Typed Lua, run inside the plugin. load/loadstring are blocked, but tempTimer compiles a string.
+-- A leading "=" prints the value, like the stock Lua prompt: lua =PkCore.opponent.offense.arms
+function PkCore.eval(code)
+  tempTimer(0, code)
+end
+PkCore.registerAlias("PkCore lua", [[^lua\s+(.+)$]], [[PkCore.eval(matches[2])]])

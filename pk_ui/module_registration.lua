@@ -20,8 +20,7 @@ loadModule("classes/class_loader.lua")
 loadModule("rage.lua")
 
 -- Opponent tracking
--- TODO: Save file uncommented after we load mudforge.
---loadModule("opponent/tracker.lua")
+loadModule("opponent/tracker.lua")
 
 -- UI: the theme first, every widget uses it. Layout builds the (empty) panels.
 loadModule("ui/theme_css.lua")
