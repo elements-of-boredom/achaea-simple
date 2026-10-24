@@ -51,6 +51,12 @@ Model.DELAYED = {
     ["apply:restoration.head"] = "restoring.head",    ["apply:restoration.body"] = "restoring.body"
 }
 
+-- Made-up afflictions that track defences or pending cures. Random cures never pick these.
+Model.PSEUDO = { norebounding = true, nodensity = true }
+for _, marker in pairs(Model.DELAYED) do
+    Model.PSEUDO[marker] = true
+end
+
 
 -- Load our cures data and mappings
 function Model.load(data)
@@ -365,6 +371,64 @@ function Model.land(target, key)
     end
     target.states = branched
     Model.settle(target)
+end
+
+-- What a random cure could take from this state: a "first" affliction (voyria if panacea etc) if one is present, otherwise
+-- anything in the pool (a cure key, e.g. "focus"), otherwise any real affliction.
+function Model.randomCandidates(affs, pool, first)
+    for _, aff in ipairs(first or {}) do
+        if affs[aff] ~= nil then
+            return { aff }
+        end
+    end
+    local allowed = pool and Model.cureSets[pool]
+    local candidates = {}
+    for aff, value in pairs(affs) do
+        if value and not Model.PSEUDO[aff] and (not allowed or allowed[aff]) then
+            candidates[#candidates + 1] = aff
+        end
+    end
+    return candidates
+end
+
+-- count afflictions cured at random, one after another (fool takes three, Dragonheal takes 3 etc).
+function Model.cureRandom(target, count, pool, first)
+    for pass = 1, count do
+        local branched = {}
+        for _, state in ipairs(target.states) do
+            local candidates = Model.randomCandidates(state.affs, pool, first)
+            if #candidates == 0 then
+                local p = pass == 1 and state.p * Model.NOTHING or state.p
+                branched[#branched + 1] = { p = p, affs = state.affs }
+            else
+                for _, aff in ipairs(candidates) do
+                    branched[#branched + 1] = { p = state.p / #candidates, affs = Model.withOneLess(state.affs, aff) }
+                end
+            end
+        end
+        target.states = branched
+        Model.settle(target)
+    end
+end
+
+-- Proof that these weren't all present at once. If no state agrees, we can't tell which one was missing, so change nothing.
+function Model.proofNotAll(target, affs)
+    local agreeing = {}
+    for _, state in ipairs(target.states) do
+        local all = true
+        for _, aff in ipairs(affs) do
+            if state.affs[aff] == nil then
+                all = false
+            end
+        end
+        if not all then
+            agreeing[#agreeing + 1] = state
+        end
+    end
+    if #agreeing > 0 then
+        target.states = agreeing
+        Model.settle(target)
+    end
 end
 
 -- Evidence first (how likely they'd pick this cure in each state), then a random removal among what it can cure.

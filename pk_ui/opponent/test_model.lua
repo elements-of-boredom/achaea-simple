@@ -146,4 +146,21 @@ t.states = { { p = 0.5, affs = { prone = true, brokenrightleg = true } }, { p = 
 for _, blocker in ipairs(Queries.CHANNEL_BLOCKERS.stand) do Model.proof(t, blocker, false) end
 check("standing proves the right leg is fine", Model.prob(t, "brokenrightleg"), 0)
 
+t = Model.newTarget("Bob")
+for _, aff in ipairs({ "anorexia", "asthma", "slickness", "norebounding" }) do Model.gain(t, aff) end
+Model.cureRandom(t, 1)
+check("random cure never takes a defence", Model.prob(t, "norebounding"), 1)
+check("random cure takes one of three", Model.prob(t, "asthma"), 2 / 3)
+
+t = Model.newTarget("Bob")
+Model.gain(t, "voyria")
+Model.gain(t, "asthma")
+Model.cureRandom(t, 1, nil, { "voyria" })
+check("passives cure voyria first", Model.prob(t, "voyria"), 0)
+
+t = Model.newTarget("Bob")
+t.states = { { p = 0.5, affs = { brokenleftarm = true, brokenrightarm = true } }, { p = 0.5, affs = { brokenleftarm = true } } }
+Model.proofNotAll(t, { "brokenleftarm", "brokenrightarm" })
+check("bloodboil proves not both arms", Model.prob(t, "brokenrightarm"), 0)
+
 print(failures == 0 and "all passed" or (failures .. " failed"))

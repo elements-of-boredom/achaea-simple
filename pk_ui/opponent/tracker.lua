@@ -100,6 +100,33 @@ function opponent.apply(event)
         opponent.Model.land(opponent.get(event.name), event.key)
         return
     end
+    if event.kind == "classcure" then
+        local entry = opponent.classCures.active[event.cure] or opponent.classCures.passive[event.cure]
+        if not entry then
+            return
+        end
+        local target = opponent.get(event.name)
+        for _, group in ipairs(entry.blockers or {}) do
+            if #group == 1 then
+                opponent.Model.proof(target, group[1], false)
+            else
+                opponent.Model.proofNotAll(target, group)
+            end
+        end
+        if entry.cures == "all" then
+            target.states = { { p = 1, affs = {} } }
+        elseif entry.only then
+            for _, aff in ipairs(entry.only) do
+                opponent.Model.removeOne(target, aff)
+            end
+        elseif entry.cures then
+            opponent.Model.cureRandom(target, entry.cures, entry.pool, entry.first)
+        end
+        if #entry.classes == 1 then
+            target.class = entry.classes[1]
+        end
+        return
+    end
     local target = opponent.get(event.name)
     if event.kind == "cure" then
         opponent.channelProof(target, event.cure)
@@ -172,4 +199,5 @@ end
 
 PkCore.onVitalsChanged("opponent.flush", opponent.flush)
 loadModule("opponent/parse_cures.lua")
+loadModule("opponent/parse_class_cures.lua")
 loadModule("opponent/commands.lua")
