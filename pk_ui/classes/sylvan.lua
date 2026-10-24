@@ -39,7 +39,7 @@ return {
         cost = 36,
         cooldown = 23,
         known = true,
-        success = "^You command the razor-edged thorny vines around you",
+        success = "",
         description = "Use your power over nature to cause a vine to grow up around your target, then channel earth to cause the vine to constrict around your target and cause great pain."
     }, {
         name = "Leechroot",
