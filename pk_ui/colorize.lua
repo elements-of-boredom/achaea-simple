@@ -264,7 +264,7 @@ local EFFECT_RULES = {
   { "^You have scored (?:a|an) [\\w -]*CRITICAL hit!+$", { 255, 255, 120 }, "lightning" },
   { "^You bleed \\d+ health\\.$", { 220, 30, 40 }, "bleeding" },
   { "^You let loose a steady stream of cold air around", { 0, 255, 255 }, "frost" },
-  { "\\(You gain \\d+)) Renown", { 255, 255, 120 }, "lightning"},
+  { "\\(You gain \\d+ Renown", { 255, 255, 120 }, "lightning"},
 }
 
 -- ── Apply ────────────────────────────────────────────────────────────────

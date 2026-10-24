@@ -86,6 +86,36 @@ local REBOUNDING_UP = {
 }
 for _, pattern in ipairs(REBOUNDING_DOWN) do opponent.affLine(pattern, "gain", "norebounding") end
 for _, pattern in ipairs(REBOUNDING_UP) do opponent.affLine(pattern, "lose", "norebounding") end
+-- Copy paste habits ftw. DOn't think density has more than one line, but to be prepared.
+local DENSITY_DOWN = {
+    [[^A great weight seems to have been lifted from ([\w'\-]+)\.$]],
+}
+for _, pattern in ipairs(DENSITY_DOWN) do opponent.affLine(pattern, "gain", "nodensity") end
+
+local FANGBARRIER_DOWN = {
+    [[^The protective coating covering the skin of ([\w'\-]+) sloughs off\.$]],
+    [[^You try to flay a non-existent sileris coating from ([\w'\-]+)\.$]],
+    [[^You flay the metallic coating from ([\w'\-]+)\.$]],
+}
+local FANGBARRIER_UP = {
+    [[^You try to bite ([\w'\-]+), but your fangs are stopped by an odd (?:metallic|waxy) coating\.$]],
+}
+for _, pattern in ipairs(FANGBARRIER_DOWN) do opponent.affLine(pattern, "gain", "nofangbarrier") end
+for _, pattern in ipairs(FANGBARRIER_UP) do opponent.affLine(pattern, "lose", "nofangbarrier") end
+
+local SILERIS_LINES = {
+    [[^([\w'\-]+) applies a sileris berry to [\w'\-]+\.$]],
+    [[^([\w'\-]+) applies a quicksilver droplet to [\w'\-]+\.$]],
+}
+for _, pattern in ipairs(SILERIS_LINES) do
+    addTrigger(pattern, function(_, _, w)
+        local name = w[1]
+        if not opponent.isTracked(name) then return end
+        opponent.record(name, { kind = "proof", aff = "slickness", present = false })
+        opponent.record(name, { kind = "gain", aff = "nofangbarrier" })
+        opponent.record(name, { kind = "lose", aff = "nofangbarrier", due = PkCore.now() + opponent.SILERIS_DELAY })
+    end, { type = "regex" })
+end
 
 local SMOKE_LINES = {
     [[^([\w'\-]+) takes a long drag off [\w'\-]+ .+\.$]],

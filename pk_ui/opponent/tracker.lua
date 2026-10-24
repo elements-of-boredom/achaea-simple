@@ -11,6 +11,7 @@ for _, marker in pairs(opponent.Model.DELAYED) do
     table.insert(opponent.Queries.CHANNEL_BLOCKERS.apply, marker)
 end
 opponent.RESTORATION_DELAY = 4.0
+opponent.SILERIS_DELAY = 9.0
 opponent.classCures = loadModule("opponent/class_cures.lua")
 
 opponent.targets = opponent.targets or {}
@@ -94,6 +95,10 @@ function opponent.apply(event)
     end
     if event.kind == "lose" then
         opponent.Model.remove(opponent.get(event.name), event.aff)
+        return
+    end
+    if event.kind == "proof" then
+        opponent.Model.proof(opponent.get(event.name), event.aff, event.present)
         return
     end
     if event.kind == "land" then
