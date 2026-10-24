@@ -75,6 +75,9 @@ function Model.load(data)
     addCureSet("focus", data.focus)
     addCureSet("tree", data.tree)
     addCureSet("writhe", data.writhe)
+    for action, list in pairs(data.other) do
+        addCureSet(action, list)
+    end
     Model.announced = {}
     for _, aff in ipairs(data.announced) do
         Model.announced[aff] = true

@@ -90,6 +90,13 @@ Queries.CHANNEL_BLOCKERS = {
   focus   = { "impatience" },
   tree    = { "paralysis" },
   fitness = { "weariness" },
+  stand = {
+        "paralysis",
+        "brokenleftleg", "brokenrightleg",
+        "damagedleftleg", "damagedrightleg",
+        "mangledleftleg", "mangledrightleg",
+    },
+  concentrate = { "confusion" },
 }
 
 -- Chance this cure channel is usable right now.

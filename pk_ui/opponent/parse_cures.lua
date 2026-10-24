@@ -59,21 +59,17 @@ end, {
 --------------------------------------------
 -----------------PIPES----------------------
 --------------------------------------------
--- Rebounding: down adds "norebounding", which skullcap cures; up removes it.
-function opponent.reboundingLine(pattern, kind)
-    addTrigger(pattern, function(_, _, w)
-        local name = (w and w[1]) or opponent.nameOrTarget()
-        if not name or not opponent.isTracked(name) then
-            return
-        end
-        opponent.record(name, {
-            kind = kind,
-            aff = "norebounding"
-        })
-    end, {
-        type = "regex"
-    })
-end
+-- A line that certainly adds or removes one affliction. who: which capture is the target (default 1);
+  -- a pattern with no capture means the current target.
+  function opponent.affLine(pattern, kind, aff, who)
+      addTrigger(pattern, function(_, _, w)
+          local name = (w and w[who or 1]) or opponent.nameOrTarget()
+          if not name or not opponent.isTracked(name) then
+              return
+          end
+          opponent.record(name, { kind = kind, aff = aff })
+      end, { type = "regex" })
+  end
 
 local REBOUNDING_DOWN = {
     [[^([\w'\-]+)'s aura of weapons rebounding disappears\.$]],
@@ -88,12 +84,8 @@ local REBOUNDING_UP = {
     [[^You would be unable to pierce through the aura of rebounding protecting ([\w'\-]+)\.$]],
     [[^The attack rebounds (?:back )?onto you!$]],
 }
-for _, pattern in ipairs(REBOUNDING_DOWN) do
-    opponent.reboundingLine(pattern, "gain")
-end
-for _, pattern in ipairs(REBOUNDING_UP) do
-    opponent.reboundingLine(pattern, "lose")
-end
+for _, pattern in ipairs(REBOUNDING_DOWN) do opponent.affLine(pattern, "gain", "norebounding") end
+for _, pattern in ipairs(REBOUNDING_UP) do opponent.affLine(pattern, "lose", "norebounding") end
 
 local SMOKE_LINES = {
     [[^([\w'\-]+) takes a long drag off [\w'\-]+ .+\.$]],
@@ -138,3 +130,56 @@ function opponent.applyLine(pattern, spots, known)
 end
 opponent.applyLine([[^([\w'\-]+) takes some (?:balm|salve) from a vial and rubs it on [\w'\-]+ ([\w'\-]+)\.$]], opponent.SALVE_SPOTS, false)
 opponent.applyLine([[^([\w'\-]+) takes some elixir from .+ and rubs it into [\w'\-]+ ([\w'\-]+)\.$]], opponent.ELIXIR_SPOTS, true)
+
+
+--------------------------------------------
+-------------100% REMOVALS---------------
+--------------------------------------------
+local REMOVALS = {
+    { [[^([\w'\-]+) has writhed free of [\w'\-]+ state of transfixation\.$]], "transfixation" },
+    { [[^([\w'\-]+) has writhed free of [\w'\-]+ entanglement by (?:tied )?ropes\.$]], "bound" },
+    -- Inferred from our own "You have writhed free of your entanglement by webs."; not yet seen third-person.
+    { [[^([\w'\-]+) has writhed free of [\w'\-]+ entanglement by webs\.$]], "webbed" },
+    { [[^Gritting [\w'\-]+ glistening teeth into a rictus grin, ([\w'\-]+) emits a low rumble as [\w'\-]+ flexes [\w'\-]+ rippling muscles, bursting the bindings that hold [\w'\-]+\.$]], "bound" },
+    { [[^With a look of agony on [\w'\-]+ face, ([\w'\-]+) manages to writhe [\w'\-]+ free of the weapon which impaled [\w'\-]+\.$]], "impaled" },
+    { [[^([\w'\-]+) wakes up with a gasp of pain\.$]], "sleeping" },
+    { [[^([\w'\-]+) awakens with a start\.$]], "sleeping" },
+    { [[^([\w'\-]+)'s eyes lose their focus suddenly\.$]], "disrupted" },
+}
+for _, entry in ipairs(REMOVALS) do
+    opponent.affLine(entry[1], "lose", entry[2])
+end
+-- Fire Lord: writhing out of the weave frees them but sets them alight.
+local WEAVE = [[^([\w'\-]+) has writhed free of [\w'\-]+ conflagrant weave\.$]]
+opponent.affLine(WEAVE, "lose", "bound")
+opponent.affLine(WEAVE, "gain", "burning")
+
+local STANDS = {
+    [[^([\w'\-]+) stands up\.$]],
+    [[^([\w'\-]+) rolls smoothly back to [\w'\-]+ feet\.$]],
+    [[^([\w'\-]+) pushes off the ground, coming back up into a guard position\.$]],
+    [[^([\w'\-]+) backs away and out of your reach\.$]],
+}
+for _, pattern in ipairs(STANDS) do
+    opponent.fixedCureLine(pattern, "stand", 0, "stand")
+end
+opponent.fixedCureLine([[^([\w'\-]+)'s eyes lose their focus suddenly\.$]], "concentrate", 0, "concentrate")
+
+--------------------------------------------
+------------------IMPALE--------------------
+--------------------------------------------
+local IMPALE_ON = {
+    { [[^You draw your blade back and plunge it deep into the body of ([\w'\-]+) impaling [\w'\-]+ to the hilt\.$]] },
+    { [[^([\w'\-]+) draws back [\w'\-]+ blade and impales ([\w'\-]+) to the hilt\.$]], 2 },
+    { [[^([\w'\-]+) shifts the sword impaling ([\w'\-]+)'s abdomen, and blood streams freely from ?the grave wound\.$]], 2 },
+    { [[^([\w'\-]+) is already impaled upon the sword of [\w'\-]+ and you can see no room for your own blade\.$]] },
+}
+local IMPALE_OFF = {
+    { [[^With a vicious snarl you carve a merciless swathe through the steaming guts of ([\w'\-]+), .+$]] },
+    { [[^With a vicious snarl [\w'\-]+ carves a merciless swathe through the steaming guts of ([\w'\-]+), .+$]] },
+    { [[^With a snarl of contempt, you allow ([\w'\-]+) to slide free of your weapon\.$]] },
+    { [[^As ([\w'\-]+) wrenches away from you, your blade rips through [\w'\-]+ innards in a violent ?fashion.+$]] },
+    { [[^([\w'\-]+) tumbles out to the .+\.$]] },
+}
+for _, entry in ipairs(IMPALE_ON) do opponent.affLine(entry[1], "gain", "impaled", entry[2]) end
+for _, entry in ipairs(IMPALE_OFF) do opponent.affLine(entry[1], "lose", "impaled", entry[2]) end

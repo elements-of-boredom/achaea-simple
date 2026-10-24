@@ -133,4 +133,17 @@ table.insert(Queries.CHANNEL_BLOCKERS.apply, "restoring.legs")
 check("a pending restoration counts as slick for a softlock", Queries.lock(t, "softlock"), 1)
 check("and shuts the apply channel", Queries.channelOpen(t, "apply"), 0)
 
+t = Model.newTarget("Bob")
+Model.gain(t, "prone")
+t.states = { { p = 0.5, affs = { prone = true, paralysis = true } }, { p = 0.5, affs = { prone = true } } }
+Model.proof(t, "paralysis", false)
+Model.cure(t, "stand")
+check("standing proves no paralysis", Model.prob(t, "paralysis"), 0)
+check("and cures prone", Model.prob(t, "prone"), 0)
+
+t = Model.newTarget("Bob")
+t.states = { { p = 0.5, affs = { prone = true, brokenrightleg = true } }, { p = 0.5, affs = { prone = true } } }
+for _, blocker in ipairs(Queries.CHANNEL_BLOCKERS.stand) do Model.proof(t, blocker, false) end
+check("standing proves the right leg is fine", Model.prob(t, "brokenrightleg"), 0)
+
 print(failures == 0 and "all passed" or (failures .. " failed"))
