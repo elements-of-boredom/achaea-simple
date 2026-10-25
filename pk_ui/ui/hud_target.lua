@@ -10,11 +10,12 @@ local CSS = [[
 .mf-theme .mf-target-track i { background: var(--mf-affliction); }
 .mf-theme .mf-target { align-items: flex-end; }
 .mf-theme .mf-target-symbol { align-self: center; }
+.mf-theme .mf-target-panel .mf-limb em[data-prepped="true"] { color: var(--mf-affliction); }
 ]]
 
 function hud.html()
   return "<style>" .. CSS .. "</style>" ..'<div class="mf-target-panel">'
-    .. PkCore.ui.limbs.row("TARGET", "target-limbs")
+    .. PkCore.ui.limbs.row("TARGET", "target-limbs", "tgt")
     .. '<div class="mf-target" data-field="target">'
     ..   '<span class="mf-target-symbol">&#x2316;</span>'
     ..   '<div class="mf-target-data">'
@@ -30,11 +31,12 @@ function hud.render()
   if not id then return end
   local r = PkCore.room
   local pct = r.targetHpPercent
-  setBoundValues(id, {
-    tgtName = r.targetName() or "",
-    tgtPct = pct and (pct .. "%") or "",
-    tgtBar = (pct or 0) .. "%",
-  })
+  local opponent = PkCore.opponent
+  local values = opponent and opponent.limbView and PkCore.ui.limbs.values("tgt", opponent.limbView(r.targetName())) or {}
+  values.tgtName = r.targetName() or ""
+  values.tgtPct = pct and (pct .. "%") or ""
+  values.tgtBar = (pct or 0) .. "%"
+  setBoundValues(id, values)
 end
 
 PkCore.onStateChanged("ui.hudTarget", hud.render)

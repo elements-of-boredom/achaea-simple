@@ -19,7 +19,7 @@ local function topbar()
       .. '<strong data-mud-bind="' .. f[2] .. '">&#x2014;</strong></div>'
   end
   return '<div class="mf-self-topbar">'
-    .. PkCore.ui.limbs.row("YOU", "self-limbs")
+    .. PkCore.ui.limbs.row("YOU", "self-limbs", "self")
     .. '<section class="mf-combat-status" data-field="combat-configuration">' .. table.concat(fields) .. "</section>"
     .. "</div>"
 end
@@ -84,9 +84,17 @@ function hud.renderStatus()
   setBoundValues(id, { hudMode = string.upper(mode) })
 end
 
+function hud.renderLimbs()
+  local id = PkCore.ui.layout.widgets.hudSelf
+  if not id or not PkCore.limbs then return end
+  setBoundValues(id, PkCore.ui.limbs.values("self", PkCore.limbs.selfView()))
+end
+
 PkCore.onVitalsChanged("ui.hudSelf", hud.renderVitals)
 PkCore.onStateChanged("ui.hudSelf", hud.renderStatus)
+PkCore.onStateChanged("ui.hudSelfLimbs", hud.renderLimbs)
 PkCore.ui.layout.setContent("hudSelf", hud.html, function()
   hud.renderVitals()
   hud.renderStatus()
+  hud.renderLimbs()
 end)

@@ -121,4 +121,14 @@ function Queries.sorted(target)
   return list
 end
 
+-- The damage that still counts on a limb, and hits of the last size needed to step it.
+function Queries.limb(target, limb, now)
+    local entry = target.limbs[limb]
+    if not entry or (entry.at and now - entry.at > 180) then
+        return 0, nil
+    end
+    local hits = entry.lastHit and entry.lastHit > 0 and math.ceil((100 - entry.damage) / entry.lastHit) or nil
+    return entry.damage, hits
+end
+
 return Queries

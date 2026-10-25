@@ -208,4 +208,40 @@ Model.deliver(t, VENOMS.delphinium)
 check("a shown venom leaves the gain to its line", Model.prob(t, "sleeping"), 0)
 check("but always settles the defence", t.insomnia == "no" and 1 or 0, 1)
 
+t = Model.newTarget("Bob")
+for i = 1, 4 do Model.limbDamage(t, "leftarm", 24, i) end
+check("four 24% hits sit at 96", t.limbs.leftarm.damage, 96)
+check("and the arm is still healthy", Model.prob(t, "damagedleftarm"), 0)
+Model.limbDamage(t, "leftarm", 24, 5)
+check("the fifth crosses 100: damaged", Model.prob(t, "damagedleftarm"), 1)
+check("and the extra 20 is thrown away", t.limbs.leftarm.damage, 0)
+
+t = Model.newTarget("Bob")
+Model.gain(t, "brokenleftarm")
+Model.limbDamage(t, "leftarm", 120, 1)
+check("broken over 100 becomes damaged", Model.prob(t, "damagedleftarm"), 1)
+check("not damaged and broken", Model.prob(t, "brokenleftarm"), 0)
+Model.limbDamage(t, "leftarm", 100, 2)
+check("damaged over 100 becomes mangled", Model.prob(t, "mangledleftarm"), 1)
+Model.limbDamage(t, "leftarm", 100, 3)
+check("mangled is the last step", Model.prob(t, "mangledleftarm"), 1)
+
+t = Model.newTarget("Bob")
+Model.limbDamage(t, "torso", 100, 1)
+check("torso's first step is mild trauma", Model.prob(t, "mildtrauma"), 1)
+Model.limbDamage(t, "torso", 100, 2)
+check("then serious trauma", Model.prob(t, "serioustrauma"), 1)
+
+t = Model.newTarget("Bob")
+t.states = { { p = 0.6, affs = { damagedleftleg = true } }, { p = 0.4, affs = {} } }
+Model.limbDamage(t, "leftleg", 100, 1)
+check("a maybe-damaged leg steps per state: mangled", Model.prob(t, "mangledleftleg"), 0.6)
+check("or damaged", Model.prob(t, "damagedleftleg"), 0.4)
+
+t = Model.newTarget("Bob")
+Model.limbDamage(t, "head", 90, 0)
+Model.limbDamage(t, "head", 20, 200)
+check("damage left alone past the decay is gone", t.limbs.head.damage, 20)
+check("so 90 then 20 much later doesn't step", Model.prob(t, "damagedhead"), 0)
+
 print(failures == 0 and "all passed" or (failures .. " failed"))

@@ -279,6 +279,50 @@ function Model.deliver(target, entry)
     end
 end
 
+-- 100% on a limb moves it one step along its ladder; the extra is lost. Mildest first.
+Model.LIMB_BREAK = 100
+Model.LIMB_DECAY = 180
+Model.LIMB_STEPS = {
+    head = { "damagedhead", "mangledhead" },
+    torso = { "mildtrauma", "serioustrauma" },
+}
+function Model.limbSteps(limb)
+    return Model.LIMB_STEPS[limb] or { "damaged" .. limb, "mangled" .. limb }
+end
+
+-- Per state: healthy or broken becomes the first step, each step the next, the last step stays.
+function Model.limbWorsen(target, limb)
+    local steps = Model.limbSteps(limb)
+    for _, state in ipairs(target.states) do
+        local at = 0
+        for i, aff in ipairs(steps) do
+            if state.affs[aff] then at = i end
+        end
+        if at < #steps then
+            local affs = Model.copyAffs(Model.copyAffs(state.affs, steps[at]), "broken" .. limb)
+            affs[steps[at + 1]] = true
+            state.affs = affs
+        end
+    end
+    Model.settle(target)
+end
+
+-- A hit for a known amount at a known time. Damage left alone for LIMB_DECAY seconds is gone.
+function Model.limbDamage(target, limb, amount, now)
+    local entry = target.limbs[limb] or { damage = 0 }
+    if entry.at and now - entry.at > Model.LIMB_DECAY then
+        entry.damage = 0
+    end
+    entry.damage = entry.damage + amount
+    entry.lastHit = amount
+    entry.at = now
+    if entry.damage >= Model.LIMB_BREAK then
+        entry.damage = 0
+        Model.limbWorsen(target, limb)
+    end
+    target.limbs[limb] = entry
+end
+
 -- A certain removal: the game told us, or a self-announcing cure.
 function Model.remove(target, aff)
     for _, state in ipairs(target.states) do

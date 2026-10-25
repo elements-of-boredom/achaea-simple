@@ -86,6 +86,18 @@ local function selfEntries()
   return entries
 end
 
+local function targetEntries()
+  local opponent = PkCore.opponent
+  if not (opponent and opponent.display) then return {} end
+  local entries = {}
+  for _, entry in ipairs(opponent.display(PkCore.room.targetName())) do
+    local c = entry.count
+    if entry.p < opponent.Queries.SURE then c = math.floor(entry.p * 100 + 0.5) .. "%" end
+    entries[#entries + 1] = { n = entry.aff, c = c }
+  end
+  return entries
+end
+
 local function renderLocks(id)
   local has = PkCore.afflictions.has
   local values = {
@@ -100,11 +112,17 @@ local function renderLocks(id)
   setBoundValues(id, values)
 end
 
--- Skips the send when nothing changed: stateChanged() fires for every kind of state.
+-- Skips each send when nothing changed: stateChanged() fires for every kind of state.
 function afflictions.render(id, force)
   renderLocks(id)
-  local payload = json.encode({ kind = "afflictions", side = "self", entries = selfEntries() })
-  if payload == afflictions.lastSelf and not force then return end
-  afflictions.lastSelf = payload
-  sendWidgetMessage(id, payload)
+  local self = json.encode({ kind = "afflictions", side = "self", entries = selfEntries() })
+  if self ~= afflictions.lastSelf or force then
+    afflictions.lastSelf = self
+    sendWidgetMessage(id, self)
+  end
+  local target = json.encode({ kind = "afflictions", side = "target", entries = targetEntries() })
+  if target ~= afflictions.lastTarget or force then
+    afflictions.lastTarget = target
+    sendWidgetMessage(id, target)
+  end
 end

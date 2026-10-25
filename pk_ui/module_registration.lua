@@ -11,6 +11,7 @@ loadModule("state/room.lua")
 loadModule("state/vitals.lua")
 loadModule("state/afflictions.lua")
 loadModule("state/balances.lua")
+loadModule("state/limbs.lua")
 
 loadModule("readiness.lua")
 loadModule("prompt_tags.lua")

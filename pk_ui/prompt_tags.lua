@@ -162,6 +162,20 @@ PkCore.registerPromptTag("afflictions", function()
   return table.concat(parts, " ") .. "<" .. C.text .. ">"
 end)
 
+PkCore.registerPromptTag("targetafflictions", function()
+  local opponent, name = PkCore.opponent, PkCore.room.targetName()
+  if not (opponent and opponent.display) then return "" end
+  local parts = {}
+  for _, entry in ipairs(opponent.display(name)) do
+    local short = PkCore.afflictionShort[entry.aff] or entry.aff
+    if entry.count then short = short .. "(" .. entry.count .. ")" end
+    if entry.p < opponent.Queries.SURE then short = short .. "?" end
+    table.insert(parts, "<" .. afflictionColor(entry.aff) .. ">" .. short)
+  end
+  if #parts == 0 then return "" end
+  return table.concat(parts, " ") .. "<" .. C.text .. ">"
+end)
+
 -- Colour tags: percentage-tiered --
 local function tierColor(current, max, highPct, lowPct)
   if not (current and max and max > 0) then return C.text end

@@ -13,6 +13,12 @@ end
 opponent.RESTORATION_DELAY = 4.0
 opponent.SILERIS_DELAY = 9.0
 opponent.SENSE_WINDOW = { deaf = { 2.0, 4.2 } }
+-- Game limb words to the model's keys: "left leg" -> "leftleg".
+opponent.LIMBS = {
+    ["left leg"] = "leftleg", ["right leg"] = "rightleg",
+    ["left arm"] = "leftarm", ["right arm"] = "rightarm",
+    head = "head", torso = "torso",
+}
 opponent.classCures = loadModule("opponent/class_cures.lua")
 opponent.VENOMS = loadModule("opponent/offense/venoms.lua")
 
@@ -109,6 +115,19 @@ function opponent.apply(event)
             return
         end
         target[event.sense] = event.value
+        return
+    end
+     if event.kind == "attack" then
+        if event.missed or not event.confirmed then
+            return
+        end
+        local target = opponent.get(event.name)
+        for _, entry in ipairs(event.deliveries) do
+            opponent.Model.deliver(target, entry)
+        end
+        if event.limb and event.damage then
+            opponent.Model.limbDamage(target, opponent.LIMBS[event.limb] or event.limb, event.damage, event.time)
+        end
         return
     end
     if event.kind == "land" then
