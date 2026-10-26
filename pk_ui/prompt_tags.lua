@@ -130,7 +130,10 @@ PkCore.registerPromptTag("wpdelta", deltaPerc("w", "maxwp", 2))
 PkCore.registerPromptTag("bal", function() return PkCore.balance.balance and "x" or "-" end)
 PkCore.registerPromptTag("eq", function() return PkCore.balance.equilibrium and "e" or "-" end)
 PkCore.registerPromptTag("target", function() return PkCore.room.targetName() or "" end)
-PkCore.registerPromptTag("targethpperc", function() return PkCore.room.targetHpPercent or "" end)
+PkCore.registerPromptTag("targethpperc", function()
+  local opponent = PkCore.opponent
+  return (opponent and opponent.targetHealth and opponent.targetHealth()) or PkCore.room.targetHpPercent or ""
+end)
 PkCore.registerPromptTag("rage", function() return tostring(PkCore.playerStatus.rage or "") end)
 PkCore.registerPromptTag("shaping", function() return tostring(PkCore.playerStatus.shaping or "") end)
 PkCore.registerPromptTag("sunlight", function() return tostring(PkCore.playerStatus.sunlight or "") end)

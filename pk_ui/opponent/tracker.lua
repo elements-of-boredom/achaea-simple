@@ -98,10 +98,18 @@ function opponent.apply(event)
         return
     end
     if event.kind == "gain" then
-        opponent.Model.gain(opponent.get(event.name), event.aff, event.count)
+        local target = opponent.get(event.name)
+        if event.chance then
+            opponent.Model.gainMaybe(target, event.aff, event.chance)
+        else
+            opponent.Model.gain(target, event.aff, event.count)
+        end
         return
     end
     if event.kind == "lose" then
+        if event.expiry and opponent.expiries[event.expiry] ~= event.token then
+            return
+        end
         opponent.Model.remove(opponent.get(event.name), event.aff)
         return
     end
@@ -193,14 +201,14 @@ function opponent.apply(event)
     end
 end
 
-function opponent.flush()
+function opponent.flush(dueOnly)
     if #opponent.pending == 0 then
         return
     end
     local events, now, applied = opponent.pending, PkCore.now(), false
     opponent.pending = {}
     for _, event in ipairs(events) do
-        if event.due and event.due > now then
+        if (event.due and event.due > now) or (dueOnly and not event.due) then
             opponent.pending[#opponent.pending + 1] = event
         else
             opponent.apply(event)
@@ -251,9 +259,71 @@ function opponent.resetLimb(name, limb)
     PkCore.stateChanged()
 end
 
+-- A timed affliction ending. A re-application restarts the clock, so only the newest timer ends it.
+opponent.expiries = opponent.expiries or {}
+function opponent.recordExpiry(name, aff, seconds)
+    local key = name:lower() .. ":" .. aff
+    local token = {}
+    opponent.expiries[key] = token
+    opponent.record(name, { kind = "lose", aff = aff, due = PkCore.now() + seconds, expiry = key, token = token })
+end
+
+-- Health from ASSESS, the only source for a player (GMCP target health is denizens only).
+-- A reading goes stale fast in a fight, so it only counts for ASSESS_FRESH seconds.
+opponent.health = opponent.health or {}
+opponent.ASSESS_FRESH = 6
+
+addTrigger([[^You glance over ([\w'\-]+) and see that [\w'\-]+ health is at (\d+)/(\d+) \[(\d+)%\]\.$]], function(_, _, w)
+    opponent.health[w[1]:lower()] = { percent = tonumber(w[4]), at = PkCore.now() }
+    PkCore.stateChanged()
+end, { type = "regex" })
+
+function opponent.healthPercent(name)
+    local entry = opponent.health[name:lower()]
+    if entry and PkCore.now() - entry.at <= opponent.ASSESS_FRESH then
+        return entry.percent
+    end
+end
+-- The current target's health %: GMCP for denizens, our last fresh ASSESS for players.
+function opponent.targetHealth()
+    local name = PkCore.room.targetName()
+    return PkCore.room.targetHpPercent or (name and opponent.healthPercent(name))
+end
+
+-- Heals we can see raise the last reading, never past 100. A mana sip looks the same as a health
+-- sip, so this can overestimate. That's the safe side: a "below 75%" check just doesn't fire.
+opponent.HEALS = {
+    { [[^([\w'\-]+) takes a drink from .+\.$]], 17 },
+    { [[^([\w'\-]+) eats (?:some irid moss|a potash crystal)\.$]], 8 },
+    { [[^([\w'\-]+) swoons for a moment then rises again, flushed but strong\.$]], 40 },
+    { [[^A look of relief crosses ([\w'\-]+)'s face as [\w'\-]+ touches a crystal tattoo\.$]], 100 },
+}
+for _, entry in ipairs(opponent.HEALS) do
+    local amount = entry[2]
+    addTrigger(entry[1], function(_, _, w)
+        local reading = opponent.health[w[1]:lower()]
+        if reading then
+            reading.percent = math.min(100, reading.percent + amount)
+            PkCore.stateChanged()
+        end
+    end, { type = "regex" })
+end
+
 PkCore.onVitalsChanged("opponent.flush", opponent.flush)
+-- Timed events (an affliction wearing off, a sense window) apply on time, not at the next prompt.
+-- Fresh events still wait for the prompt: a burst of lines isn't finished until then (rend, then carve).
+opponent.TICK_MS = 200
+if opponent.tickTimer then
+    removeTimer(opponent.tickTimer)
+end
+opponent.tickTimer = addTimer(opponent.TICK_MS, function()
+    opponent.flush(true)
+end, true)
+
+-- Sub-modules
 loadModule("opponent/parse_cures.lua")
 loadModule("opponent/parse_class_cures.lua")
+loadModule("opponent/parse_symptoms.lua")
 -- classes
 loadModule("opponent/offense/sylvan.lua")
 

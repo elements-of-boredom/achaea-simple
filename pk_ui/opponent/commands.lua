@@ -1,6 +1,7 @@
 local opponent = PkCore.opponent
 
 function opponent.show(name)
+    opponent.flush() -- pretend we got a prompt incase we do this back to back with inline lua.
     name = opponent.nameOrTarget(name)
     if not name then
         PkCore.note("opponent: no target")

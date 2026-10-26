@@ -43,8 +43,8 @@ function hud.render()
   local id = PkCore.ui.layout.widgets.hudTarget
   if not id then return end
   local r = PkCore.room
-  local pct = r.targetHpPercent
   local opponent = PkCore.opponent
+  local pct = opponent and opponent.targetHealth and opponent.targetHealth() or r.targetHpPercent
   local values = opponent and opponent.limbView and PkCore.ui.limbs.values("tgt", opponent.limbView(r.targetName())) or {}
   values.tgtName = r.targetName() or ""
   values.tgtPct = pct and (pct .. "%") or ""

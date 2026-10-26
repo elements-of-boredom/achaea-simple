@@ -54,7 +54,7 @@ Model.DELAYED = {
 }
 
 -- Made-up afflictions that track defences or pending cures. Random cures never pick these.
-Model.PSEUDO = { norebounding = true, nodensity = true, nofangbarrier = true }
+Model.PSEUDO = { norebounding = true, nodensity = true, nofangbarrier = true, vinewreathed = true }
 for _, marker in pairs(Model.DELAYED) do
     Model.PSEUDO[marker] = true
 end

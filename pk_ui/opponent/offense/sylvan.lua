@@ -123,3 +123,114 @@ addTrigger([[^([\w'\-]+) parries the attack with a deft manoeuvre\.$]], function
     local attack = opponent.lastPending(w[1], "attack")
     if attack then attack.missed = true end
 end, { type = "regex" })
+
+-- A line that means a fixed set of events. `delay` makes an event wait (a timed affliction ending).
+function opponent.spellLine(pattern, events)
+    addTrigger(pattern, function(_, _, w)
+        local name = w[1]
+        if not name or not opponent.isTracked(name) then
+            return
+        end
+         for _, template in ipairs(events) do
+            if template.delay then
+                opponent.recordExpiry(name, template.aff, template.delay)
+            else
+                local event = {}
+                for key, value in pairs(template) do
+                    event[key] = value
+                end
+                opponent.record(name, event)
+            end
+        end
+    end, { type = "regex" })
+end
+
+opponent.BLACKOUT_ECLIPSE = 6
+opponent.BLACKOUT_BOLT = 4
+opponent.VINEWREATHE = 25
+local SPELLS = {
+    { [[^Channeling arcane power through your air and earth channels, you summon forth a burst of arcane static directed at ([\w'\-]+)\.$]],
+        { { kind = "gain", aff = "paralysis" } } },
+    { [[^Channeling large quantities of arcane power through your air channel, you direct a localised explosion of pure sound at ([\w'\-]+)\.$]],
+        { { kind = "gain", aff = "sensitivity" }, { kind = "sense", sense = "deaf", value = "no" } } },
+    { [[^Channeling large quantities of arcane power through your air channel, you direct a localised explosion of pure sound at ([\w'\-]+), restoring [\w'\-]+ hearing\.$]],
+        { { kind = "sense", sense = "deaf", value = "no" } } },
+    { [[^Summoning forth power through your air and earth channels, you conjure forth a brilliant flash of light at ([\w'\-]+), who blinks rapidly\.$]],
+        { { kind = "sense", sense = "blind", value = "no" } } },
+    { [[^Summoning forth power through your air and earth channels, you conjure forth a brilliant flash of light at ([\w'\-]+), who freezes in place\.$]],
+        { { kind = "gain", aff = "transfixation" }, { kind = "sense", sense = "blind", value = "no" } } },
+    { [[^Tapping into your air channel, you summon forth a vicious wind to lacerate the body of ([\w'\-]+)\.$]],
+        { { kind = "gain", aff = "healthleech" } } },
+    { [[^[\w'\-]+ thrusts one hand toward ([\w'\-]+), summoning forth a wind to viciously lacerate [\w'\-]+\.$]],
+        { { kind = "gain", aff = "healthleech" } } },
+    { [[^Summoning forth energy that you have gathered, you conjure forth a terrible cyclone of wind, picking up ([\w'\-]+) and whipping [\w'\-]+ about in a frenzy\.$]],
+        { { kind = "gain", aff = "dizziness" } } },
+    { [[^Summoning forth energy that you have gathered, you conjure forth a terrible cyclone of wind, picking up the disorientated form of ([\w'\-]+) and whipping [\w'\-]+ about in a frenzy, dashing [\w'\-]+ against any available surfaces\.$]],
+        { { kind = "proof", aff = "dizziness", present = true }, { kind = "gain", aff = "impatience" } } },
+    { [[^A flare of (?:sun|moon)light streaks forward to engulf ([\w'\-]+)\.$]],
+        { { kind = "gain", aff = "blackout" }, { kind = "lose", aff = "blackout", delay = opponent.BLACKOUT_ECLIPSE } } },
+    { [[^A flare of (?:sun|moon)light streaks forward, but ([\w'\-]+) ducks out of the way\.$]], {
+        { kind = "proof", aff = "prone", present = false },
+        { kind = "proof", aff = "webbed", present = false },
+        -- Inferred: they hold the target in place like webbed. Not tested yet.
+        { kind = "proof", aff = "bound", present = false },
+        { kind = "proof", aff = "transfixation", present = false },
+    } },
+    { [[^Blood sprays forth as the thorn-laden vine rips a deep wound in ([\w'\-]+)'s throat\.$]],
+        { { kind = "gain", aff = "laceratedthroat" } } },
+    { [[^Lunging forward with one palm outstretched and a singular purpose in mind, you strike a blow to ([\w'\-]+)'s heart\. Willing Nature's ire into [\w'\-]+ very soul, a warm pulse accompanies your attack as it connects\.$]],
+        { { kind = "gain", aff = "heartseed" } } },
+    { [[^Uttering a quiet recitation, you gesture towards ([\w'\-]+)\. A mass of writhing vines burst forth from the ground, grabbing hold of [\w'\-]+ form\.$]],
+        { { kind = "gain", aff = "vinewreathed" }, { kind = "lose", aff = "vinewreathed", delay = opponent.VINEWREATHE } } },
+    { [[^The vines flailing about ([\w'\-]+)'s form recede\.$]],
+        { { kind = "lose", aff = "vinewreathed" } } },
+}
+for _, entry in ipairs(SPELLS) do
+    opponent.spellLine(entry[1], entry[2])
+end
+
+-- The progression spells: the follow-up names the step, and proves every step below it.
+-- Only right after our own cast: the same lines come from anyone's hailstone or waterspout.
+local LADDERS = {
+    hailstone = { "clumsiness", "epilepsy", "impatience" },
+    waterspout = { "confusion", "dizziness", "vertigo" },
+}
+addTrigger([[^Channeling power through your water channel, you conjure forth a hailstone to strike ([\w'\-]+) in the side of the head\.$]], function()
+    opponent.offense.spell = "hailstone"
+end, { type = "regex" })
+addTrigger([[^You summon forth a spout of water, directing it at ([\w'\-]+)\.$]], function()
+    opponent.offense.spell = "waterspout"
+end, { type = "regex" })
+PkCore.onVitalsChanged("sylvan spell", function()
+    opponent.offense.spell = nil
+end)
+
+local FOLLOWUPS = {
+    { [[^([\w'\-]+) stumbles clumsily as the blow lands\.$]], "hailstone", 1 },
+    { [[^([\w'\-]+) begins to shake uncontrollably\.$]], "hailstone", 2 },
+    { [[^A puzzled expression crosses the face of ([\w'\-]+)\.$]], "hailstone", 3 },
+    { [[^([\w'\-]+) begins to thrash at the water enveloping [\w'\-]+\.$]], "waterspout", 1 },
+    { [[^([\w'\-]+) begins to sway unsteadily\.$]], "waterspout", 2 },
+    { [[^A look of panic comes over the face of ([\w'\-]+)\.$]], "waterspout", 3 },
+}
+for _, entry in ipairs(FOLLOWUPS) do
+    local spell, step = entry[2], entry[3]
+    addTrigger(entry[1], function(_, _, w)
+        if opponent.offense.spell ~= spell or not opponent.isTracked(w[1]) then
+            return
+        end
+        for i = 1, step - 1 do
+            opponent.record(w[1], { kind = "proof", aff = LADDERS[spell][i], present = true })
+        end
+    end, { type = "regex" })
+end
+
+addTrigger([[^Raising your hands above your head, you channel power through your earth and air channels\. Focusing upon ([\w'\-]+), you direct your arcane might in a focused burst, bringing down lightning to smite [\w'\-]+\.$]], function(_, _, w)
+    local name = w[1]
+    local hp = opponent.healthPercent(name)
+    if not opponent.isTracked(name) or not hp or hp >= 75 then
+        return
+    end
+    opponent.record(name, { kind = "gain", aff = "blackout" })
+    opponent.recordExpiry(name, "blackout", opponent.BLACKOUT_BOLT)
+end, { type = "regex" })

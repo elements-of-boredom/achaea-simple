@@ -196,6 +196,9 @@ local REMOVALS = {
     { [[^With a look of agony on [\w'\-]+ face, ([\w'\-]+) manages to writhe [\w'\-]+ free of the weapon which impaled [\w'\-]+\.$]], "impaled" },
     { [[^([\w'\-]+) wakes up with a gasp of pain\.$]], "sleeping" },
     { [[^([\w'\-]+) awakens with a start\.$]], "sleeping" },
+    { [[^([\w'\-]+) opens [\w'\-]+ eyes and stretches languidly, a smile on [\w'\-]+ face\.$]], "sleeping" },
+    { [[^([\w'\-]+) opens [\w'\-]+ eyes and yawns mightily\.$]], "sleeping" },
+    { [[^([\w'\-]+) seems able to move more freely all of a sudden\.$]], "hamstrung" },
     { [[^([\w'\-]+)'s eyes lose their focus suddenly\.$]], "disrupted" },
 }
 for _, entry in ipairs(REMOVALS) do
