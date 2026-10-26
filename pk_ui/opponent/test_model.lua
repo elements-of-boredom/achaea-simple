@@ -244,4 +244,20 @@ Model.limbDamage(t, "head", 20, 200)
 check("damage left alone past the decay is gone", t.limbs.head.damage, 20)
 check("so 90 then 20 much later doesn't step", Model.prob(t, "damagedhead"), 0)
 
+  t = Model.newTarget("Bob")
+Model.gain(t, "slickness")
+Model.gain(t, "asthma")
+Model.gain(t, "weariness")
+Model.cure(t, "eat:kelp")
+for _ = 1, 5 do
+  Model.overdue(t, "smoke", { "asthma" }, 0.7 ^ 0.2)
+end
+check("a second with no smoke favours asthma", Model.prob(t, "asthma"), 0.588)
+
+t = Model.newTarget("Bob")
+t.states = { { p = 0.5, affs = { damagedleftarm = true, mangledrightarm = true } }, { p = 0.5, affs = { brokenleftarm = true } } }
+Model.proofNotAll(t, { "leftarm", "rightarm" })
+check("both arms out at any level is ruled out", Model.prob(t, "mangledrightarm"), 0)
+check("one arm out survives", Model.prob(t, "brokenleftarm"), 1)
+
 print(failures == 0 and "all passed" or (failures .. " failed"))

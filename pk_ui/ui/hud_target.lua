@@ -46,7 +46,10 @@ function hud.render()
   local opponent = PkCore.opponent
   local pct = opponent and opponent.targetHealth and opponent.targetHealth() or r.targetHpPercent
   local values = opponent and opponent.limbView and PkCore.ui.limbs.values("tgt", opponent.limbView(r.targetName())) or {}
-  values.tgtName = r.targetName() or ""
+  local name = r.targetName() or ""
+  local tracked = opponent and opponent.find and name ~= "" and opponent.find(name)
+  local class = tracked and tracked.class
+  values.tgtName = class and (name .. " [" .. class:sub(1, 1):upper() .. class:sub(2) .. "]") or name
   values.tgtPct = pct and (pct .. "%") or ""
   values.tgtBar = (pct or 0) .. "%"
   setBoundValues(id, values)

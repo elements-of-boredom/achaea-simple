@@ -522,13 +522,25 @@ function Model.cureRandom(target, count, pool, first)
     end
 end
 
+Model.LIMB_SIDES = {
+    leftarm = { "left", "arm" }, rightarm = { "right", "arm" },
+    leftleg = { "left", "leg" }, rightleg = { "right", "leg" },
+}
+function Model.holds(affs, item)
+    local limb = Model.LIMB_SIDES[item]
+    if limb then
+        return Model.limbHurt(affs, limb[1], limb[2]) and true or false
+    end
+    return affs[item] ~= nil
+end
+
 -- Proof that these weren't all present at once. If no state agrees, we can't tell which one was missing, so change nothing.
 function Model.proofNotAll(target, affs)
     local agreeing = {}
     for _, state in ipairs(target.states) do
         local all = true
         for _, aff in ipairs(affs) do
-            if state.affs[aff] == nil then
+            if not Model.holds(state.affs, aff) then
                 all = false
             end
         end
@@ -549,6 +561,35 @@ function Model.cure(target, cureKey)
     end
     Model.cureUnknown(target, { cureKey })
     return true
+end
+
+-- Lack of a cure as evidence that a state that would be curing through this channel, and could, but isn't,
+-- So it becomes less likely.
+Model.OVERDUE_FLOOR = 0.05
+
+function Model.wantsChannel(affs, group, blockers)
+    for _, aff in ipairs(blockers) do
+        if affs[aff] then
+            return false
+        end
+    end
+    for _, key in ipairs(Model.groups[group] or {}) do
+        for aff, value in pairs(affs) do
+            if value and not Model.PSEUDO[aff] and Model.cureSets[key][aff] then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+function Model.overdue(target, group, blockers, factor)
+    for _, state in ipairs(target.states) do
+        if state.p > Model.OVERDUE_FLOOR and Model.wantsChannel(state.affs, group, blockers) then
+            state.p = state.p * factor
+        end
+    end
+    Model.settle(target)
 end
 
 function Model.prob(target, aff)

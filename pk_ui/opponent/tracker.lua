@@ -117,8 +117,28 @@ function opponent.apply(event)
         opponent.Model.proof(opponent.get(event.name), event.aff, event.present)
         return
     end
+     if event.kind == "notall" then
+        opponent.Model.proofNotAll(opponent.get(event.name), event.affs)
+        return
+    end
     if event.kind == "limbreset" then
         opponent.Model.limbReset(opponent.get(event.name), event.limb)
+        return
+    end
+    if event.kind == "class" then
+        local target = opponent.get(event.name)
+        local narrowed = {}
+        for _, class in ipairs(event.classes) do
+            for _, known in ipairs(target.classes or event.classes) do
+                if known == class then
+                    narrowed[#narrowed + 1] = class
+                end
+            end
+        end
+        target.classes = #narrowed > 0 and narrowed or event.classes
+        if #target.classes == 1 then
+            target.class = target.classes[1]
+        end
         return
     end
     if event.kind == "sense" then
@@ -309,6 +329,67 @@ for _, entry in ipairs(opponent.HEALS) do
     end, { type = "regex" })
 end
 
+-- while they're actively curing, a pipe that's been free past its gap with no smoke
+-- counts against every state that would be smoking. Asleep can't smoke either.
+opponent.OVERDUE_PER_SECOND = 0.7
+opponent.OVERDUE_GRACE = 1.0
+opponent.ACTIVE_WINDOW = 8
+-- A restoration still landing (about 4 s) blocks every other salve, as slickness does.
+opponent.RESTORING = {}
+for _, marker in pairs(opponent.Model.DELAYED) do
+    opponent.RESTORING[#opponent.RESTORING + 1] = marker
+end
+opponent.OVERDUE_CHANNELS = {
+    { group = "smoke", gap = "PIPE_GAP" },
+    { group = "eat", gap = "HERB_GAP" },
+    { group = "apply", gap = "SALVE_GAP", extra = opponent.RESTORING },
+}
+-- Conditions that stop every channel, on top of each channel's own blockers.
+opponent.CANT_ACT = { "sleeping" }
+
+function opponent.overdueBlockers(channel)
+    local blockers = {}
+    for _, aff in ipairs(opponent.CANT_ACT) do
+        blockers[#blockers + 1] = aff
+    end
+    for _, aff in ipairs(opponent.Queries.CHANNEL_BLOCKERS[channel.group] or {}) do
+        blockers[#blockers + 1] = aff
+    end
+    for _, aff in ipairs(channel.extra or {}) do
+        blockers[#blockers + 1] = aff
+    end
+    return blockers
+end
+
+function opponent.checkOverdue()
+    local now = PkCore.now()
+    local factor = opponent.OVERDUE_PER_SECOND ^ (opponent.TICK_MS / 1000)
+    local changed = false
+    for key, target in pairs(opponent.targets) do
+        local last = opponent.lastCure[key]
+        if target and last and opponent.isTracked(target.name) then
+            local latest = 0
+            for _, at in pairs(last) do
+                if at and at > latest then
+                    latest = at
+                end
+            end
+            if now - latest < opponent.ACTIVE_WINDOW then
+                for _, channel in ipairs(opponent.OVERDUE_CHANNELS) do
+                    local ready = math.max((last[channel.group] or 0) + opponent[channel.gap], latest)
+                    if now - ready > opponent.OVERDUE_GRACE then
+                        opponent.Model.overdue(target, channel.group, opponent.overdueBlockers(channel), factor)
+                        changed = true
+                    end
+                end
+            end
+        end
+    end
+    if changed then
+        PkCore.stateChanged()
+    end
+end
+
 PkCore.onVitalsChanged("opponent.flush", opponent.flush)
 -- Timed events (an affliction wearing off, a sense window) apply on time, not at the next prompt.
 -- Fresh events still wait for the prompt: a burst of lines isn't finished until then (rend, then carve).
@@ -318,7 +399,10 @@ if opponent.tickTimer then
 end
 opponent.tickTimer = addTimer(opponent.TICK_MS, function()
     opponent.flush(true)
+    opponent.checkOverdue()
 end, true)
+
+
 
 -- Sub-modules
 loadModule("opponent/parse_cures.lua")
