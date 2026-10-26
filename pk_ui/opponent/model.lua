@@ -323,6 +323,11 @@ function Model.limbDamage(target, limb, amount, now)
     target.limbs[limb] = entry
 end
 
+-- A way to reset a limb manually if needed.
+function Model.limbReset(target, limb)
+    target.limbs[limb] = { damage = 0 }
+end
+
 -- A certain removal: the game told us, or a self-announcing cure.
 function Model.remove(target, aff)
     for _, state in ipairs(target.states) do

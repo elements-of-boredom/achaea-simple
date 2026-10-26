@@ -109,6 +109,10 @@ function opponent.apply(event)
         opponent.Model.proof(opponent.get(event.name), event.aff, event.present)
         return
     end
+    if event.kind == "limbreset" then
+        opponent.Model.limbReset(opponent.get(event.name), event.limb)
+        return
+    end
     if event.kind == "sense" then
         local target = opponent.get(event.name)
         if event.ifUnknown and target[event.sense] ~= "unknown" then
@@ -235,6 +239,15 @@ function opponent.reset(name)
         })
         PkCore.note("opponent: reset " .. name)
     end
+    PkCore.stateChanged()
+end
+
+function opponent.resetLimb(name, limb)
+    name = opponent.nameOrTarget(name)
+    if not name or not limb then
+        return
+    end
+    opponent.apply({ kind = "limbreset", name = name, limb = limb })
     PkCore.stateChanged()
 end
 

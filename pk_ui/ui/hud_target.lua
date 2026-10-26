@@ -24,6 +24,19 @@ function hud.html()
     ..   "</div>"
     .. "</div>"
     .. "</div>"
+    .. [[<script>
+document.addEventListener("contextmenu", function (e) {
+  mudforge.send("dbg", { tag: e.target.nodeName, y: e.clientY });
+}, true);
+document.addEventListener("contextmenu", function (e) {
+  var cell = e.composedPath().find(function (n) {
+    return n.classList && n.classList.contains("mf-limb");
+  });
+  if (!cell) return;
+  e.preventDefault();
+  mudforge.send("limbreset", { limb: cell.dataset.limb });
+});
+</script>]]
 end
 
 function hud.render()
@@ -39,5 +52,21 @@ function hud.render()
   setBoundValues(id, values)
 end
 
+function hud.attach(id)
+  unregisterWidgetEvent(id, "luamsg")
+  registerWidgetEvent(id, "luamsg", function(m)
+    if m.event == "limbreset" and m.data then
+      local opponent = PkCore.opponent
+      local limb = PkCore.ui.limbs.KEYS[m.data.limb]
+      if opponent and opponent.resetLimb and limb then
+        opponent.resetLimb(PkCore.room.targetName(), limb)
+      elseif m.event == "dbg" then
+        PkCore.note("ctx: " .. tostring(m.data.tag) .. " y=" .. tostring(m.data.y))
+      end
+    end
+  end)
+  hud.render()
+end
+
 PkCore.onStateChanged("ui.hudTarget", hud.render)
-PkCore.ui.layout.setContent("hudTarget", hud.html, hud.render)
+PkCore.ui.layout.setContent("hudTarget", hud.html, hud.attach)
