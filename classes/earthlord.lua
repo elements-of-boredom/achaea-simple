@@ -172,6 +172,15 @@ PkCore.trackTrigger(tempRegexTrigger(
     syncLimbTrauma("head")
   end
 
+-- AK has no idea Manifest Quake exists; the stomp prones the room, our target included
+PkCore.trackTrigger(tempRegexTrigger(
+  "^You stomp upon the ground, a ripple of tremors radiating out from the impact\\.$",
+  PkCore.protected("earthlord.onQuake", function()
+    if type(target) == "string" and (affstrack.score.prone or 0) == 0 then
+      OppGainedAff("prone")
+    end
+  end)))
+
 --- CLASS DATA ---
 --47% SQueeze with mild trauma , 55% in titan
 --27% Squeeze with no trauma

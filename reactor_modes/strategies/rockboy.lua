@@ -27,6 +27,7 @@ R.buryCount = R.buryCount or 0
 R.entombed = R.entombed or false
 R.fissureLegsNeeded = R.fissureLegsNeeded or 1
 R.fissureLegsReached = R.fissureLegsReached or false
+R.titanActive = R.titanActive or false
 
 function R.resetTracking()
     R.legBroken = false
@@ -46,6 +47,8 @@ function R.resetTracking()
     R.entombed = false
     R.fissureLegsNeeded = 1
     R.fissureLegsReached = false
+     R.cb = nil
+    if R.cbTimer then killTimer(R.cbTimer); R.cbTimer = nil end
 end
 
 local CALCIFY_AFF = {
@@ -398,19 +401,105 @@ local ACTIONS = {
                 and not cmd:find("^MANIFEST QUAKE") then
                 cmd = "MANIFEST QUAKE|" .. cmd
             end
-            return "ASSESS " .. target .. " | " .. cmd
+            local t = liveTarget()
+            if not t or not cmd then return cmd end
+            return "ASSESS " .. t .. " | " .. cmd
         end,
     },
 
     -- general
-    squeeze_spam = {
+    head_spam = {
         can = function() return true end,
         build = function() 
             local target = liveTarget()
             if not target then return nil end
-            return "TERRAN SQUEEZE " .. target
+            return powderiseCmd(R.headKey)
         end,
     },
+}
+
+R.cbAdvanceOn = R.cbAdvanceOn or "apply" -- "apply": wait for their body restoration; "calcify": go on our calcify line
+R.cbApplyTimeout = R.cbApplyTimeout or 4 -- give up waiting for the apply after this long and go anyway
+local function cbPrimed(key)
+    return safeForCombo(key) and not PkCore.limbPrep.broken(key)
+end
+ACTIONS.cb_finish = {
+    can = function()
+        return R.cb == "go" and PkCore.limbPrep.broken(R.headKey) and currentShaping() >= 4
+    end,
+    build = function()
+        if not hasAff("prone") then
+            PkCore.note("!!! ROCKBOY calcify_basic: not prone at the finish - flow failed !!!")
+            R.cb = nil
+            return nil
+        end
+        local cCmd = calcifyCmd("head")
+        return cCmd and (cCmd .. "|MANIFEST AVALANCHE") or nil
+    end,
+}
+ACTIONS.cb_crunch = {
+    can = function()
+        return R.cb == "go" and PkCore.limbPrep.broken(R.headKey) and currentShaping() < 4
+    end,
+    build = function() return crunchCmd() end,
+}
+ACTIONS.cb_break_head = {
+    can = function()
+        return R.cb == "go" and PkCore.limbPrep.broken(R.legKey) and not PkCore.limbPrep.broken(R.headKey)
+    end,
+    build = function() return powderiseCmd(R.headKey) end,
+}
+ACTIONS.cb_break_leg = {
+    can = function() return R.cb == "go" and not PkCore.limbPrep.broken(R.legKey) end,
+    build = function()
+        local cmd = powderiseCmd(R.legKey)
+        if cmd and currentShaping() >= 2 and not cmd:find("^MANIFEST QUAKE") then
+            cmd = "MANIFEST QUAKE|" .. cmd
+        end
+        return cmd
+    end,
+}
+ACTIONS.cb_wait = {
+    -- torso calcify is on, hold balance until their restoration goes on the body
+    can = function() return R.cb == "await_apply" end,
+    build = function() return nil end,
+}
+ACTIONS.cb_open = {
+    can = function()
+        return R.cb == nil and cbPrimed(R.legKey) and cbPrimed(R.headKey) and currentShaping() >= 4
+    end,
+    build = function() return calcifyCmd("torso") end,
+}
+ACTIONS.cb_shaping = {
+    can = function()
+        return R.cb == nil and cbPrimed(R.legKey) and cbPrimed(R.headKey) and currentShaping() < 4
+    end,
+    build = function() return crunchCmd() end,
+}
+ACTIONS.cb_prep = {
+    can = function() return true end,
+    build = function()
+        -- the breaks land at ~2 shaping, so prep against the 21% hit, not the 43% one
+        local limb = PkCore.limbPrep.nextUnprepared({R.headKey, R.legKey}, currentDamagePerHit(2))
+        return limb and powderiseCmd(limb) or nil
+    end,
+}
+
+-- titan: crunch to 4 shaping, TERRAN TITAN, then paste until the titan form falls
+ACTIONS.titan_paste = {
+    can = function() return R.titanActive end,
+    build = function()
+        local target = liveTarget()
+        return target and ("TERRAN PASTE " .. target) or nil
+    end,
+}
+ACTIONS.titan_cast = {
+    can = function() return not R.titanActive and currentShaping() >= 4 end,
+    build = function() return "TERRAN TITAN" end,
+}
+ACTIONS.titan_shaping = {
+    can = function() return not R.titanActive end,
+    build = function() return crunchCmd() end,
 }
 
 local ROUTES = {
@@ -425,6 +514,21 @@ local ROUTES = {
         "break_leg", 
         "prep"
     },
+     calcify_basic = {
+        "cb_finish",
+        "cb_crunch",
+        "cb_break_head",
+        "cb_break_leg",
+        "cb_wait",
+        "cb_open",
+        "cb_shaping",
+        "cb_prep",
+    }, 
+    titan = {
+        "titan_paste",
+        "titan_cast",
+        "titan_shaping",
+    },
     squeeze = {
         "squeeze_kill",
         "calcify_squeeze_kill", 
@@ -437,7 +541,7 @@ local ROUTES = {
         "prep",
     },
     group = {
-        "squeeze_spam",
+        "head_spam",
     },
     bury = {
         "entomb",
@@ -454,7 +558,7 @@ local function pickAction(routeList)
     for _, name in ipairs(routeList) do
         local action = ACTIONS[name]
         if action and action.can() then
-            PkCore.note("DB:RB: chose ".. name)
+            --PkCore.note("DB:RB: chose ".. name)
             return action.build()
         end
     end
@@ -470,6 +574,7 @@ function R.selectRoute(name)
         PkCore.note("rockboy: unknown route '" .. tostring(name) .. "' (known: " .. table.concat(names, ", ") .. ")")
         return
     end
+    if R.routeChoice ~= name then R.resetTracking() end
     R.routeChoice = name
     PkCore.note("rockboy: route=" .. name)
 end
@@ -534,6 +639,46 @@ PkCore.trackHandler(registerAnonymousEventHandler("gmcp.Room.AddPlayer",
         local name = tostring(type(p) == "table" and p.name or p or ""):lower()
         if name == R.buriedName then R.onEscapedBury() end
     end)))
+local function isTarget(name)
+    local target = liveTarget()
+    return target ~= nil and name:lower() == target:lower()
+end
+local function cbGo()
+    if R.cbTimer then killTimer(R.cbTimer); R.cbTimer = nil end
+    if R.cb == "await_apply" then
+        R.cb = "go"
+        PkCore.stateChanged()
+    end
+end
+PkCore.trackTrigger(tempRegexTrigger(
+    "^Reaching out, you press a single stone digit to the torso of ([\\w'\\-]+), beginning the transformation of the calcium within\\.$",
+    PkCore.protected("rockboy.cbOnCalcifyTorso", function()
+        if R.routeChoice ~= "calcify_basic" or R.cb ~= nil or not isTarget(matches[2]) then return end
+        R.cb = "await_apply"
+        if R.cbAdvanceOn == "calcify" then return cbGo() end
+        R.cbTimer = tempTimer(R.cbApplyTimeout, cbGo)
+    end)))
+PkCore.trackTrigger(tempRegexTrigger(
+    "^([\\w'\\-]+) takes some salve from a vial and rubs it on (?:his|her|their) (?:body|torso)\\.$",
+    PkCore.protected("rockboy.cbOnBodyRestoration", function()
+        if isTarget(matches[2]) then cbGo() end
+    end)))
+
+    -- Titan form on/off
+PkCore.trackTrigger(tempRegexTrigger(
+    "^A roar builds within your stone forged form, building to a deafening bellow\\. As your body channels the might of the",
+    PkCore.protected("rockboy.onTitanStart", function()
+        R.titanActive = true
+        PkCore.stateChanged()
+    end)))
+PkCore.trackTrigger(tempRegexTrigger(
+    "^A sudden sense of all-consuming weakness comes over you\\. Rock falls away in great sheets, magma fades, and you are left,",
+    PkCore.protected("rockboy.onTitanEnd", function()
+        R.titanActive = false
+        PkCore.stateChanged()
+    end)))
+PkCore.trackTrigger(tempRegexTrigger("^You have been slain by ",
+    PkCore.protected("rockboy.onDeathTitanReset", function() R.titanActive = false end)))
 
 local function evaluate()
     if not isEarthlord() then
