@@ -1,4 +1,5 @@
-local opponent = PkCore.opponent
+ local opponent = Opponent
+local E = opponent.events
 
 opponent.EAT_ITEMS = {
     ["piece of kelp"] = "kelp",     ["aurum flake"] = "kelp",
@@ -20,25 +21,23 @@ opponent.EAT_SENSES = {
     hawthorn = "deaf",
     cohosh = "insomnia",
 }
-opponent.FOCUS_GAP = 1.9
-opponent.TREE_GAP = 12.5
-opponent.PIPE_GAP = 1.1
+
 opponent.SMOKES = { "smoke:elm", "smoke:valerian", "smoke:skullcap" }
 
 --------------------------------------------
 -----------HERB/Focus/Tree------------------
 --------------------------------------------
 -- A cure line whose cure is always the same: the first capture is the name.
-function opponent.fixedCureLine(pattern, group, gap, cure, keys)
+function opponent.fixedCureLine(pattern, group, cure, keys)
   addTrigger(pattern, function(_, _, w)
     local name = w[1]
     if not opponent.isTracked(name) then return end
-    if not opponent.acceptCure(name, group, gap) then return end
+    if not opponent.acceptCure(name, group) then return end
     opponent.record(name, { kind = "cure", cure = cure, keys = keys })
   end, { type = "regex" })
 end
-opponent.fixedCureLine([[^A look of extreme focus crosses the face of ([\w'\-]+)\.$]], "focus", opponent.FOCUS_GAP, "focus")
-opponent.fixedCureLine([[^([\w'\-]+) touches a tree of life tattoo\.$]], "tree", opponent.TREE_GAP, "tree")
+opponent.fixedCureLine([[^A look of extreme focus crosses the face of ([\w'\-]+)\.$]], "focus", "focus")
+opponent.fixedCureLine([[^([\w'\-]+) touches a tree of life tattoo\.$]], "tree", "tree")
 
 addTrigger([[^([\w'\-]+) eats (?:a|an|some) (.+)\.$]], function(_, _, w)
     local name, item = w[1], w[2]:gsub("^withered ", "")
@@ -46,7 +45,7 @@ addTrigger([[^([\w'\-]+) eats (?:a|an|some) (.+)\.$]], function(_, _, w)
     if not herb or not opponent.isTracked(name) then
         return
     end
-    if not opponent.acceptCure(name, "eat", opponent.HERB_GAP) then
+    if not opponent.acceptCure(name, "eat") then
         return
     end
     opponent.record(name, {
@@ -61,17 +60,6 @@ end, {
 --------------------------------------------
 -----------------PIPES----------------------
 --------------------------------------------
--- A line that certainly adds or removes one affliction. who: which capture is the target (default 1);
-  -- a pattern with no capture means the current target.
-  function opponent.affLine(pattern, kind, aff, who)
-      addTrigger(pattern, function(_, _, w)
-          local name = (w and w[who or 1]) or opponent.nameOrTarget()
-          if not name or not opponent.isTracked(name) then
-              return
-          end
-          opponent.record(name, { kind = kind, aff = aff })
-      end, { type = "regex" })
-  end
 
 local REBOUNDING_DOWN = {
     [[^([\w'\-]+)'s aura of weapons rebounding disappears\.$]],
@@ -86,13 +74,13 @@ local REBOUNDING_UP = {
     [[^You would be unable to pierce through the aura of rebounding protecting ([\w'\-]+)\.$]],
     [[^The attack rebounds (?:back )?onto you!$]],
 }
-for _, pattern in ipairs(REBOUNDING_DOWN) do opponent.affLine(pattern, "gain", "norebounding") end
-for _, pattern in ipairs(REBOUNDING_UP) do opponent.affLine(pattern, "lose", "norebounding") end
+for _, pattern in ipairs(REBOUNDING_DOWN) do opponent.onLine(pattern, { E.gain("norebounding") }) end
+for _, pattern in ipairs(REBOUNDING_UP) do opponent.onLine(pattern, { E.lose("norebounding") }) end
 -- Copy paste habits ftw. DOn't think density has more than one line, but to be prepared.
 local DENSITY_DOWN = {
     [[^A great weight seems to have been lifted from ([\w'\-]+)\.$]],
 }
-for _, pattern in ipairs(DENSITY_DOWN) do opponent.affLine(pattern, "gain", "nodensity") end
+for _, pattern in ipairs(DENSITY_DOWN) do opponent.onLine(pattern, { E.gain("nodensity") }) end
 
 local FANGBARRIER_DOWN = {
     [[^You try to flay a non-existent sileris coating from ([\w'\-]+)\.$]],
@@ -101,40 +89,24 @@ local FANGBARRIER_DOWN = {
 local FANGBARRIER_UP = {
     [[^You try to bite ([\w'\-]+), but your fangs are stopped by an odd (?:metallic|waxy) coating\.$]],
 }
-for _, pattern in ipairs(FANGBARRIER_DOWN) do opponent.affLine(pattern, "gain", "nofangbarrier") end
-for _, pattern in ipairs(FANGBARRIER_UP) do opponent.affLine(pattern, "lose", "nofangbarrier") end
+for _, pattern in ipairs(FANGBARRIER_DOWN) do opponent.onLine(pattern, { E.gain("nofangbarrier") }) end
+for _, pattern in ipairs(FANGBARRIER_UP) do opponent.onLine(pattern, { E.lose("nofangbarrier") }) end
 
 local SLICKNESS_STRIP = [[^The protective coating covering the skin of ([\w'\-]+) sloughs off\.$]]
-opponent.affLine(SLICKNESS_STRIP, "gain", "nofangbarrier")
-opponent.affLine(SLICKNESS_STRIP, "gain", "slickness")
+opponent.onLine(SLICKNESS_STRIP, { E.gain("nofangbarrier"), E.gain("slickness") })
 
 local SILERIS_LINES = {
     [[^([\w'\-]+) applies a sileris berry to [\w'\-]+\.$]],
     [[^([\w'\-]+) applies a quicksilver droplet to [\w'\-]+\.$]],
 }
 for _, pattern in ipairs(SILERIS_LINES) do
-    addTrigger(pattern, function(_, _, w)
-        local name = w[1]
-        if not opponent.isTracked(name) then return end
-        opponent.record(name, { kind = "proof", aff = "slickness", present = false })
-        opponent.record(name, { kind = "gain", aff = "nofangbarrier" })
-        opponent.record(name, { kind = "lose", aff = "nofangbarrier", due = PkCore.now() + opponent.SILERIS_DELAY })
-    end, { type = "regex" })
+    opponent.onLine(pattern, { E.absent("slickness"), E.gain("nofangbarrier"), E.lose("nofangbarrier", opponent.SILERIS_DELAY) })
 end
 
--- The Survival skill INSOMNIA; Puts the defence straight up.
-addTrigger([[^([\w'\-]+) clenches [\w'\-]+ fists and grits [\w'\-]+ teeth\.$]], function(_, _, w)
-    local name = w[1]
-    if not opponent.isTracked(name) then return end
-    opponent.record(name, { kind = "sense", sense = "insomnia", value = "insomnia" })
-end, { type = "regex" })
+-- The Survival skill INSOMNIA; puts the defence straight up.
+opponent.onLine([[^([\w'\-]+) clenches [\w'\-]+ fists and grits [\w'\-]+ teeth\.$]], { E.sense("insomnia", "insomnia") })
 -- Falling asleep: proof of sleep, and that nothing (insomnia) was up to stop it.
-addTrigger([[^([\w'\-]+)'s eyes close suddenly as [\w'\-]+ falls asleep\.$]], function(_, _, w)
-    local name = w[1]
-    if not opponent.isTracked(name) then return end
-    opponent.record(name, { kind = "gain", aff = "sleeping" })
-    opponent.record(name, { kind = "sense", sense = "insomnia", value = "no" })
-end, { type = "regex" })
+opponent.onLine([[^([\w'\-]+)'s eyes close suddenly as [\w'\-]+ falls asleep\.$]], { E.gain("sleeping"), E.sense("insomnia", "no") })
 
 local SMOKE_LINES = {
     [[^([\w'\-]+) takes a long drag off [\w'\-]+ .+\.$]],
@@ -143,13 +115,12 @@ local SMOKE_LINES = {
     [[^([\w'\-]+) takes a few short puffs from [\w'\-]+ pipe\.$]],
 }
 for _, pattern in ipairs(SMOKE_LINES) do
-  opponent.fixedCureLine(pattern, "smoke", opponent.PIPE_GAP, "smoke", opponent.SMOKES)
+  opponent.fixedCureLine(pattern, "smoke", "smoke", opponent.SMOKES)
 end
 
 --------------------------------------------
 -----------------SALVES---------------------
 --------------------------------------------
-opponent.SALVE_GAP = 1.0
 -- What could have been applied at each spot the line names.
 opponent.SALVE_SPOTS = {
     arms  = { "apply:mending.arms", "apply:restoration.arms", "apply:health.arms" },
@@ -169,7 +140,7 @@ function opponent.applyLine(pattern, spots, known)
     addTrigger(pattern, function(_, _, w)
         local name, spot = w[1], w[2]
         if not opponent.isTracked(name) then return end
-        if not opponent.acceptCure(name, "apply", opponent.SALVE_GAP) then return end
+        if not opponent.acceptCure(name, "apply") then return end
         if spot == "ears" then -- Theres no BM cure here right????
             opponent.record(name, { kind = "sense", sense = "deaf", value = "no" })
         end
@@ -202,12 +173,11 @@ local REMOVALS = {
     { [[^([\w'\-]+)'s eyes lose their focus suddenly\.$]], "disrupted" },
 }
 for _, entry in ipairs(REMOVALS) do
-    opponent.affLine(entry[1], "lose", entry[2])
+    opponent.onLine(entry[1], { E.lose(entry[2]) })
 end
+
 -- Fire Lord: writhing out of the weave frees them but sets them alight.
-local WEAVE = [[^([\w'\-]+) has writhed free of [\w'\-]+ conflagrant weave\.$]]
-opponent.affLine(WEAVE, "lose", "bound")
-opponent.affLine(WEAVE, "gain", "burning")
+opponent.onLine([[^([\w'\-]+) has writhed free of [\w'\-]+ conflagrant weave\.$]], { E.lose("bound"), E.gain("burning") })
 
 local STANDS = {
     [[^([\w'\-]+) stands up\.$]],
@@ -216,9 +186,9 @@ local STANDS = {
     [[^([\w'\-]+) backs away and out of your reach\.$]],
 }
 for _, pattern in ipairs(STANDS) do
-    opponent.fixedCureLine(pattern, "stand", 0, "stand")
+    opponent.fixedCureLine(pattern, "stand", "stand")
 end
-opponent.fixedCureLine([[^([\w'\-]+)'s eyes lose their focus suddenly\.$]], "concentrate", 0, "concentrate")
+opponent.fixedCureLine([[^([\w'\-]+)'s eyes lose their focus suddenly\.$]], "concentrate", "concentrate")
 
 --------------------------------------------
 ------------------IMPALE--------------------
@@ -236,5 +206,5 @@ local IMPALE_OFF = {
     { [[^As ([\w'\-]+) wrenches away from you, your blade rips through [\w'\-]+ innards in a violent ?fashion.+$]] },
     { [[^([\w'\-]+) tumbles out to the .+\.$]] },
 }
-for _, entry in ipairs(IMPALE_ON) do opponent.affLine(entry[1], "gain", "impaled", entry[2]) end
-for _, entry in ipairs(IMPALE_OFF) do opponent.affLine(entry[1], "lose", "impaled", entry[2]) end
+for _, entry in ipairs(IMPALE_ON) do opponent.onLine(entry[1], { E.gain("impaled") }, entry[2]) end
+for _, entry in ipairs(IMPALE_OFF) do opponent.onLine(entry[1], { E.lose("impaled") }, entry[2]) end

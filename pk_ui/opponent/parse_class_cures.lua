@@ -1,4 +1,4 @@
-local opponent = PkCore.opponent
+ local opponent = Opponent
 
 function opponent.classCureLine(pattern, cure, who)
     addTrigger(pattern, function(_, _, w)

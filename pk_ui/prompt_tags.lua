@@ -131,7 +131,7 @@ PkCore.registerPromptTag("bal", function() return PkCore.balance.balance and "x"
 PkCore.registerPromptTag("eq", function() return PkCore.balance.equilibrium and "e" or "-" end)
 PkCore.registerPromptTag("target", function() return PkCore.room.targetName() or "" end)
 PkCore.registerPromptTag("targethpperc", function()
-  local opponent = PkCore.opponent
+ local opponent = Opponent
   return (opponent and opponent.targetHealth and opponent.targetHealth()) or PkCore.room.targetHpPercent or ""
 end)
 PkCore.registerPromptTag("rage", function() return tostring(PkCore.playerStatus.rage or "") end)

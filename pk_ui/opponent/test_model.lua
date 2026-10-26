@@ -2,6 +2,9 @@
 local Model = dofile("opponent/model.lua")
 Model.load(dofile("opponent/cures.lua"))
 local Queries = dofile("opponent/queries.lua")
+local LIMB_RULES = dofile("opponent/limb_rules.lua")
+Model.LIMB = LIMB_RULES
+Queries.LIMB = LIMB_RULES
 local VENOMS = dofile("opponent/offense/venoms.lua")
 
 local failures = 0
@@ -130,7 +133,7 @@ check("restoration lands: damaged becomes broken", Model.prob(t, "brokenleftleg"
 
 t = Model.newTarget("Bob")
 for _, aff in ipairs({ "anorexia", "asthma", "restoring.legs" }) do Model.gain(t, aff) end
-table.insert(Queries.CHANNEL_BLOCKERS.apply, "restoring.legs")
+table.insert(Queries.BLOCKERS.apply, "restoring.legs")
 check("a pending restoration counts as slick for a softlock", Queries.lock(t, "softlock"), 1)
 check("and shuts the apply channel", Queries.channelOpen(t, "apply"), 0)
 
@@ -144,7 +147,7 @@ check("and cures prone", Model.prob(t, "prone"), 0)
 
 t = Model.newTarget("Bob")
 t.states = { { p = 0.5, affs = { prone = true, brokenrightleg = true } }, { p = 0.5, affs = { prone = true } } }
-for _, blocker in ipairs(Queries.CHANNEL_BLOCKERS.stand) do Model.proof(t, blocker, false) end
+for _, blocker in ipairs(Queries.BLOCKERS.stand) do Model.proof(t, blocker, false) end
 check("standing proves the right leg is fine", Model.prob(t, "brokenrightleg"), 0)
 
 t = Model.newTarget("Bob")

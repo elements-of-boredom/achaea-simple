@@ -21,6 +21,7 @@ loadModule("classes/class_loader.lua")
 loadModule("rage.lua")
 
 -- Opponent tracking
+loadModule("opponent_host.lua")
 loadModule("opponent/tracker.lua")
 
 -- UI: the theme first, every widget uses it. Layout builds the (empty) panels.

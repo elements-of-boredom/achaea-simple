@@ -1,15 +1,15 @@
-local opponent = PkCore.opponent
+ local opponent = Opponent
 
 function opponent.show(name)
     opponent.flush() -- pretend we got a prompt incase we do this back to back with inline lua.
     name = opponent.nameOrTarget(name)
     if not name then
-        PkCore.note("opponent: no target")
+        opponent.host.note("opponent: no target")
         return
     end
     local target = opponent.find(name)
     if not target then
-        PkCore.note("opponent: not tracking " .. name)
+        opponent.host.note("opponent: not tracking " .. name)
         return
     end
     local lines = {}
@@ -19,7 +19,7 @@ function opponent.show(name)
     if #lines == 0 then
         lines[1] = "  clean"
     end
-    PkCore.note(string.format("%s: %d states, %s, %s\n", target.name, #target.states, target.blind, target.deaf) ..
+    opponent.host.note(string.format("%s: %d states, %s, %s\n", target.name, #target.states, target.blind, target.deaf) ..
                     table.concat(lines, "\n"))
 
     local limbs = {}
@@ -28,7 +28,7 @@ function opponent.show(name)
     end
     if #limbs > 0 then
         table.sort(limbs)
-        PkCore.note("limbs: " .. table.concat(limbs, ", "))
+        opponent.host.note("limbs: " .. table.concat(limbs, ", "))
     end
 end
 
@@ -74,11 +74,8 @@ function opponent.limbView(name)
     for _, limb in pairs(opponent.LIMBS) do
         local cell = { damage = 0 }
         if target then
-            cell.damage, cell.hits = opponent.Queries.limb(target, limb, PkCore.now())
-            local ladder = { "broken" .. limb }
-            for _, aff in ipairs(opponent.Model.limbSteps(limb)) do
-                ladder[#ladder + 1] = aff
-            end
+            cell.damage, cell.hits = opponent.Queries.limb(target, limb, opponent.host.now())
+            local ladder = opponent.LIMB_RULES.ladder(limb)
             for level, aff in ipairs(ladder) do
                 if opponent.Queries.has(target, aff) then cell.level = level end
             end
@@ -88,6 +85,6 @@ function opponent.limbView(name)
     return view
 end
 
-PkCore.registerAlias("PkCore opponent arms", [[^opparms$]], [[PkCore.opponent.showArms()]])
-PkCore.registerAlias("PkCore opponent show", [[^oppshow(?:\s+(\w+))?$]], [[PkCore.opponent.show(matches[2])]])
-PkCore.registerAlias("PkCore opponent reset", [[^oppreset(?:\s+(\w+))?$]], [[PkCore.opponent.reset(matches[2])]])
+addAlias([[^opparms$]], "", function() opponent.showArms() end, { name = "opponent arms" })
+addAlias([[^oppshow(?:\s+(\w+))?$]], "", function(matches) opponent.show(matches[2]) end, { name = "opponent show" })
+addAlias([[^oppreset(?:\s+(\w+))?$]], "", function(matches) opponent.reset(matches[2]) end, { name = "opponent reset" })

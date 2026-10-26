@@ -2,7 +2,7 @@
 -- and WunderSys's Class detection; the trailing comment on each line says which of them had it.
 -- { pattern, classes }: the first capture is the person; classes are who could have done it.
 -- acted = false: a class tell, not them acting on you. missed = true: used, but didn't connect.
--- blocked: what would have stopped this attack, beyond ATTACKED in parse_symptoms.lua. Groups: any one
+-- blocked: what would have stopped this attack.  Groups: any one
 --          group stops it, and everything in a group must be present. An affliction name, or a limb
 --          (leftarm, rightarm, leftleg, rightleg) meaning broken, damaged or mangled.
 --          e.g. blocked = { { "prone" }, { "leftarm", "rightarm" } }  -- not prone, and not both arms out

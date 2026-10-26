@@ -1,4 +1,5 @@
-local opponent = PkCore.opponent
+ local opponent = Opponent
+local E = opponent.events
 
 -- The plant our arms are propagated with. It persists until the next crush line,
 -- and every thornrend delivers it before the venom.
@@ -31,7 +32,7 @@ function opponent.clearArms()
     setVariable("pk_arms", "")
 end
 function opponent.showArms()
-    PkCore.note("arms: " .. tostring(opponent.offense.arms))
+    opponent.host.note("arms: " .. tostring(opponent.offense.arms))
 end
 -- Leaving or (re)entering viridian unpropagates the arms; GMCP sees every way out.
 function opponent.sylvanDefenceList(data)
@@ -72,7 +73,7 @@ end
 addTrigger([[^Crushing (?:a|an|some) (.+) in your hand, you absorb the remnants of natural energy stored within\.$]], function(_, _, w)
     local plant = sylvanArmsPlant(w[1])
     if not plant then
-        PkCore.note("unknown arms plant: " .. w[1])
+        opponent.host.note("unknown arms plant: " .. w[1])
         return
     end
     opponent.offense.arms = plant
@@ -84,7 +85,7 @@ addTrigger([[^You rub some ([\w'\-]+) on the thorny vines covering your arms\.$]
     opponent.offense.venom = w[1]:lower()
 end, { type = "regex" })
 -- onVitalsChanged is the same as getting a prompt. Clear venom for sylvan here.
-PkCore.onVitalsChanged("sylvan venom", function()
+opponent.host.onPrompt("sylvan venom", function()
     opponent.offense.venom = nil
 end)
 
@@ -99,7 +100,7 @@ addTrigger([[^You command the razor-edged thorny vines around you to lash out an
         if opponent.VENOMS[venom] then
             deliveries[#deliveries + 1] = opponent.VENOMS[venom]
         else
-            PkCore.note("unknown venom: " .. venom)
+            opponent.host.note("unknown venom: " .. venom)
         end
     end
     opponent.offense.venom = nil
@@ -124,69 +125,44 @@ addTrigger([[^([\w'\-]+) parries the attack with a deft manoeuvre\.$]], function
     if attack then attack.missed = true end
 end, { type = "regex" })
 
--- A line that means a fixed set of events. `delay` makes an event wait (a timed affliction ending).
-function opponent.spellLine(pattern, events)
-    addTrigger(pattern, function(_, _, w)
-        local name = w[1]
-        if not name or not opponent.isTracked(name) then
-            return
-        end
-         for _, template in ipairs(events) do
-            if template.delay then
-                opponent.recordExpiry(name, template.aff, template.delay)
-            else
-                local event = {}
-                for key, value in pairs(template) do
-                    event[key] = value
-                end
-                opponent.record(name, event)
-            end
-        end
-    end, { type = "regex" })
-end
-
 opponent.BLACKOUT_ECLIPSE = 6
 opponent.BLACKOUT_BOLT = 4
 opponent.VINEWREATHE = 25
 local SPELLS = {
     { [[^Channeling arcane power through your air and earth channels, you summon forth a burst of arcane static directed at ([\w'\-]+)\.$]],
-        { { kind = "gain", aff = "paralysis" } } },
+        { E.gain("paralysis") } },
     { [[^Channeling large quantities of arcane power through your air channel, you direct a localised explosion of pure sound at ([\w'\-]+)\.$]],
-        { { kind = "gain", aff = "sensitivity" }, { kind = "sense", sense = "deaf", value = "no" } } },
+        { E.gain("sensitivity"), E.sense("deaf", "no") } },
     { [[^Channeling large quantities of arcane power through your air channel, you direct a localised explosion of pure sound at ([\w'\-]+), restoring [\w'\-]+ hearing\.$]],
-        { { kind = "sense", sense = "deaf", value = "no" } } },
+        { E.sense("deaf", "no") } },
     { [[^Summoning forth power through your air and earth channels, you conjure forth a brilliant flash of light at ([\w'\-]+), who blinks rapidly\.$]],
-        { { kind = "sense", sense = "blind", value = "no" } } },
+        { E.sense("blind", "no") } },
     { [[^Summoning forth power through your air and earth channels, you conjure forth a brilliant flash of light at ([\w'\-]+), who freezes in place\.$]],
-        { { kind = "gain", aff = "transfixation" }, { kind = "sense", sense = "blind", value = "no" } } },
+        { E.gain("transfixation"), E.sense("blind", "no") } },
     { [[^Tapping into your air channel, you summon forth a vicious wind to lacerate the body of ([\w'\-]+)\.$]],
-        { { kind = "gain", aff = "healthleech" } } },
+        { E.gain("healthleech") } },
     { [[^[\w'\-]+ thrusts one hand toward ([\w'\-]+), summoning forth a wind to viciously lacerate [\w'\-]+\.$]],
-        { { kind = "gain", aff = "healthleech" } } },
+        { E.gain("healthleech") } },
     { [[^Summoning forth energy that you have gathered, you conjure forth a terrible cyclone of wind, picking up ([\w'\-]+) and whipping [\w'\-]+ about in a frenzy\.$]],
-        { { kind = "gain", aff = "dizziness" } } },
+        { E.gain("dizziness") } },
     { [[^Summoning forth energy that you have gathered, you conjure forth a terrible cyclone of wind, picking up the disorientated form of ([\w'\-]+) and whipping [\w'\-]+ about in a frenzy, dashing [\w'\-]+ against any available surfaces\.$]],
-        { { kind = "proof", aff = "dizziness", present = true }, { kind = "gain", aff = "impatience" } } },
+        { E.present("dizziness"), E.gain("impatience") } },
     { [[^A flare of (?:sun|moon)light streaks forward to engulf ([\w'\-]+)\.$]],
-        { { kind = "gain", aff = "blackout" }, { kind = "lose", aff = "blackout", delay = opponent.BLACKOUT_ECLIPSE } } },
-    { [[^A flare of (?:sun|moon)light streaks forward, but ([\w'\-]+) ducks out of the way\.$]], {
-        { kind = "proof", aff = "prone", present = false },
-        { kind = "proof", aff = "webbed", present = false },
-        -- Inferred: they hold the target in place like webbed. Not tested yet.
-        { kind = "proof", aff = "bound", present = false },
-        { kind = "proof", aff = "transfixation", present = false },
-    } },
+        { E.gain("blackout"), E.lose("blackout", opponent.BLACKOUT_ECLIPSE) } },
+    { [[^A flare of (?:sun|moon)light streaks forward, but ([\w'\-]+) ducks out of the way\.$]],
+        -- bound and transfixation are inferred (they hold the target in place like webbed); not tested yet.
+        { E.absent("prone"), E.absent("webbed"), E.absent("bound"), E.absent("transfixation") } },
     { [[^Blood sprays forth as the thorn-laden vine rips a deep wound in ([\w'\-]+)'s throat\.$]],
-        { { kind = "gain", aff = "laceratedthroat" } } },
+        { E.gain("laceratedthroat") } },
     { [[^Lunging forward with one palm outstretched and a singular purpose in mind, you strike a blow to ([\w'\-]+)'s heart\. Willing Nature's ire into [\w'\-]+ very soul, a warm pulse accompanies your attack as it connects\.$]],
-        { { kind = "gain", aff = "heartseed" } } },
+        { E.gain("heartseed") } },
     { [[^Uttering a quiet recitation, you gesture towards ([\w'\-]+)\. A mass of writhing vines burst forth from the ground, grabbing hold of [\w'\-]+ form\.$]],
-        { { kind = "gain", aff = "vinewreathed" }, { kind = "lose", aff = "vinewreathed", delay = opponent.VINEWREATHE } } },
+        { E.gain("vinewreathed"), E.lose("vinewreathed", opponent.VINEWREATHE) } },
     { [[^The vines flailing about ([\w'\-]+)'s form recede\.$]],
-        { { kind = "lose", aff = "vinewreathed" } } },
+        { E.lose("vinewreathed") } },
 }
 for _, entry in ipairs(SPELLS) do
-    opponent.spellLine(entry[1], entry[2])
+    opponent.onLine(entry[1], entry[2])
 end
 
 -- The progression spells: the follow-up names the step, and proves every step below it.
@@ -201,7 +177,7 @@ end, { type = "regex" })
 addTrigger([[^You summon forth a spout of water, directing it at ([\w'\-]+)\.$]], function()
     opponent.offense.spell = "waterspout"
 end, { type = "regex" })
-PkCore.onVitalsChanged("sylvan spell", function()
+opponent.host.onPrompt("sylvan spell", function()
     opponent.offense.spell = nil
 end)
 

@@ -1,5 +1,22 @@
-PkCore.opponent = PkCore.opponent or {}
-local opponent = PkCore.opponent
+Opponent = Opponent or {}
+local opponent = Opponent
+
+-- What the package needs from the plugin it runs in. A host sets Opponent.host before loading this
+-- file; anything it leaves out falls back to these, which work in any MudForge plugin.
+local DEFAULT_HOST = {
+    now = function() return getCurrentTime() / 1000 end,              -- the time, in seconds
+    note = function(text) cecho("<cyan>[opponent]<reset> " .. tostring(text)) end,
+    changed = function() end,                                         -- redraw, if there's a UI
+    target = function() return nil end,                               -- current target's name
+    targetHealth = function() return nil end,                         -- its health %, if known
+    onPrompt = function(name, fn) onGMCPUpdate("Char.Vitals", function() fn() end) end,
+}
+opponent.host = opponent.host or {}
+for key, fn in pairs(DEFAULT_HOST) do
+    if opponent.host[key] == nil then
+        opponent.host[key] = fn
+    end
+end
 
 opponent.Model = loadModule("opponent/model.lua")
 opponent.Queries = loadModule("opponent/queries.lua")
@@ -8,17 +25,17 @@ opponent.Model.addCure("smoke:skullcap", {"norebounding"})
 opponent.Model.addCure("apply:mass", { "nodensity" })
 -- A pending restoration ties up the salve channel like slickness (AK's "tempslickness").
 for _, marker in pairs(opponent.Model.DELAYED) do
-    table.insert(opponent.Queries.CHANNEL_BLOCKERS.apply, marker)
+    table.insert(opponent.Queries.BLOCKERS.apply, marker)
 end
 opponent.RESTORATION_DELAY = 4.0
 opponent.SILERIS_DELAY = 9.0
 opponent.SENSE_WINDOW = { deaf = { 2.0, 4.2 } }
--- Game limb words to the model's keys: "left leg" -> "leftleg".
-opponent.LIMBS = {
-    ["left leg"] = "leftleg", ["right leg"] = "rightleg",
-    ["left arm"] = "leftarm", ["right arm"] = "rightarm",
-    head = "head", torso = "torso",
-}
+-- The game's limb rules, shared with our own limb tracking without depending on it.
+opponent.LIMB_RULES = loadModule("opponent/limb_rules.lua")
+opponent.Model.LIMB = opponent.LIMB_RULES
+opponent.Queries.LIMB = opponent.LIMB_RULES
+opponent.LIMBS = opponent.LIMB_RULES.WORDS
+
 opponent.classCures = loadModule("opponent/class_cures.lua")
 opponent.VENOMS = loadModule("opponent/offense/venoms.lua")
 
@@ -44,18 +61,27 @@ function opponent.isTracked(name)
     if opponent.find(name) then
         return true
     end
-    local current = PkCore.room.targetName()
+    local current = opponent.host.target()
     return type(current) == "string" and current:lower() == name:lower()
 end
 
 -- Tracking/Recording
-opponent.HERB_GAP = 1.2
+-- How soon after a cure the same cure balance can be used again, per cure group.
+-- A second cure sooner than this is ignored as an illusion; the overdue check waits at least this long.
+opponent.GAPS = {
+    eat = 1.3,
+    smoke = 1.2,
+    apply = 0.9,
+    focus = 2,
+    tree = 12.5
+}
+
 opponent.lastCure = opponent.lastCure or {}
 
 -- Triggers only record. Nothing touches the model until the prompt.
 function opponent.record(name, event)
     event.name = name
-    event.time = PkCore.now()
+    event.time = opponent.host.now()
     opponent.pending[#opponent.pending + 1] = event
     return event
 end
@@ -72,11 +98,11 @@ function opponent.lastPending(name, kind)
 end
 
 -- Illusion/Double eat check: two real cures on one balance can't come closer together than that balance.
-function opponent.acceptCure(name, group, gap)
-    local key, now = name:lower(), PkCore.now()
+function opponent.acceptCure(name, group)
+    local key, now, gap = name:lower(), opponent.host.now(), opponent.GAPS[group] or 0
     local last = opponent.lastCure[key] or {}
     if last[group] and now - last[group] < gap then
-        PkCore.note("ignored " .. group .. " from " .. name .. " (too soon, likely an illusion)")
+        opponent.host.note("ignored " .. group .. " from " .. name .. " (too soon, likely an illusion)")
         return false
     end
     last[group] = now
@@ -87,7 +113,7 @@ end
 -- A cure through a channel proves the channel wasn't blocked: eating proves no anorexia.
 function opponent.channelProof(target, cureKey)
     local channel = cureKey:match("^(%a+)")
-    for _, blocker in ipairs(opponent.Queries.CHANNEL_BLOCKERS[channel] or {}) do
+    for _, blocker in ipairs(opponent.Queries.BLOCKERS[channel] or {}) do
         opponent.Model.proof(target, blocker, false)
     end
 end
@@ -225,7 +251,7 @@ function opponent.flush(dueOnly)
     if #opponent.pending == 0 then
         return
     end
-    local events, now, applied = opponent.pending, PkCore.now(), false
+    local events, now, applied = opponent.pending, opponent.host.now(), false
     opponent.pending = {}
     for _, event in ipairs(events) do
         if (event.due and event.due > now) or (dueOnly and not event.due) then
@@ -236,7 +262,7 @@ function opponent.flush(dueOnly)
         end
     end
     if applied then
-        PkCore.stateChanged()
+       opponent.host.changed()
     end
 end
 
@@ -245,7 +271,7 @@ function opponent.nameOrTarget(name)
     if type(name) == "string" and name ~= "" then
         return name
     end
-    local current = PkCore.room.targetName()
+    local current = opponent.host.target()
     if type(current) == "string" and current ~= "" then
         return current
     end
@@ -254,20 +280,20 @@ end
 function opponent.reset(name)
     if name == "all" then
         opponent.targets = {}
-        PkCore.note("opponent: reset everyone")
+        opponent.host.note("opponent: reset everyone")
     else
         name = opponent.nameOrTarget(name)
         if not name then
-            PkCore.note("opponent: no target to reset")
+            opponent.host.note("opponent: no target to reset")
             return
         end
         opponent.apply({
             kind = "reset",
             name = name
         })
-        PkCore.note("opponent: reset " .. name)
+        opponent.host.note("opponent: reset " .. name)
     end
-    PkCore.stateChanged()
+   opponent.host.changed()
 end
 
 function opponent.resetLimb(name, limb)
@@ -276,138 +302,49 @@ function opponent.resetLimb(name, limb)
         return
     end
     opponent.apply({ kind = "limbreset", name = name, limb = limb })
-    PkCore.stateChanged()
+   opponent.host.changed()
 end
 
--- A timed affliction ending. A re-application restarts the clock, so only the newest timer ends it.
-opponent.expiries = opponent.expiries or {}
-function opponent.recordExpiry(name, aff, seconds)
-    local key = name:lower() .. ":" .. aff
-    local token = {}
-    opponent.expiries[key] = token
-    opponent.record(name, { kind = "lose", aff = aff, due = PkCore.now() + seconds, expiry = key, token = token })
-end
-
--- Health from ASSESS, the only source for a player (GMCP target health is denizens only).
--- A reading goes stale fast in a fight, so it only counts for ASSESS_FRESH seconds.
-opponent.health = opponent.health or {}
-opponent.ASSESS_FRESH = 6
-
-addTrigger([[^You glance over ([\w'\-]+) and see that [\w'\-]+ health is at (\d+)/(\d+) \[(\d+)%\]\.$]], function(_, _, w)
-    opponent.health[w[1]:lower()] = { percent = tonumber(w[4]), at = PkCore.now() }
-    PkCore.stateChanged()
-end, { type = "regex" })
-
-function opponent.healthPercent(name)
-    local entry = opponent.health[name:lower()]
-    if entry and PkCore.now() - entry.at <= opponent.ASSESS_FRESH then
-        return entry.percent
-    end
-end
--- The current target's health %: GMCP for denizens, our last fresh ASSESS for players.
-function opponent.targetHealth()
-    local name = PkCore.room.targetName()
-    return PkCore.room.targetHpPercent or (name and opponent.healthPercent(name))
-end
-
--- Heals we can see raise the last reading, never past 100. A mana sip looks the same as a health
--- sip, so this can overestimate. That's the safe side: a "below 75%" check just doesn't fire.
-opponent.HEALS = {
-    { [[^([\w'\-]+) takes a drink from .+\.$]], 17 },
-    { [[^([\w'\-]+) eats (?:some irid moss|a potash crystal)\.$]], 8 },
-    { [[^([\w'\-]+) swoons for a moment then rises again, flushed but strong\.$]], 40 },
-    { [[^A look of relief crosses ([\w'\-]+)'s face as [\w'\-]+ touches a crystal tattoo\.$]], 100 },
+opponent.events = {
+    gain = function(aff, chance) return { kind = "gain", aff = aff, chance = chance } end,
+    lose = function(aff, delay) return { kind = "lose", aff = aff, delay = delay } end,
+    present = function(aff) return { kind = "proof", aff = aff, present = true } end,
+    absent = function(aff) return { kind = "proof", aff = aff, present = false } end,
+    sense = function(sense, value, delay) return { kind = "sense", sense = sense, value = value, delay = delay } end,
+    notall = function(affs) return { kind = "notall", affs = affs } end,
+    class = function(classes) return { kind = "class", classes = classes } end,
 }
-for _, entry in ipairs(opponent.HEALS) do
-    local amount = entry[2]
-    addTrigger(entry[1], function(_, _, w)
-        local reading = opponent.health[w[1]:lower()]
-        if reading then
-            reading.percent = math.min(100, reading.percent + amount)
-            PkCore.stateChanged()
+
+function opponent.onLine(pattern, events, who)
+    addTrigger(pattern, function(_, _, w)
+        local name = (w and w[who or 1]) or opponent.nameOrTarget()
+        if not name or not opponent.isTracked(name) then
+            return
+        end
+        for _, template in ipairs(events) do
+            if template.delay and template.kind == "lose" then
+                opponent.recordExpiry(name, template.aff, template.delay)
+            else
+                local event = {}
+                for key, value in pairs(template) do
+                    event[key] = value
+                end
+                if template.delay then
+                    event.due = opponent.host.now() + template.delay
+                end
+                opponent.record(name, event)
+            end
         end
     end, { type = "regex" })
 end
 
--- while they're actively curing, a pipe that's been free past its gap with no smoke
--- counts against every state that would be smoking. Asleep can't smoke either.
-opponent.OVERDUE_PER_SECOND = 0.7
-opponent.OVERDUE_GRACE = 1.0
-opponent.ACTIVE_WINDOW = 8
--- A restoration still landing (about 4 s) blocks every other salve, as slickness does.
-opponent.RESTORING = {}
-for _, marker in pairs(opponent.Model.DELAYED) do
-    opponent.RESTORING[#opponent.RESTORING + 1] = marker
-end
-opponent.OVERDUE_CHANNELS = {
-    { group = "smoke", gap = "PIPE_GAP" },
-    { group = "eat", gap = "HERB_GAP" },
-    { group = "apply", gap = "SALVE_GAP", extra = opponent.RESTORING },
-}
--- Conditions that stop every channel, on top of each channel's own blockers.
-opponent.CANT_ACT = { "sleeping" }
-
-function opponent.overdueBlockers(channel)
-    local blockers = {}
-    for _, aff in ipairs(opponent.CANT_ACT) do
-        blockers[#blockers + 1] = aff
-    end
-    for _, aff in ipairs(opponent.Queries.CHANNEL_BLOCKERS[channel.group] or {}) do
-        blockers[#blockers + 1] = aff
-    end
-    for _, aff in ipairs(channel.extra or {}) do
-        blockers[#blockers + 1] = aff
-    end
-    return blockers
-end
-
-function opponent.checkOverdue()
-    local now = PkCore.now()
-    local factor = opponent.OVERDUE_PER_SECOND ^ (opponent.TICK_MS / 1000)
-    local changed = false
-    for key, target in pairs(opponent.targets) do
-        local last = opponent.lastCure[key]
-        if target and last and opponent.isTracked(target.name) then
-            local latest = 0
-            for _, at in pairs(last) do
-                if at and at > latest then
-                    latest = at
-                end
-            end
-            if now - latest < opponent.ACTIVE_WINDOW then
-                for _, channel in ipairs(opponent.OVERDUE_CHANNELS) do
-                    local ready = math.max((last[channel.group] or 0) + opponent[channel.gap], latest)
-                    if now - ready > opponent.OVERDUE_GRACE then
-                        opponent.Model.overdue(target, channel.group, opponent.overdueBlockers(channel), factor)
-                        changed = true
-                    end
-                end
-            end
-        end
-    end
-    if changed then
-        PkCore.stateChanged()
-    end
-end
-
-PkCore.onVitalsChanged("opponent.flush", opponent.flush)
--- Timed events (an affliction wearing off, a sense window) apply on time, not at the next prompt.
--- Fresh events still wait for the prompt: a burst of lines isn't finished until then (rend, then carve).
-opponent.TICK_MS = 200
-if opponent.tickTimer then
-    removeTimer(opponent.tickTimer)
-end
-opponent.tickTimer = addTimer(opponent.TICK_MS, function()
-    opponent.flush(true)
-    opponent.checkOverdue()
-end, true)
-
-
-
--- Sub-modules
+-- Sub-modules: timing and health first, then the parsers (they use onLine and the events above).
+loadModule("opponent/timing.lua")
+loadModule("opponent/health.lua")
 loadModule("opponent/parse_cures.lua")
 loadModule("opponent/parse_class_cures.lua")
 loadModule("opponent/parse_symptoms.lua")
+loadModule("opponent/parse_attacks.lua")
 -- classes
 loadModule("opponent/offense/sylvan.lua")
 

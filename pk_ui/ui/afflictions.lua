@@ -87,7 +87,7 @@ local function selfEntries()
 end
 
 local function targetEntries()
-  local opponent = PkCore.opponent
+ local opponent = Opponent
   if not (opponent and opponent.display) then return {} end
   local entries = {}
   for _, entry in ipairs(opponent.display(PkCore.room.targetName())) do

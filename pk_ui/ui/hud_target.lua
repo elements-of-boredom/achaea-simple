@@ -43,7 +43,7 @@ function hud.render()
   local id = PkCore.ui.layout.widgets.hudTarget
   if not id then return end
   local r = PkCore.room
-  local opponent = PkCore.opponent
+ local opponent = Opponent
   local pct = opponent and opponent.targetHealth and opponent.targetHealth() or r.targetHpPercent
   local values = opponent and opponent.limbView and PkCore.ui.limbs.values("tgt", opponent.limbView(r.targetName())) or {}
   local name = r.targetName() or ""
@@ -59,7 +59,7 @@ function hud.attach(id)
   unregisterWidgetEvent(id, "luamsg")
   registerWidgetEvent(id, "luamsg", function(m)
     if m.event == "limbreset" and m.data then
-      local opponent = PkCore.opponent
+     local opponent = Opponent
       local limb = PkCore.ui.limbs.KEYS[m.data.limb]
       if opponent and opponent.resetLimb and limb then
         opponent.resetLimb(PkCore.room.targetName(), limb)

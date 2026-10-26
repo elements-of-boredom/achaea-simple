@@ -1,7 +1,7 @@
 -- Class cures: skills that cure afflictions, which the game's AFFLICTION SHOW data doesn't cover.
 -- Globbed together from multiple sources. 
 --
--- classes     lowercase, no spaces, matching PkCore.classes keys
+-- classes     lowercase, no spaces
 -- cures       how many random afflictions it removes, or "all"
 -- only        cures exactly these instead of random ones
 -- first       cured before anything random, if present

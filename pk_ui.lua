@@ -30,6 +30,7 @@ function init()
     PkCore.room.refresh()
     PkCore.room.onTargetSet(getGMCPData("IRE.Target.Set"))
     PkCore.room.onTargetInfo(getGMCPData("IRE.Target.Info"))
+    PkCore.opponent.startTick()
   end
 
   echo("[pk_ui] v" .. plugin.version .. " loaded at " .. formatTime(getCurrentTime()), "#a5d3ba")
@@ -37,4 +38,5 @@ end
 
 function onConnect()
   PkCore.gmcp.refreshSupport()
+  PkCore.opponent.startTick()
 end

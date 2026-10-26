@@ -75,7 +75,7 @@ Queries.LOCKS = {
 function Queries.lock(target, name, extra)
     local groups = {}
     for _, slot in ipairs(Queries.LOCKS[name]) do
-        groups[#groups + 1] = type(slot) == "string" and Queries.CHANNEL_BLOCKERS[slot] or slot
+        groups[#groups + 1] = type(slot) == "string" and Queries.BLOCKERS[slot] or slot
     end
     for _, aff in ipairs(extra or {}) do
         groups[#groups + 1] = { aff }
@@ -83,7 +83,9 @@ function Queries.lock(target, name, extra)
     return Queries.probGroups(target, groups)
 end
 
-Queries.CHANNEL_BLOCKERS = {
+-- What stops someone doing each thing: any one of these present is enough.
+-- The cure channels (eat to concentrate) are also what Queries.lock reads.
+Queries.BLOCKERS = {
   eat     = { "anorexia" },
   smoke   = { "asthma" },
   apply   = { "slickness" },
@@ -97,11 +99,14 @@ Queries.CHANNEL_BLOCKERS = {
         "mangledleftleg", "mangledrightleg",
     },
   concentrate = { "confusion" },
+  attack  = { "paralysis", "sleeping", "transfixation", "webbed", "bound" },
+  move    = { "paralysis" },
+  fly     = { "paralysis", "vertigo" },
 }
 
 -- Chance this cure channel is usable right now.
 function Queries.channelOpen(target, channel)
-  return 1 - Queries.probAny(target, Queries.CHANNEL_BLOCKERS[channel])
+  return 1 - Queries.probAny(target, Queries.BLOCKERS[channel])
 end
 
 -- Every affliction in any state with its chance, highest first. For display.
@@ -124,10 +129,10 @@ end
 -- The damage that still counts on a limb, and hits of the last size needed to step it.
 function Queries.limb(target, limb, now)
     local entry = target.limbs[limb]
-    if not entry or (entry.at and now - entry.at > 180) then
+    if not entry or (entry.at and now - entry.at > Queries.LIMB.DECAY) then
         return 0, nil
     end
-    local hits = entry.lastHit and entry.lastHit > 0 and math.ceil((100 - entry.damage) / entry.lastHit) or nil
+    local hits = entry.lastHit and entry.lastHit > 0 and math.ceil((Queries.LIMB.BREAK - entry.damage) / entry.lastHit) or nil
     return entry.damage, hits
 end
 
