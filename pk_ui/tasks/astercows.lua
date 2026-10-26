@@ -29,7 +29,7 @@ local function build()
           idx = idx + 1
           if idx > #sequence then
             done = true
-            cecho("\n<bold><red>FAILED TO COMPLETE\n")
+            PkCore.cecho("\n<b><red>FAILED TO COMPLETE\n")
             raiseEvent("AchaeaCore.task.asterBurrsDone")
             return
           end

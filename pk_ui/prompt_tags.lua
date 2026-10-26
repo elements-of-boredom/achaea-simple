@@ -245,9 +245,13 @@ local function substituteConditionals(template)
   end))
 end
 
+-- Achaea's own "normal" colour (256-colour index 7). Server lines leave it set and uncoloured lines
+-- inherit it, so ours must hand it back too: a bare reset falls to the terminal default, bright white.
+local NORMAL = "\27[0m\27[38;5;7m"
+
 local function toAnsi(s)
-  s = s:gsub("<r>", "\27[0m"):gsub("<(%d+),(%d+),(%d+)>", "\27[38;2;%1;%2;%3m")
-  return s .. "\27[0m"
+  s = s:gsub("<r>", NORMAL):gsub("<(%d+),(%d+),(%d+)>", "\27[38;2;%1;%2;%3m")
+  return NORMAL .. s .. NORMAL
 end
 
 local lastRendered, lastRenderedAt

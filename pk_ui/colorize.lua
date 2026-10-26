@@ -270,7 +270,7 @@ local EFFECT_RULES = {
 -- ── Apply ────────────────────────────────────────────────────────────────
 -- MudForge's colorize option only knows the 16 ANSI names, so each rule returns
 -- the line rebuilt with truecolor escapes instead (a returned string replaces it).
-local RESET = "\27[0m"
+local RESET = "\27[0m\27[38;5;7m"  -- back to Achaea's colour 7, not the terminal default
 
 local function ansiFg(c) return "\27[38;2;" .. c[1] .. ";" .. c[2] .. ";" .. c[3] .. "m" end
 local function ansiBg(c) return "\27[48;2;" .. c[1] .. ";" .. c[2] .. ";" .. c[3] .. "m" end

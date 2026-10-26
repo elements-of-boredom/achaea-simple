@@ -21,10 +21,10 @@ for _, filename in ipairs(filenames) do
             PkCore.tasks[data.name] = data
             table.insert(PkCore.taskOrder, data.name)
         else
-            cecho("<red>[PkCore]<reset> tasks/" .. filename .. " did not return a valid task table")
+            PkCore.cecho("<red>[PkCore]<reset> tasks/" .. filename .. " did not return a valid task table")
         end
     else
-        cecho("<red>[PkCore]<reset> tasks/" .. filename .. " error: " .. tostring(loadErr))
+        PkCore.cecho("<red>[PkCore]<reset> tasks/" .. filename .. " error: " .. tostring(loadErr))
     end
 end
 

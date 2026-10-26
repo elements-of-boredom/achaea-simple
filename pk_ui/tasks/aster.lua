@@ -79,7 +79,7 @@ local function build()
     { send = "say Need help?", wait = "\"Nagging Nags\" has been added to your log", timeout = 20 },
     {
       fn = function()
-        cecho("\n<bold><yellow>FIND A HORSE, PET HORSE, ")
+        PkCore.cecho("\n<b><yellow>FIND A HORSE, PET HORSE, ")
         hyperlink("PATH TRACK 55425", "path track 55425", { hint = "Send: path track 55425" })
         echo("\n")
       end,
