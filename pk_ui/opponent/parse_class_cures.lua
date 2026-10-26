@@ -28,7 +28,6 @@ local CLASS_CURE_LINES = {
     { [[^Throwing back [\w'\-]+ head, ([\w'\-]+) shouts out in defiance as blazing flames consume [\w'\-]+ for a single, glorious instant before dying away\.$]], "phoenix" },
     { [[^([\w'\-]+) lets out a great keening, casting the impurities from [\w'\-]+ form\.$]], "dragonheal" },
     { [[^([\w'\-]+)'s eyes flash with rage\.$]], "rage" },
-    -- Unconfirmed: it's probably grove cure as other people see it.
     { [[^([\w'\-]+) stands suddenly upright, rooted to the earth\.$]], "grovecure" },
     -- passive
     { [[^A demonic crimson glow emanates from ([\w'\-]+)\.$]], "syphon" },

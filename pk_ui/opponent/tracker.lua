@@ -65,6 +65,21 @@ function opponent.isTracked(name)
     return type(current) == "string" and current:lower() == name:lower()
 end
 
+-- Narrow down which class they could be: an attack or a class cure only some classes have.
+-- Keep the overlap with what we knew; no overlap means they've probably changed class, so start over.
+function opponent.narrowClass(target, classes)
+    local narrowed = {}
+    for _, class in ipairs(classes) do
+        for _, known in ipairs(target.classes or classes) do
+            if known == class then
+                narrowed[#narrowed + 1] = class
+            end
+        end
+    end
+    target.classes = #narrowed > 0 and narrowed or classes
+    target.class = #target.classes == 1 and target.classes[1] or nil
+end
+
 -- Tracking/Recording
 -- How soon after a cure the same cure balance can be used again, per cure group.
 -- A second cure sooner than this is ignored as an illusion; the overdue check waits at least this long.
@@ -152,19 +167,7 @@ function opponent.apply(event)
         return
     end
     if event.kind == "class" then
-        local target = opponent.get(event.name)
-        local narrowed = {}
-        for _, class in ipairs(event.classes) do
-            for _, known in ipairs(target.classes or event.classes) do
-                if known == class then
-                    narrowed[#narrowed + 1] = class
-                end
-            end
-        end
-        target.classes = #narrowed > 0 and narrowed or event.classes
-        if #target.classes == 1 then
-            target.class = target.classes[1]
-        end
+        opponent.narrowClass(opponent.get(event.name), event.classes)
         return
     end
     if event.kind == "sense" then
@@ -214,9 +217,7 @@ function opponent.apply(event)
         elseif entry.cures then
             opponent.Model.cureRandom(target, entry.cures, entry.pool, entry.first)
         end
-        if #entry.classes == 1 then
-            target.class = entry.classes[1]
-        end
+        opponent.narrowClass(target, entry.classes)
         return
     end
     local target = opponent.get(event.name)

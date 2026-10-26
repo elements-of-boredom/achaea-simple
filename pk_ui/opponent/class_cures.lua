@@ -94,7 +94,7 @@ return {
       proneCures = 1,
       blockers = { { "weariness", "recklessness" } },
     },
-    -- No blocker: can always break a lock. Its line hasn't been captured yet.
+    -- No blocker: can always break a lock
     grovecure = {
       classes = { "druid", "sylvan" },
       cures = 1,
