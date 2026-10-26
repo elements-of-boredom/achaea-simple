@@ -40,7 +40,7 @@ function opponent.checkOverdue()
     local changed = false
     for key, target in pairs(opponent.targets) do
         local last = opponent.lastCure[key]
-        if target and last and opponent.isTracked(target.name) then
+        if target and last and not target.leftAt and opponent.isTracked(target.name) then
             local latest = 0
             for _, at in pairs(last) do
                 if at and at > latest then

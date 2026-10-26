@@ -98,6 +98,7 @@ function opponent.record(name, event)
     event.name = name
     event.time = opponent.host.now()
     opponent.pending[#opponent.pending + 1] = event
+    opponent.inSight(name:lower())
     return event
 end
 
@@ -168,6 +169,10 @@ function opponent.apply(event)
     end
     if event.kind == "class" then
         opponent.narrowClass(opponent.get(event.name), event.classes)
+        return
+    end
+    if event.kind == "left" then
+        opponent.lostSight(event.name:lower())
         return
     end
     if event.kind == "sense" then
@@ -314,6 +319,7 @@ opponent.events = {
     sense = function(sense, value, delay) return { kind = "sense", sense = sense, value = value, delay = delay } end,
     notall = function(affs) return { kind = "notall", affs = affs } end,
     class = function(classes) return { kind = "class", classes = classes } end,
+    left = function() return { kind = "left" } end,
 }
 
 function opponent.onLine(pattern, events, who)
@@ -342,6 +348,7 @@ end
 -- Sub-modules: timing and health first, then the parsers (they use onLine and the events above).
 loadModule("opponent/timing.lua")
 loadModule("opponent/health.lua")
+loadModule("opponent/presence.lua")
 loadModule("opponent/parse_cures.lua")
 loadModule("opponent/parse_class_cures.lua")
 loadModule("opponent/parse_symptoms.lua")
