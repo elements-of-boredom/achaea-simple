@@ -94,6 +94,22 @@ function opponent.limbView(name)
     return view
 end
 
+-- What the defence markers show for one target: "up", "down" or "unknown", plus bleeding if known.
+-- Rebounding is a pseudo-affliction, so it's only "down" once that's likely. With no evidence we
+-- assume it's up, which is the safe side for weapon attacks.
+function opponent.defenceView(name)
+    local target = type(name) == "string" and opponent.find(name)
+    if not target then
+        return { shield = "unknown", rebounding = "unknown" }
+    end
+    local down = opponent.Queries.prob(target, "norebounding")
+    return {
+        shield = target.shield == "shield" and "up" or target.shield == "no" and "down" or "unknown",
+        rebounding = down >= opponent.Queries.HAS and "down" or down <= 1 - opponent.Queries.HAS and "up" or "unknown",
+        bleeding = opponent.bleedAmount and opponent.bleedAmount(target.name),
+    }
+end
+
 addAlias([[^opparms$]], "", function() opponent.showArms() end, { name = "opponent arms" })
 addAlias([[^oppshow(?:\s+(\w+))?$]], "", function(matches) opponent.show(matches[2]) end, { name = "opponent show" })
 addAlias([[^oppreset(?:\s+(\w+))?$]], "", function(matches) opponent.reset(matches[2]) end, { name = "opponent reset" })

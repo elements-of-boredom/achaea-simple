@@ -410,6 +410,7 @@ end
 -- Sub-modules: timing and health first, then the parsers (they use onLine and the events above).
 loadModule("opponent/timing.lua")
 loadModule("opponent/health.lua")
+loadModule("opponent/bleed.lua")
 loadModule("opponent/presence.lua")
 loadModule("opponent/parse_cures.lua")
 loadModule("opponent/parse_defences.lua")
