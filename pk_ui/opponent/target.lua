@@ -55,3 +55,34 @@ function T.class(name)
   local target = tracked(name)
   return target and target.class
 end
+
+-- A parried limb stays avoided until a hit lands on it, or this many seconds pass (they may switch).
+opponent.PARRY_MEMORY = 15
+
+function T.parried(limb, name)
+  local target = tracked(name)
+  local at = target and target.parried and target.parried[opponent.LIMB_RULES.key(limb)]
+  return at ~= nil and opponent.host.now() - at <= opponent.PARRY_MEMORY
+end
+
+-- The next limb to work on, from candidates in preference order ({ "rl", "ll" }): skip any already
+-- prepped or broken, skip any parried lately, and take the one closest to prepped (ties go to the
+-- earlier one). Returns nil, "parried" when parrying is all that's in the way; nil when all are done.
+function T.nextLimb(candidates, name)
+  local target = tracked(name)
+  local now = opponent.host.now()
+  local best, bestDamage, blocked = nil, -1, false
+  for _, limb in ipairs(candidates) do
+    local key = opponent.LIMB_RULES.key(limb)
+    if not T.isPrepped(key, nil, name) and not T.isBroken(key, name) then
+      if T.parried(key, name) then
+        blocked = true
+      else
+        local damage = target and Q.limb(target, key, now) or 0
+        if damage > bestDamage then best, bestDamage = key, damage end
+      end
+    end
+  end
+  if best then return best end
+  return nil, blocked and "parried" or nil
+end

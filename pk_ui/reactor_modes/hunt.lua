@@ -3,8 +3,6 @@ local hunt = PkCore.hunt_mode
 -- Denizen shields, keyed by lowercased short name ("a sturdy troll woman"). Names aren't
 -- unique, but they're per room, so we forget everything when we move.
 hunt.shielded = hunt.shielded or {}
-hunt.staleAfter = hunt.staleAfter or 2.0
-local lastQueueAt = 0
 local lastRoom
 
 local function findTargetMob()
@@ -13,22 +11,6 @@ local function findTargetMob()
     if tostring(entry.id) == PkCore.room.targetId then return entry end
   end
   return nil
-end
-
--- Bal and eq both up but the queue still hasn't fired: after staleAfter, allow a resend.
-local function clearStaleQueue()
-  if PkCore.reactor.lastQueueSent == "" then return end
-  if not (PkCore.balance.balance and PkCore.balance.equilibrium) then
-    lastQueueAt = PkCore.now() -- off balance: the queue is legitimately waiting
-    return
-  end
-  if PkCore.now() - lastQueueAt >= hunt.staleAfter then PkCore.reactor.queueConsumed() end
-end
-
-local function submitAttack(actions)
-  local before = PkCore.reactor.lastQueueSent
-  PkCore.reactor.submitQueue(actions)
-  if PkCore.reactor.lastQueueSent ~= before then lastQueueAt = PkCore.now() end
 end
 
 local function setShield(name, up)
@@ -41,7 +23,6 @@ end
 
 local function evaluateHunt()
   if PkCore.reactor.mode ~= "hunt" then return end
-  clearStaleQueue()
   local target = findTargetMob()
   if not target then return end
 
@@ -61,7 +42,7 @@ local function evaluateHunt()
   end
 
   if not hunt.isShielded(target) then
-    submitAttack({ classData.basicAttack })
+    PkCore.reactor.submitQueue({ classData.basicAttack })
   end
 end
 hunt.evaluate = evaluateHunt

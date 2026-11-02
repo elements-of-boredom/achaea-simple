@@ -53,6 +53,11 @@ loadModule("tasks/tasks.lua")
 -- Reactor modes
 loadModule("reactor_modes/reactor.lua")
 loadModule("reactor_modes/hunt.lua")
+loadModule("reactor_modes/pk.lua")
+-- Reactor modes class PK files
+loadModule("reactor_modes/pk/sylvan/state.lua")
+loadModule("reactor_modes/pk/sylvan/actions.lua")
+loadModule("reactor_modes/pk/sylvan/routes.lua")
 
 -- Alias stuff
 loadModule("aliases/iht.lua")

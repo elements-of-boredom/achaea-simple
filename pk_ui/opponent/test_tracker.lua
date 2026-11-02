@@ -381,4 +381,51 @@ same("stopped bleeding reads zero", view().bleeding, 0)
 line("You observe that Alice is bleeding slightly.")
 same("someone we don't track is ignored", o.bleedAmount("Alice"), nil)
 
+-- Parried limbs and the limb picker -------------------------------------------------------------
+local T = o.target
+local function rendLimb(words, result)
+  line("You command the razor-edged thorny vines around you to lash out and rend the " .. words .. " of Bob.")
+  if result then line(result) end
+  prompt()
+end
+local function carve(pct, words)
+  return "As you carve into Bob, you perceive that you have dealt " .. pct .. "% damage to his " .. words .. "."
+end
+local LEGS = { "rl", "ll" }
+
+fresh()
+o.offense.arms, o.offense.venom = nil, nil
+same("fresh: start on the first preference", T.nextLimb(LEGS), "rightleg")
+rendLimb("right leg", "Bob parries the attack with a deft manoeuvre.")
+same("a parried limb is remembered", T.parried("rl"), true)
+same("and the picker switches sides", T.nextLimb(LEGS), "leftleg")
+check("a parry deals no limb damage", (bob().limbs.rightleg or { damage = 0 }).damage, 0)
+local only, why = T.nextLimb({ "rl" })
+same("only the parried limb left: nothing to hit", only, nil)
+same("and it says parrying is why", why, "parried")
+rendLimb("right leg", carve("20.0", "right leg"))
+same("a landed hit clears the parry", T.parried("rl"), false)
+
+fresh()
+rendLimb("right leg", "Bob parries the attack with a deft manoeuvre.")
+wait(o.PARRY_MEMORY + 1)
+same("a parry is forgotten after PARRY_MEMORY", T.parried("rl"), false)
+
+fresh()
+rendLimb("right leg", carve("20.0", "right leg"))
+rendLimb("left leg", carve("30.0", "left leg"))
+same("the picker finishes the limb closest to prepped", T.nextLimb(LEGS), "leftleg")
+rendLimb("left leg", carve("30.0", "left leg"))
+rendLimb("left leg", carve("40.0", "left leg"))
+same("left leg reached 100 and stepped", T.isBroken("ll"), true)
+same("so the picker returns to the right", T.nextLimb(LEGS), "rightleg")
+
+fresh()
+rendLimb("right leg", carve("60.0", "right leg"))
+same("one more 60 would step it: prepped", T.isPrepped("rl"), true)
+same("so the picker moves on", T.nextLimb(LEGS), "leftleg")
+same("a lighter hit wouldn't step it", T.isPrepped("rl", 30), false)
+rendLimb("left leg", carve("60.0", "left leg"))
+same("both prepped: prepping is done", T.nextLimb(LEGS), nil)
+
 print(failures == 0 and "all passed" or (failures .. " failed"))

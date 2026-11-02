@@ -5,11 +5,26 @@ reactor.pollInterval = reactor.pollInterval or 0.35
 reactor.lastQueueSent = ""
 reactor.pollGeneration = reactor.pollGeneration or 0
 
+-- Bal and eq both up but our queue still hasn't fired: after staleAfter, allow a resend.
+-- Without this a whiff (target gone, command rejected) left the mode stuck until toggled.
+reactor.staleAfter = reactor.staleAfter or 2.0
+reactor.lastQueueAt = reactor.lastQueueAt or 0
+
+local function clearStaleQueue()
+  if reactor.lastQueueSent == "" then return end
+  if not (PkCore.balance.balance and PkCore.balance.equilibrium) then
+    reactor.lastQueueAt = PkCore.now()   -- off balance: the queue is legitimately waiting
+    return
+  end
+  if PkCore.now() - reactor.lastQueueAt >= reactor.staleAfter then reactor.queueConsumed() end
+end
+
 function reactor.registerMode(name, spec)
   reactor.modes[name] = spec
 end
 
 function reactor.evaluate()
+  clearStaleQueue()
   local mode = reactor.modes[reactor.mode]
   if mode and mode.evaluate then mode.evaluate() end
 end
@@ -31,13 +46,17 @@ end
 -- balance/eq used; Achaea's own queue-ran line replaces it once we have the text.
 function reactor.queueConsumed()
   reactor.lastQueueSent = ""
+  reactor.pendingFired = nil
 end
 
-function reactor.submitQueue(actions)
+-- fired: optional, runs when the game says our queued command actually ran.
+function reactor.submitQueue(actions, fired)
   if #actions == 0 then return end
   local commands = table.concat(actions, "|")
   if commands == reactor.lastQueueSent then return end
   reactor.lastQueueSent = commands
+  reactor.lastQueueAt = PkCore.now()
+  reactor.pendingFired = fired
   send("queue addclear free " .. commands)
 end
 
@@ -73,10 +92,28 @@ PkCore.registerAlias("PkCore mode set", [[^mode\s+(\w+)$]], [[PkCore.reactor.set
 
 -- Achaea echoes queued commands upper-cased. Only ours clears the dedupe; one you queued yourself doesn't.
 tempRegexTrigger([[^\[System\]: Running queued \w+ command: (.+)$]], function(_, _, w)
-  if w[1]:upper() == reactor.lastQueueSent:upper() then reactor.queueConsumed() end
+  if w[1]:upper() ~= reactor.lastQueueSent:upper() then return end
+  local fired = reactor.pendingFired
+  reactor.queueConsumed()
+  if fired then
+    local ok, err = pcall(fired)
+    if not ok then PkCore.note("reactor fired hook: " .. tostring(err)) end
+  end
 end)
 -- target gone (dead, moved, we flew): the queued attack failed without spending balance
 tempRegexTrigger([[^You cannot see that being here\.$]], reactor.queueConsumed)
+
+-- Leaving the arena, won or lost, ends the fight: stop the mode and drop the target.
+local ARENA_EXITS = {
+  [[^You have been victorious and leave the Arena in triumph!$]],
+  [[^You have been defeated and are thrown out of the Arena[.!]?$]],
+}
+for _, pattern in ipairs(ARENA_EXITS) do
+  tempRegexTrigger(pattern, function()
+    if reactor.mode ~= "off" then reactor.set("off") end
+    PkCore.room.clearTarget()
+  end)
+end
 
 -- Restart the chain on reload if we were already in a mode.
 reactor.pollGeneration = reactor.pollGeneration + 1

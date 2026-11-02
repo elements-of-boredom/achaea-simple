@@ -221,9 +221,20 @@ function opponent.apply(event)
         return
     end
      if event.kind == "attack" then
+        local target = opponent.get(event.name)
+        local limb = event.limb and (opponent.LIMBS[event.limb] or event.limb)
+        -- A parried limb is guarded until a hit lands on it again.
+        if limb then
+            target.parried = target.parried or {}
+            if event.parried then
+                target.parried[limb] = event.time
+            elseif event.confirmed and not event.missed then
+                target.parried[limb] = nil
+            end
+        end
         if event.missed or not event.confirmed then
             return
-        end        
+        end      
         local target = opponent.get(event.name)
         target.shield = "no"
         for _, entry in ipairs(event.deliveries) do
