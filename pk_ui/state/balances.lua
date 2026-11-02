@@ -31,6 +31,7 @@ B.downAt = {}                  -- id -> seconds it went down
 B.variant = {}                 -- id -> what used it (salve type), for per-variant timing
 B.failsafe = {}
 B.expected = B.expected or {}  -- "id" or "id:variant" -> seconds
+B.missing = B.missing or {}    -- id -> true: the game says we don't have it (no tree tattoo)
 
 local function now()
   return getCurrentTime() / 1000
@@ -47,6 +48,7 @@ function B.expectedFor(id)
 end
 
 function B.isReady(id)
+  if B.missing[id] then return false end
   if DEFS[id].gmcp then return PkCore.balance[id] ~= false end
   return B.downAt[id] == nil
 end
@@ -59,7 +61,7 @@ end
 
 function B.anyDown()
   for id in pairs(DEFS) do
-    if not B.isReady(id) then return true end
+    if not B.missing[id] and not B.isReady(id) then return true end
   end
   return false
 end
@@ -67,6 +69,7 @@ end
 local markUp
 
 local function markDown(id, variant)
+  B.missing[id] = nil
   variant = slowVariant(id, variant)
   B.downAt[id] = B.downAt[id] or now()
   B.variant[id] = variant
@@ -171,6 +174,11 @@ for _, r in ipairs(RECOVERY_LINES) do
   local id = r[2]
   tempRegexTrigger(r[1], function() markUp(id) end)
 end
+-- No tree tattoo. It stays missing until a tree use succeeds.
+tempRegexTrigger([[^You have no tree\.$]], function()
+  B.missing.tree = true
+  PkCore.stateChanged()
+end)
 
 -- class cures -----------------
 -- used: it just went down. refused: it's down but we don't know since when, so the short retry

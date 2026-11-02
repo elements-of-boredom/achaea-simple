@@ -6,6 +6,7 @@ config.defaults = {
   affEchos = false,
   partyAutoCaller = true,
   lockPrio = true,
+  classCure = true,
 }
 
 -- Defaults first, then saved values on top; keys no longer in defaults are dropped.

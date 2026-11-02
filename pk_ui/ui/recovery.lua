@@ -2,6 +2,13 @@ PkCore.ui = PkCore.ui or {}
 PkCore.ui.recovery = PkCore.ui.recovery or {}
 local recovery = PkCore.ui.recovery
 
+local CSS = [[
+.mf-theme .mf-cooldown[data-state="missing"] {
+  --mf-meter-fill: color-mix(in srgb, var(--mf-affliction) 70%, #2c171c);
+  border-color: var(--mf-affliction);
+}
+]]
+
 local TICK = 0.1
 local PRIMARY = { { "balance", "Balance" }, { "equilibrium", "Equilibrium" } }
 -- Two columns; the theme stretches the last one across both, so an odd count looks intentional.
@@ -26,7 +33,8 @@ local function meters(list)
 end
 
 function recovery.html()
-  return '<section class="mf-recovery" data-field="recovery">'
+  return "<style>" .. CSS .. "</style>"
+    .. '<section class="mf-recovery" data-field="recovery">'
     .. '<div class="mf-panel-heading"><h2>Recovery</h2></div>'
     .. '<div class="mf-recovery-primary">' .. meters(PRIMARY) .. "</div>"
     .. '<div class="mf-recovery-secondary">' .. meters(SECONDARY) .. "</div>"
@@ -35,6 +43,12 @@ end
 
 local function meterValues(values, id)
   local B = PkCore.balances
+  if B.missing[id] then
+    values["cd_" .. id] = "missing"
+    values["cdFill_" .. id] = "100%"
+    values["cdText_" .. id] = "Missing"
+    return
+  end
   if B.isReady(id) then
     values["cd_" .. id] = "ready"
     values["cdFill_" .. id] = "100%"

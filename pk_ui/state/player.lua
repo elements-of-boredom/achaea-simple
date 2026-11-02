@@ -23,7 +23,7 @@ function PkCore.player.onStatus(status)
   set("gold", status.gold, true)
   set("bank", status.bank, true)
   set("class", status.class)
-   -- Clearing the target sends IRE.Target.Set "", which never reaches our handler; Char.Status says "None" too.
+  -- A backup for IRE.Target.Set "": Char.Status also reports a cleared target as "None".
   if type(status.target) == "string" and status.target:lower() == "none" and PkCore.room then
     PkCore.room.clearTarget()
   end

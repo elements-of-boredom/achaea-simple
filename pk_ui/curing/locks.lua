@@ -64,10 +64,43 @@ function locks.update()
     locks.current = rule.cure
     send("curing prioaff " .. rule.cure)
     PkCore.note("prioaff " .. rule.cure .. " (" .. rule.why .. ")")
-  elseif not rule and locks.current and pressure() < locks.PRESSURE then
-    locks.current = nil
-    send("curing prioaff none")
   end
 end
 
+-- Layer 3: our class's active cure, sent whenever it's ready and we hold CLASS_PRESSURE or more lock
+-- afflictions. Commands come from WunderSys's classActiveHeal; blockers from the opponent class cures.
+locks.CLASS_PRESSURE = 2
+local CLASS_CURES = {
+  dragon = { id = "dragonheal", command = "dragonheal" },
+  earthlord = { id = "eruption", command = "terran eruption" },
+}
+locks.sentAt = locks.sentAt or {}
+local RESEND = 1   -- seconds: until the game confirms it, don't send again on every prompt
+
+-- Blocked when every affliction in any one group is present (dragonheal: weariness with recklessness).
+local function classCureBlocked(id)
+  local entry = Opponent and Opponent.classCures and Opponent.classCures.active[id]
+  for _, group in ipairs(entry and entry.blockers or {}) do
+    local all = true
+    for _, aff in ipairs(group) do
+      if not PkCore.afflictions.has(aff) then all = false end
+    end
+    if all then return true end
+  end
+  return false
+end
+
+function locks.classCure()
+  if not PkCore.config.values.classCure then return end
+  local cure = CLASS_CURES[PkCore.defences.classKey() or ""]
+  if not cure or pressure() < locks.CLASS_PRESSURE then return end
+  if not PkCore.balances.isReady(cure.id) or classCureBlocked(cure.id) then return end
+  local now = PkCore.now()
+  if now - (locks.sentAt[cure.id] or 0) < RESEND then return end
+  locks.sentAt[cure.id] = now
+  send(cure.command)
+  PkCore.note(cure.command .. " (" .. pressure() .. " lock afflictions)")
+end
+
+PkCore.onVitalsChanged("locks.classcure", locks.classCure)
 PkCore.onVitalsChanged("locks", locks.update)
