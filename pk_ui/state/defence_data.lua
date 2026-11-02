@@ -1,4 +1,4 @@
--- GENERATED from WunderSys 2.4.4 (Defence Tables, Def Display)
+-- GENERATED from WunderSys 2.4.4 (Defence Tables, Def Display) by tools/gen_defences.py. Do not edit by hand.
 -- name: display name. skillsets: where the defence comes from. manual: the command for a defence the
 -- server cannot keep up. mana: keeping it up drains mana.
 return {
@@ -215,5 +215,42 @@ return {
     waterlord = { "pervasion" },
     legenddeck = { "legendeck" },
     artefact = { "artefact" },
+  },
+  -- Lines meaning these defences cannot be raised right now: stop asking the server for them.
+  errors = {
+    { [[^A little hard to attack with your hands full, no\?$]], { "retaliation" } },
+    { [[^I cannot fathom the meaning of "elusiveness"\.$]], { "elusiveness" } },
+    { [[^I'm sorry, I don't know what "elusiveness" does\.$]], { "elusiveness" } },
+    { [[^Looking deep inside yourself, you discover that your life essence is too low to carry out this Necromantic skill\.$]], { "putrefaction", "deathaura", "vengeance", "blackwind", "soulcage" } },
+    { [[^Looking deep inside yourself, you discover that your soul's karma is too low to carry out this Occultic spell\.$]], { "devilmark", "distortedaura", "tentacles", "lifevision", "astralvision", "astralform" } },
+    { [[^Too many prying eyes prevent you from finding a suitable hiding place\.$]], { "hiding" } },
+    { [[^Where is your faithful quarterstaff, Forestwalker\?$]], { "panacea", "wildgrowth", "vigour", "harmony" } },
+    { [[^You cannot call upon your vitality again so soon\.$]], { "vitality" } },
+    { [[^You cannot summon Jy'Barrak Golgotha, Emperor of Chaos for you have no pact with that entity\.$]], { "golgothagrace" } },
+    { [[^You do not have channels opened to the proper elements\.$]], { "earthshield", "enduranceblessing", "willpowerblessing", "thermalshield", "frostshield", "bedevilaura" } },
+    { [[^You do not have enough Kai energy stored to do that\.$]], { "kaiboost" } },
+    { [[^You do not have the proper elemental channels open\.$]], { "chargeshield", "diamondskin", "reflections", "stonefist", "stoneskin", "barkskin" } },
+    { [[^You find you lack the essence to perform that deed\.$]], { "putrefaction", "deathaura", "vengeance", "blackwind", "soulcage" } },
+    { [[^You find your sunlight reserves too low to attempt that\.$]], { "panacea", "wildgrowth", "vigour", "harmony" } },
+    { [[^You have no bell\.$]], { "belltattoo" } },
+    { [[^You have no boar\.$]], { "boartattoo" } },
+    { [[^You have no firefly\.$]], { "firefly" } },
+    { [[^You have no megalith\.$]], { "megalithtattoo" } },
+    { [[^You have no moon\.$]], { "moontattoo" } },
+    { [[^You have no moss\.$]], { "mosstattoo" } },
+    { [[^You have no regenerative ability to boost\.$]], { "boostedregeneration" } },
+    { [[^You have no shield\.$]], { "shield" } },
+    { [[^You have no starburst\.$]], { "starburst" } },
+    { [[^You must be in a trance to manipulate your Kai energy\.$]], { "kaiboost" } },
+    { [[^You must be in the air before you can begin evasive flying\.$]], { "evasion" } },
+    { [[^You must be in the trees to cling to branches, or in the rigging of a ship to cling to the ropes\.$]], { "clinging" } },
+    { [[^You must be leading your Baalzadeen\.$]], { "demonarmour", "demonsyphon" } },
+    { [[^You need a quarterstaff to be able to do that\.$]], { "flailingstaff" } },
+    { [[^You need to be fully healthy in both body and mind before you can call upon your vitality\.$]], { "vitality" } },
+    { [[^You need to be wielding your quarterstaff to be able to do that\.$]], { "flailingstaff" } },
+    { [[^You remain in \w+ form, dolt.$]], { "affinity", "spiritbonded" } },
+    { [[^Your city is not focusing upon an astronomical body\.$]], { "astronomy" } },
+    { [[^Your eyes are sightless, how do you expect to be able to lipread\?$]], { "lipreading" } },
+    { [[^Your voice rises to the heavens with your instrument, but without your audience, as you sing an Aria of healing to yourself\.$]], { "aria" } },
   },
 }
