@@ -19,8 +19,14 @@ function opponent.show(name)
     if #lines == 0 then
         lines[1] = "  clean"
     end
+    local defs = {}
+    for _, def in ipairs(opponent.Model.DEFENCES) do
+        if target[def] == def then defs[#defs + 1] = def end
+    end
+
     opponent.host.note(string.format("%s: %d states, %s, %s\n", target.name, #target.states, target.blind, target.deaf) ..
-                    table.concat(lines, "\n"))
+                    (#defs > 0 and ("\ndefs: " .. table.concat(defs, ", ")) or "") ..
+                    table.concat(lines, "\n")) 
 
     local limbs = {}
     for limb, entry in pairs(target.limbs) do

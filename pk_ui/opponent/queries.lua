@@ -92,6 +92,7 @@ Queries.BLOCKERS = {
   focus   = { "impatience" },
   tree    = { "paralysis" },
   fitness = { "weariness" },
+  sip     = { "anorexia" },
   stand = {
         "paralysis",
         "brokenleftleg", "brokenrightleg",

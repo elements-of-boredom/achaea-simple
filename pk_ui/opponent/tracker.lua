@@ -180,14 +180,21 @@ function opponent.apply(event)
         if event.ifUnknown and target[event.sense] ~= "unknown" then
             return
         end
+        if event.ifValue and target[event.sense] ~= event.ifValue then
+            return
+        end
+        if event.value ~= "no" and opponent.illusionAt and math.abs(event.time - opponent.illusionAt) < opponent.ILLUSION_WINDOW then
+            return
+        end
         target[event.sense] = event.value
         return
     end
      if event.kind == "attack" then
         if event.missed or not event.confirmed then
             return
-        end
+        end        
         local target = opponent.get(event.name)
+        target.shield = "no"
         for _, entry in ipairs(event.deliveries) do
             opponent.Model.deliver(target, entry)
         end
@@ -316,7 +323,7 @@ opponent.events = {
     lose = function(aff, delay) return { kind = "lose", aff = aff, delay = delay } end,
     present = function(aff) return { kind = "proof", aff = aff, present = true } end,
     absent = function(aff) return { kind = "proof", aff = aff, present = false } end,
-    sense = function(sense, value, delay) return { kind = "sense", sense = sense, value = value, delay = delay } end,
+    sense = function(sense, value, delay, ifValue) return { kind = "sense", sense = sense, value = value, delay = delay, ifValue = ifValue } end,
     notall = function(affs) return { kind = "notall", affs = affs } end,
     class = function(classes) return { kind = "class", classes = classes } end,
     left = function() return { kind = "left" } end,
@@ -350,6 +357,7 @@ loadModule("opponent/timing.lua")
 loadModule("opponent/health.lua")
 loadModule("opponent/presence.lua")
 loadModule("opponent/parse_cures.lua")
+loadModule("opponent/parse_defences.lua")
 loadModule("opponent/parse_class_cures.lua")
 loadModule("opponent/parse_symptoms.lua")
 loadModule("opponent/parse_attacks.lua")

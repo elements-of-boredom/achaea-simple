@@ -112,6 +112,13 @@ Model.cureUnknown(t, SMOKES)
 check("an affliction beats rebounding", Model.prob(t, "slickness"), 0.1 / 1.1)
 
 t = Model.newTarget("Bob")
+Model.gainMaybe(t, "voyria", 0.5)
+Model.gain(t, "asthma")
+Model.cureUnknown(t, { "sip health", "sip immunity" })
+check("any sip clears voyria", Model.prob(t, "voyria"), 0)
+check("and leaves the rest alone", Model.prob(t, "asthma"), 1)
+
+t = Model.newTarget("Bob")
 t.states = { { p = 0.5, affs = { slickness = true, norebounding = true } }, { p = 0.5, affs = { norebounding = true } } }
 Model.cureUnknown(t, SMOKES)
 check("cured or never there, slickness is gone", Model.prob(t, "slickness") < 0.06 and 1 or 0, 1)

@@ -53,6 +53,9 @@ Model.DELAYED = {
     ["apply:restoration.head"] = "restoring.head",    ["apply:restoration.body"] = "restoring.body"
 }
 
+-- Defences we only ever see go up or come down; nothing cures them back. Same values as the senses.
+Model.DEFENCES = { "shield", "speed", "curseward", "holdbreath", "prismatic", "mounted" }
+
 -- Made-up afflictions that track defences or pending cures. Random cures never pick these.
 Model.PSEUDO = { norebounding = true, nodensity = true, nofangbarrier = true, vinewreathed = true }
 for _, marker in pairs(Model.DELAYED) do
@@ -114,7 +117,7 @@ function Model.addCure(key, list)
 end
 
 function Model.newTarget(name)
-    return {
+    local target = {
         name = name,
         states = {{
             p = 1,
@@ -126,6 +129,10 @@ function Model.newTarget(name)
         insomnia = "unknown",
         limbs = {}
     }
+    for _, def in ipairs(Model.DEFENCES) do
+        target[def] = "unknown"
+    end
+    return target
 end
 
 function Model.copyAffs(affs, without)

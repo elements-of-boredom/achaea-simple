@@ -38,6 +38,8 @@ function opponent.fixedCureLine(pattern, group, cure, keys)
 end
 opponent.fixedCureLine([[^A look of extreme focus crosses the face of ([\w'\-]+)\.$]], "focus", "focus")
 opponent.fixedCureLine([[^([\w'\-]+) touches a tree of life tattoo\.$]], "tree", "tree")
+-- A sip could be any vial and we can't see which: health cures latched, immunity cures voyria.
+opponent.fixedCureLine([[^([\w'\-]+) takes a drink from .+\.$]], "sip", "sip", { "sip health", "sip immunity" })
 
 addTrigger([[^([\w'\-]+) eats (?:a|an|some) (.+)\.$]], function(_, _, w)
     local name, item = w[1], w[2]:gsub("^withered ", "")

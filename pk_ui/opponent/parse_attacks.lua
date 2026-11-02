@@ -12,6 +12,8 @@ end
 local MOVED, FLEW = opponent.did("move"), opponent.did("fly")
 MOVED[#MOVED + 1] = E.left()
 FLEW[#FLEW + 1] = E.left()
+MOVED[#MOVED + 1] = E.sense("shield", "no")
+FLEW[#FLEW + 1] = E.sense("shield", "no")
 
 for _, entry in ipairs(loadModule("opponent/attacks.lua")) do
     local events = entry.acted ~= false and opponent.did("attack") or {}
