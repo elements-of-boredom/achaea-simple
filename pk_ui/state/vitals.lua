@@ -27,8 +27,8 @@ local function statsOf(charstats)
   if type(charstats) ~= "table" then return stats end
   for _, entry in ipairs(charstats) do
     if type(entry) == "string" then
-      local key, value = entry:match("^(%a+):%s*(%-?%d+)$")
-      if key then stats[key:lower()] = tonumber(value) end
+      local key, value = entry:match("^(%a+):%s*(.-)%s*$")
+      if key then stats[key:lower()] = tonumber(value) or value end
     end
   end
   return stats

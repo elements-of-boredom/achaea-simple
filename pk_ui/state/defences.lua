@@ -22,14 +22,17 @@ local function remove(name)
   if base == "parrying" or base == "guarding" then defences.parrying = nil end
 end
 
-onGMCPUpdate("Char.Defences.List", function(data)
-  if type(data) ~= "table" then return end
+local function onList(list)
+  if type(list) ~= "table" then return end
   defences.have, defences.parrying = {}, nil
-  for _, entry in ipairs(data) do
+  for _, entry in ipairs(list) do
     if type(entry) == "table" then add(entry.name) end
   end
   PkCore.stateChanged()
-end)
+end
+onGMCPUpdate("Char.Defences.List", onList)
+-- A reload doesn't make the server send the list again, so start from the last one the client kept.
+onList(getGMCPData("Char.Defences.List"))
 onGMCPUpdate("Char.Defences.Add", function(entry)
   if type(entry) == "table" then add(entry.name) end
   PkCore.stateChanged()
@@ -238,16 +241,19 @@ addTrigger([[^You will now cure using the (\w+) set\.$]], function(_, _, w)
   defences.onSet(w[1])
 end, { type = "regex" })
 
--- On reaching the class's set, read its defence list. With no saved keepup yet, adopt the server's;
--- otherwise send the difference.
-local reading, serverList = false, {}
+-- The list starts with a header line. A prompt before that header belongs to an earlier command.
+local awaitingList, reading, serverList = false, false, {}
 
 function defences.onSet(name)
   defences.set = name
   if name ~= defences.classKey() then return end
-  reading, serverList = true, {}
+  awaitingList, reading, serverList = true, false, {}
   send("curing priority defence list")
 end
+
+addTrigger([[^Your defence priorities for curing set (\w+):$]], function()
+  if awaitingList then awaitingList, reading = false, true end
+end, { type = "regex" })
 
 addTrigger([[^(\w+)\s+:\s+(\d+)$]], function(_, _, w)
   if reading then serverList[w[1]] = tonumber(w[2]) end
@@ -263,6 +269,9 @@ PkCore.onVitalsChanged("defences.sync", function()
   else
     for name in pairs(saved) do
       if not serverList[name] then defences.write(name, 25) end
+    end
+    for name in pairs(serverList) do
+      if not saved[name] then defences.write(name, "reset") end
     end
   end
   flushWrites()
