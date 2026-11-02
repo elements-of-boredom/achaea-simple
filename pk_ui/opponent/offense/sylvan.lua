@@ -119,12 +119,6 @@ addTrigger([[^As you carve into ([\w'\-]+), you perceive that you have dealt ([\
     attack.damage = tonumber(w[2])
 end, { type = "regex" })
 
--- Generic to any attack; TODO: Move to a shared offense file when a second class needs it.
-addTrigger([[^([\w'\-]+) parries the attack with a deft manoeuvre\.$]], function(_, _, w)
-    local attack = opponent.lastPending(w[1], "attack")
-    if attack then attack.missed = true end
-end, { type = "regex" })
-
 opponent.BLACKOUT_ECLIPSE = 6
 opponent.BLACKOUT_BOLT = 4
 opponent.VINEWREATHE = 25

@@ -167,6 +167,10 @@ function opponent.apply(event)
         opponent.Model.limbReset(opponent.get(event.name), event.limb)
         return
     end
+    if event.kind == "limbat" then
+        opponent.Model.limbAtLeast(opponent.get(event.name), event.limb, event.level)
+        return
+    end
     if event.kind == "class" then
         opponent.narrowClass(opponent.get(event.name), event.classes)
         return
@@ -380,6 +384,7 @@ loadModule("opponent/parse_defences.lua")
 loadModule("opponent/parse_class_cures.lua")
 loadModule("opponent/parse_symptoms.lua")
 loadModule("opponent/parse_attacks.lua")
+loadModule("opponent/parse_limbs.lua")
 -- classes
 loadModule("opponent/offense/sylvan.lua")
 

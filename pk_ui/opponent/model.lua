@@ -303,6 +303,24 @@ function Model.limbWorsen(target, limb)
     Model.settle(target)
 end
 
+-- Per state: afterwards the limb is at this ladder level (1 broken, 2, 3) or worse.
+function Model.limbAtLeast(target, limb, level)
+    local ladder = Model.LIMB.ladder(limb)
+    for _, state in ipairs(target.states) do
+        local at = 0
+        for i, aff in ipairs(ladder) do
+            if state.affs[aff] then at = i end
+        end
+        if at < level then
+            local affs = state.affs
+            for _, aff in ipairs(ladder) do affs = Model.copyAffs(affs, aff) end
+            affs[ladder[level]] = true
+            state.affs = affs
+        end
+    end
+    Model.settle(target)
+end
+
 -- A hit for a known amount at a known time. Damage left alone for LIMB.DECAY seconds is gone.
 function Model.limbDamage(target, limb, amount, now)
     local entry = target.limbs[limb] or { damage = 0 }
