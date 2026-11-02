@@ -9,12 +9,14 @@ loadModule("gmcp.lua")
 loadModule("state/player.lua")
 loadModule("state/room.lua")
 loadModule("state/vitals.lua")
+loadModule("state/defences.lua")
 loadModule("state/afflictions.lua")
 loadModule("state/balances.lua")
 loadModule("state/limbs.lua")
 
 loadModule("readiness.lua")
 loadModule("prompt_tags.lua")
+
 
 -- Class systems
 loadModule("classes/class_loader.lua")

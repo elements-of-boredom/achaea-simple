@@ -21,6 +21,19 @@ local function applyChange(name, value)
   raiseEvent(value and "PkCore balance gained" or "PkCore balance lost", name)
 end
 
+-- charstats: { "Bleed: 0", "Rage: 12", ... } -> { bleed = 0, rage = 12 }
+local function statsOf(charstats)
+  local stats = {}
+  if type(charstats) ~= "table" then return stats end
+  for _, entry in ipairs(charstats) do
+    if type(entry) == "string" then
+      local key, value = entry:match("^(%a+):%s*(%-?%d+)$")
+      if key then stats[key:lower()] = tonumber(value) end
+    end
+  end
+  return stats
+end
+
 function PkCore.vitals.onVitals(data)
   if type(data) ~= "table" then return end
   applyChange("balance", tostring(data.bal) == "1")
@@ -34,16 +47,3 @@ function PkCore.vitals.onVitals(data)
 end
 
 onGMCPUpdate("Char.Vitals", PkCore.vitals.onVitals)
-
--- charstats: { "Bleed: 0", "Rage: 12", ... } -> { bleed = 0, rage = 12 }
-local function statsOf(charstats)
-  local stats = {}
-  if type(charstats) ~= "table" then return stats end
-  for _, entry in ipairs(charstats) do
-    if type(entry) == "string" then
-      local key, value = entry:match("^(%a+):%s*(%-?%d+)$")
-      if key then stats[key:lower()] = tonumber(value) end
-    end
-  end
-  return stats
-end
