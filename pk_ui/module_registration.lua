@@ -13,6 +13,7 @@ loadModule("state/defences.lua")
 loadModule("state/afflictions.lua")
 loadModule("state/balances.lua")
 loadModule("state/limbs.lua")
+loadModule("state/me.lua")
 
 loadModule("readiness.lua")
 loadModule("prompt_tags.lua")

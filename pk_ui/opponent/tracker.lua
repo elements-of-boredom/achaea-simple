@@ -423,3 +423,4 @@ loadModule("opponent/offense/sylvan.lua")
 
 -- commands/aliases
 loadModule("opponent/commands.lua")
+loadModule("opponent/target.lua")

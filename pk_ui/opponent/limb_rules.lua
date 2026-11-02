@@ -6,6 +6,13 @@ rules.WORDS = {
     ["left arm"] = "leftarm", ["right arm"] = "rightarm",
     head = "head", torso = "torso",
 }
+-- Short names for limbs
+rules.SHORT = { ll = "leftleg", rl = "rightleg", la = "leftarm", ra = "rightarm", h = "head", t = "torso" }
+-- Any name a step might use ("left leg", "leftleg", "ll") to the limb key.
+function rules.key(limb)
+  return rules.WORDS[limb] or rules.SHORT[limb] or limb
+end
+
 -- 100% damage moves a limb one step along its ladder, and the extra is lost.
 rules.BREAK = 100
 -- Damage left alone this long is gone.
