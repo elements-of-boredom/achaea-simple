@@ -227,9 +227,23 @@ function opponent.apply(event)
                 opponent.Model.removeOne(target, aff)
             end
         elseif entry.cures then
-            opponent.Model.cureRandom(target, entry.cures, entry.pool, entry.first)
+            local count = event.boosted and entry.boostedCures or entry.cures
+            if event.took then
+                -- A "first" affliction is always taken ahead of anything else, so taking another proves none was there.
+                for _, aff in ipairs(entry.first or {}) do
+                    if aff ~= event.took then opponent.Model.proof(target, aff, false) end
+                end
+                opponent.Model.proof(target, event.took, true)
+                opponent.Model.removeOne(target, event.took)
+                count = count - 1
+            end
+            if count > 0 then
+                opponent.Model.cureRandom(target, count, entry.pool, entry.first)
+            end
         end
-        opponent.narrowClass(target, entry.classes)
+        if entry.classes then
+            opponent.narrowClass(target, entry.classes)
+        end
         return
     end
     local target = opponent.get(event.name)

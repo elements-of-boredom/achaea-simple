@@ -39,6 +39,7 @@ local SHOWN = {
     { [[^([\w'\-]+) begins to sway unsteadily\.$]], { "dizziness" } },
     { [[^([\w'\-]+) staggers and falls to the ground\.$]], { "dizziness", "prone" } },
     { [[^([\w'\-]+) violently quakes and shudders, [\w'\-]+ eyes rolling in their sockets\.$]], { "mycalium" } },
+     { [[^([\w'\-]+) pops a mickey into [\w'\-]+ mouth\.$]], { "nausea" } },
 }
 for _, entry in ipairs(SHOWN) do
     local events = {}

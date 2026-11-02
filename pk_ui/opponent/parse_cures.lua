@@ -173,13 +173,54 @@ local REMOVALS = {
     { [[^([\w'\-]+) opens [\w'\-]+ eyes and yawns mightily\.$]], "sleeping" },
     { [[^([\w'\-]+) seems able to move more freely all of a sudden\.$]], "hamstrung" },
     { [[^([\w'\-]+)'s eyes lose their focus suddenly\.$]], "disrupted" },
+    { [[^([\w'\-]+) sucks in a great gasp of air\.$]], "tension" },
 }
 for _, entry in ipairs(REMOVALS) do
     opponent.onLine(entry[1], { E.lose(entry[2]) })
 end
 
+-- RESTORE: every broken limb at once. Damaged and mangled stay.
+opponent.onLine([[^([\w'\-]+) crackles with blue energy that wreathes itself about [\w'\-]+ limbs\.$]],
+    { E.lose("brokenleftarm"), E.lose("brokenrightarm"), E.lose("brokenleftleg"), E.lose("brokenrightleg") })
+
+-- Cures the game names, seen only with skill access (usually by whoever gave it). Right after a
+-- random cure, the line says what that cure took, so it marks that cure instead of curing again.
+local ANNOUNCED = {
+    { [[^([\w'\-]+) ceases [\w'\-]+ nervous trembling\.$]], "mycalium" },
+    { [[^The skin of ([\w'\-]+) ceases secreting slime\.$]], "rebbies" },
+    { [[^Lucidity returns to the eyes of ([\w'\-]+)\.$]], "shadowmadness" },
+    { [[^([\w'\-]+) suddenly seems much more vital\.$]], "unweavingbody" },
+    { [[^([\w'\-]+) seems suddenly unburdened, clarity reasserting itself upon [\w'\-]+ features\.$]], "unweavingspirit" },
+    { [[^The light behind the eyes of ([\w'\-]+) reignites\.$]], "unweavingmind" },
+    { [[^([\w'\-]+) straightens, as if some great burden had been lifted from [\w'\-]+ shoulders\.$]], "guilt" },
+}
+for _, entry in ipairs(ANNOUNCED) do
+    local aff = entry[2]
+    addTrigger(entry[1], function(_, _, w)
+        local name = w[1]
+        if not opponent.isTracked(name) then return end
+        local classcure = opponent.lastPending(name, "classcure")
+        local cure = opponent.lastPending(name, "cure")
+        if classcure and not classcure.took then
+            classcure.took = aff
+        elseif cure and not cure.announced and not cure.sense and not cure.keys then
+            cure.announced = aff
+        else
+            opponent.record(name, { kind = "cure", cure = "announced", announced = aff })
+        end
+    end, { type = "regex" })
+end
+
 -- Fire Lord: writhing out of the weave frees them but sets them alight.
 opponent.onLine([[^([\w'\-]+) has writhed free of [\w'\-]+ conflagrant weave\.$]], { E.lose("bound"), E.gain("burning") })
+opponent.onLine([[^([\w'\-]+) saturates [\w'\-]+ with water, putting out the fire that raged\.$]], { E.lose("burning") })
+-- Follows a body salve in the same packet: the salve was mending, and it took one burning stack.
+addTrigger([[^The fires consuming ([\w'\-]+) diminish somewhat\.$]], function(_, _, w)
+    local apply = opponent.lastPending(w[1], "cure")
+    if apply and apply.keys == opponent.SALVE_SPOTS.torso then
+        apply.announced = "burning"
+    end
+end, { type = "regex" })
 
 local STANDS = {
     [[^([\w'\-]+) stands up\.$]],
@@ -210,3 +251,4 @@ local IMPALE_OFF = {
 }
 for _, entry in ipairs(IMPALE_ON) do opponent.onLine(entry[1], { E.gain("impaled") }, entry[2]) end
 for _, entry in ipairs(IMPALE_OFF) do opponent.onLine(entry[1], { E.lose("impaled") }, entry[2]) end
+

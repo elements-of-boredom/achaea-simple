@@ -23,12 +23,15 @@ local CLASS_CURE_LINES = {
     { [[^A slight tightening of the eyes is the only sign ([\w'\-]+) makes that [\w'\-]+ has made a great effort of will\.$]], "expunge" },
     { [[^A pale mist begins to rise from the skin of ([\w'\-]+)\.$]], "purification" },
     { [[^([\w'\-]+) presses a tarot to (?:his|her|their) forehead, producing a wan smile\.$]], "fool" },
-    { [[^[\w'\-]+ presses a tarot to ([\w'\-]+)'s forehead, producing a wan smile\.$]], "fool" },
+    { [[^[\w'\-]+ presses a tarot to ([\w'\-]+)'s forehead, producing a wan smile\.$]], "foolgiven" },
     { [[^As ([\w'\-]+) massages key pressure points, a look of relief comes over [\w'\-]+ face as [\w'\-]+ ailments ease\.$]], "alleviate" },
     { [[^Throwing back [\w'\-]+ head, ([\w'\-]+) shouts out in defiance as blazing flames consume [\w'\-]+ for a single, glorious instant before dying away\.$]], "phoenix" },
     { [[^([\w'\-]+) lets out a great keening, casting the impurities from [\w'\-]+ form\.$]], "dragonheal" },
     { [[^([\w'\-]+)'s eyes flash with rage\.$]], "rage" },
     { [[^([\w'\-]+) stands suddenly upright, rooted to the earth\.$]], "grovecure" },
+    { [[^The room is consumed in an explosion of light, out of which ([\w'\-]+) emerges refreshed and renewed\.$]], "sacrifice" },
+    { [[^([\w'\-]+) calls upon the powers of .+ and projects [\w'\-]+ spiritual essence inwardly\.$]], "essence" },
+    { [[^A flickering nimbus outlines ([\w'\-]+) for an instant, before fading from sight\.$]], "nimbus" },
     -- passive
     { [[^A demonic crimson glow emanates from ([\w'\-]+)\.$]], "syphon" },
     { [[^A song can be heard on the edge of hearing as the air distorts about ([\w'\-]+)\.$]], "hallelujah" },
@@ -40,8 +43,16 @@ local CLASS_CURE_LINES = {
     { [[^The guardian angel of ([\w'\-]+) shimmers and [\w'\-]+ gives a sigh of relief\.$]], "angelcare" },
     { [[^A rune like a rising sun upon the ground flares, bathing ([\w'\-]+) with healing magic\.$]], "dagaz" },
     { [[^The tempestuous form of ([\w'\-]+) is cleansed by a purifying breeze\.$]], "susurration" },
-    -- Missing : Waterlord Class cure lines, find Xylarys
+     { [[^The amorphous form of ([\w'\-]+) trembles, some of the liquid composing it falling away from the greater whole\.$]], "purify" },
 }
 for _, entry in ipairs(CLASS_CURE_LINES) do
     opponent.classCureLine(entry[1], entry[2], entry[3])
 end
+
+addTrigger([[^([\w'\-]+) grows older before your eyes\.$]], function(_, _, w)
+    local cure = opponent.lastPending(w[1], "classcure")
+    if cure and cure.cure == "accelerate" then
+        cure.boosted = true
+        opponent.record(w[1], { kind = "proof", aff = "prone", present = false })
+    end
+end, { type = "regex" })

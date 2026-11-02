@@ -77,6 +77,7 @@ return {
       cures = 3,
       blockers = { { "paralysis" }, { "prone" } },
     },
+    foolgiven = { cures = 3 },
     alleviate = {
       classes = { "blademaster" },
       cures = 1,
@@ -106,6 +107,11 @@ return {
       pool = "eat:bellwort",
       blockers = {},
     },
+    sacrifice = {
+      classes = { "priest" },
+      cures = "all",
+      blockers = {},
+    },
   },
 
   -- Fire on their own about every 10 seconds, curing voyria first.
@@ -118,6 +124,8 @@ return {
     leech = { classes = { "pariah" }, first = { "voyria" }, cures = 1, interval = 10 },
     healing = { classes = { "priest", "paladin" }, first = { "voyria" }, cures = 1, interval = 10 },
     angelcare = { classes = { "priest" }, first = { "voyria" }, cures = 1, interval = 10 },
+    essence = { classes = { "priest" }, first = { "voyria" }, cures = 1, interval = 10 },
+    nimbus = { classes = { "priest" }, first = { "voyria" }, cures = 1, interval = 10 },
     dagaz = { classes = { "runewarden" }, first = { "voyria" }, cures = 1, interval = 10 },
     susurration = { classes = { "airlord" }, first = { "voyria" }, cures = 1, interval = 10 },
   },
