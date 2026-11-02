@@ -409,26 +409,65 @@ function Model.profileChoices(profile, group, affs)
     return choices, count
 end
 
+function Model.canCure(affs, cureKey)
+    local cures = Model.cureSets[cureKey]
+    if not cures then return false end
+    for aff, value in pairs(affs) do
+        if value and cures[aff] then return true end
+    end
+    return false
+end
+
+-- How likely one profile was to use this cure in this state, given it could cure something.
+function Model.profileLikelihood(profile, affs, cureKey)
+    local group = cureKey:match("^(%a+):") or cureKey
+    local choices, count = Model.profileChoices(profile, group, affs)
+    return (choices[cureKey] and (1 - Model.SLACK) / count or 0) + Model.SLACK
+end
+
 -- How likely this target was to use this cure if the state were true.
 function Model.cureLikelihood(target, affs, cureKey)
-    local cures = Model.cureSets[cureKey]
-    local curable = false
-    for aff, value in pairs(affs) do
-        if value and cures[aff] then
-            curable = true
-        end
-    end
-    if not curable then
+    if not Model.canCure(affs, cureKey) then
         return Model.NOTHING
     end
-    local group = cureKey:match("^(%a+):") or cureKey
     local total = 0
     for name, weight in pairs(target.weights) do
-        local choices, count = Model.profileChoices(Model.data.profiles[name], group, affs)
-        local chosen = choices[cureKey] and (1 - Model.SLACK) / count or 0
-        total = total + weight * (chosen + Model.SLACK)
+        total = total + weight * Model.profileLikelihood(Model.data.profiles[name], affs, cureKey)
     end
     return total
+end
+
+-- Each cure we see is evidence about which curing profile this target follows. LEARN_RATE softens
+-- each step (1 would be full Bayes); WEIGHT_FLOOR stops a few odd cures ruling a profile out.
+Model.LEARN_RATE = 0.3
+Model.WEIGHT_FLOOR = 0.05
+
+function Model.learnWeights(target, keys)
+    local updated, total = {}, 0
+    for name, weight in pairs(target.weights) do
+        local profile, evidence = Model.data.profiles[name], 0
+        for _, state in ipairs(target.states) do
+            for _, key in ipairs(keys) do
+                if Model.canCure(state.affs, key) then
+                    evidence = evidence + state.p * Model.profileLikelihood(profile, state.affs, key)
+                end
+            end
+        end
+        updated[name] = weight * evidence ^ Model.LEARN_RATE
+        total = total + updated[name]
+    end
+    if total == 0 then
+        return
+    end
+    local floored = 0
+    for name, weight in pairs(updated) do
+        updated[name] = math.max(weight / total, Model.WEIGHT_FLOOR)
+        floored = floored + updated[name]
+    end
+    for name, weight in pairs(updated) do
+        updated[name] = weight / floored
+    end
+    target.weights = updated
 end
 
 -- One cure's removal, added to branched. landing: restoration arriving now, so apply it instead of marking it.

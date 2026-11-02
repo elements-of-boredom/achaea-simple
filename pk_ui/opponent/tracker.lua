@@ -47,11 +47,38 @@ function opponent.find(name)
     return opponent.targets[name:lower()]
 end
 
+-- Learned curing weights per player, kept between fights as "wsys=0.120,pk=0.540,game=0.340".
+function opponent.savedWeights(name)
+    local text = getVariable("opp_weights_" .. name:lower())
+    if type(text) ~= "string" then return nil end
+    local weights = {}
+    for profile, weight in text:gmatch("(%a+)=([%d.]+)") do
+        if opponent.Model.data.profiles[profile] then
+            weights[profile] = tonumber(weight)
+        end
+    end
+    return next(weights) and weights or nil
+end
+
+function opponent.saveWeights(target)
+    local parts = {}
+    for profile, weight in pairs(target.weights) do
+        parts[#parts + 1] = string.format("%s=%.3f", profile, weight)
+    end
+    setVariable("opp_weights_" .. target.name:lower(), table.concat(parts, ","))
+end
+
+function opponent.newTarget(name)
+    local target = opponent.Model.newTarget(name)
+    target.weights = opponent.savedWeights(name) or target.weights
+    return target
+end
+
 -- Creates the model the first time we need one.
 function opponent.get(name)
     local key = name:lower()
     if not opponent.targets[key] then
-        opponent.targets[key] = opponent.Model.newTarget(name)
+        opponent.targets[key] = opponent.newTarget(name)
     end
     return opponent.targets[key]
 end
@@ -136,7 +163,7 @@ end
 
 function opponent.apply(event)
     if event.kind == "reset" then
-        opponent.targets[event.name:lower()] = opponent.Model.newTarget(event.name)
+        opponent.targets[event.name:lower()] = opponent.newTarget(event.name)
         return
     end
     if event.kind == "gain" then
@@ -258,6 +285,11 @@ function opponent.apply(event)
     local target = opponent.get(event.name)
     if event.kind == "cure" then
         opponent.channelProof(target, event.cure)
+        local keys = event.keys or (opponent.Model.cureSets[event.cure] and { event.cure })
+        if keys then
+            opponent.Model.learnWeights(target, keys)
+            opponent.saveWeights(target)
+        end
         if event.sense then
             local window = opponent.SENSE_WINDOW[event.sense]
             if window then

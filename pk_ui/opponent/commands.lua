@@ -28,6 +28,9 @@ function opponent.show(name)
                     (#defs > 0 and ("\ndefs: " .. table.concat(defs, ", ")) or "") ..
                     table.concat(lines, "\n")) 
 
+    opponent.host.note(string.format("weights: wsys %.2f, pk %.2f, game %.2f",
+        target.weights.wsys or 0, target.weights.pk or 0, target.weights.game or 0))
+
     local limbs = {}
     for limb, entry in pairs(target.limbs) do
         limbs[#limbs + 1] = string.format("%s %.1f%%", limb, entry.damage)
@@ -94,3 +97,11 @@ end
 addAlias([[^opparms$]], "", function() opponent.showArms() end, { name = "opponent arms" })
 addAlias([[^oppshow(?:\s+(\w+))?$]], "", function(matches) opponent.show(matches[2]) end, { name = "opponent show" })
 addAlias([[^oppreset(?:\s+(\w+))?$]], "", function(matches) opponent.reset(matches[2]) end, { name = "opponent reset" })
+addAlias([[^oppforget(?:\s+(\w+))?$]], "", function(matches)
+    local name = opponent.nameOrTarget(matches[2])
+    if not name then return end
+    deleteVariable("opp_weights_" .. name:lower())
+    local target = opponent.find(name)
+    if target then target.weights = opponent.Model.DEFAULT_WEIGHTS end
+    opponent.host.note("opponent: forgot " .. name .. "'s curing weights")
+end, { name = "opponent forget" })

@@ -24,7 +24,8 @@ local function same(label, got, want)
 end
 
 -- MudForge stand-ins ----------------------------------------------------------------------
-local triggers, promptHooks, clock, currentTarget = {}, {}, 1000, "Bob"
+local triggers, aliases, promptHooks, clock, currentTarget = {}, {}, {}, 1000, "Bob"
+local variables = {}
 
 function addTrigger(pattern, fn, opts)
   local ok, compiled = pcall(rex.new, pattern)
@@ -35,12 +36,16 @@ function addTrigger(pattern, fn, opts)
   triggers[#triggers + 1] = { pattern = pattern, regex = compiled, fn = fn }
   return tostring(#triggers)
 end
-function addAlias() return "" end
+function addAlias(pattern, _, fn)
+  aliases[#aliases + 1] = { regex = rex.new(pattern), fn = fn }
+  return tostring(#aliases)
+end
 function addTimer() return "" end
 function onGMCPUpdate() end
 function cecho() end
-function getVariable() end
-function setVariable() end
+function getVariable(name) return variables[name] end
+function setVariable(name, value) variables[name] = value end
+function deleteVariable(name) variables[name] = nil end
 function getCurrentTime() return clock * 1000 end
 function loadModule(path) return dofile(path) end
 
@@ -71,6 +76,21 @@ local function line(text)
   end
   if hits == 0 then fail("no trigger matched: " .. text) end
 end
+-- One typed command: the first matching alias gets [1] the whole command, [2] on its captures.
+local function command(text)
+  for _, alias in ipairs(aliases) do
+    local found = { alias.regex:tfind(text) }
+    if found[1] then
+      local matches = { text }
+      for i, capture in ipairs(found[3] or {}) do
+        if capture then matches[i + 1] = capture end
+      end
+      alias.fn(matches)
+      return
+    end
+  end
+  fail("no alias matched: " .. text)
+end
 local function prompt()
   for _, hook in ipairs(promptHooks) do hook() end
 end
@@ -78,8 +98,10 @@ local function wait(seconds)
   clock = clock + seconds
 end
 -- A fresh Bob, far enough from the last test that no cure gap or illusion window carries over.
-local function fresh()
+-- Learned weights are forgotten too, unless the test is about keeping them.
+local function fresh(keepSaved)
   wait(60)
+  if not keepSaved then variables = {} end
   o.pending = {}
   o.apply({ kind = "reset", name = "Bob" })
   return o.get("Bob")
@@ -287,5 +309,39 @@ line("You command the razor-edged thorny vines around you to lash out and rend t
 line("As you carve into Bob, you perceive that you have dealt 23.5% damage to his left leg.")
 prompt()
 check("carve records limb damage", bob().limbs.leftleg.damage, 23.5)
+
+-- Learning curing priorities -------------------------------------------------------------------
+local function weights() return bob().weights end
+t = fresh()
+M.gain(t, "clumsiness")
+M.gain(t, "slickness")
+line("Bob eats a bloodroot leaf.")
+prompt()
+check("bloodroot over kelp counts against wsys", weights().wsys, 0.334)
+check("and for pk", weights().pk, 0.400)
+check("weights sum to one", weights().wsys + weights().pk + weights().game, 1)
+check("the shared defaults are untouched", M.DEFAULT_WEIGHTS.wsys, 0.5)
+local saved = variables["opp_weights_bob"] or ""
+same("saved for next time", saved:find("wsys=0.334", 1, true) and saved:find("pk=0.400", 1, true)
+  and saved:find("game=0.266", 1, true) and true, true)
+
+fresh(true)
+check("a reset keeps what was learned", weights().wsys, 0.334)
+
+fresh(true)
+M.gain(bob(), "asthma")
+line("Bob takes a long drag off his pipe.")
+prompt()
+check("an unknown pipe teaches nothing", weights().wsys, 0.334)
+
+fresh(true)
+command("oppforget")
+check("oppforget goes back to the defaults", weights().wsys, 0.5)
+same("and clears the saved weights", variables["opp_weights_bob"], nil)
+
+fresh()
+variables["opp_weights_bob"] = "bogus=1,wsys=oops"
+o.apply({ kind = "reset", name = "Bob" })
+check("unreadable saved weights fall back to defaults", weights().wsys, 0.5)
 
 print(failures == 0 and "all passed" or (failures .. " failed"))

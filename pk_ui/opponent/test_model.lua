@@ -279,4 +279,12 @@ Model.proofNotAll(t, { "leftarm", "rightarm" })
 check("both arms out at any level is ruled out", Model.prob(t, "mangledrightarm"), 0)
 check("one arm out survives", Model.prob(t, "brokenleftarm"), 1)
 
+t = Model.newTarget("Bob")
+Model.gain(t, "clumsiness")
+Model.gain(t, "slickness")
+Model.learnWeights(t, { "eat:bloodroot" })
+check("bloodroot over kelp counts against wsys", t.weights.wsys, 0.334)
+check("weights still sum to one", t.weights.wsys + t.weights.pk + t.weights.game, 1)
+check("the shared defaults are untouched", Model.DEFAULT_WEIGHTS.wsys, 0.5)
+
 print(failures == 0 and "all passed" or (failures .. " failed"))
