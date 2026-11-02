@@ -56,6 +56,7 @@ return {
     accelerate = {
       classes = { "depthswalker" },
       cures = 1,
+      boostBlockers = { { "prone" } },
       boostedCures = 2,
       blockers = { { "recklessness" } },
     },

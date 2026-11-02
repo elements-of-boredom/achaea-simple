@@ -220,6 +220,11 @@ function opponent.apply(event)
                 opponent.Model.proofNotAll(target, group)
             end
         end
+        if event.boosted then
+            for _, group in ipairs(entry.boostBlockers or {}) do
+                opponent.Model.proof(target, group[1], false)
+            end
+        end
         if entry.cures == "all" then
             target.states = { { p = 1, affs = {} } }
         elseif entry.only then

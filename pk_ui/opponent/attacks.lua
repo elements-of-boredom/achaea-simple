@@ -508,7 +508,7 @@ return {
     { [[^You recoil from ([\w'\-]+), clapping your hands over your ears to block out the maddening whispers\.$]], { "unnamable" } }, -- wsys
     { [[^The profane presence of ([\w'\-]+) washes over you, and your courage is torn asunder\.$]], { "unnamable" } }, -- wsys
     { [[^The profane nature of ([\w'\-]+) becomes too much to withstand\.$]], { "unnamable" } }, -- wsys
-    { [[^The amorphous form of ([\w'\-]+) trembles, some of the liquid composing it falling away from the greater whole\.$]], { "waterlord" } }, -- wsys
+    { [[^The amorphous form of ([\w'\-]+) trembles, some of the liquid composing it falling away from the greater whole\.$]], { "waterlord" }, acted = false  }, -- wsys
     { [[^([\w'\-]+) skilfully whirls .+ toward you(?:r (?:left arm|right arm|left leg|right leg|torso|head))?\.$]], { "infernal", "paladin", "runewarden", "unnamable" } }, -- wsys
     { [[^([\w'\-]+) ducks low and smashes (?:his|her|faes) shield into your knees, causing them to buckle underneath you\.$]], { "infernal", "paladin", "runewarden", "unnamable" } }, -- wsys
     { [[^([\w'\-]+) quickly lunges to the side, bringing (?:\w+) shield around to smash into your spine\.$]], { "infernal", "paladin", "runewarden", "unnamable" } }, -- wsys

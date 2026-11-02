@@ -53,6 +53,5 @@ addTrigger([[^([\w'\-]+) grows older before your eyes\.$]], function(_, _, w)
     local cure = opponent.lastPending(w[1], "classcure")
     if cure and cure.cure == "accelerate" then
         cure.boosted = true
-        opponent.record(w[1], { kind = "proof", aff = "prone", present = false })
     end
 end, { type = "regex" })
