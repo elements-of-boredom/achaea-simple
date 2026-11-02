@@ -118,6 +118,7 @@ end
 
 function room.clearTarget()
   room.targetId = nil
+  room.targetDisplayName = nil
   room.targetHpPercent = nil
   PkCore.stateChanged()
 end
@@ -268,6 +269,11 @@ end
 -- Players come through with id/hpperc "-1"; keep the id Target.Set gave us.
 function room.onTargetInfo(info)
   if type(info) ~= "table" then return end
+  -- A reload replays the cached Info; if Char.Status says there's no target, ignore it.
+  local status = getGMCPData("Char.Status")
+  if type(status) == "table" and type(status.target) == "string" and status.target:lower() == "none" then
+    return
+  end
   local id = text(info.id)
   if id and id ~= "-1" then room.targetId = id end
   room.targetDisplayName = text(info.name) or text(info.short_desc) or room.targetDisplayName

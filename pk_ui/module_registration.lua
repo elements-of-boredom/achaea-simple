@@ -26,6 +26,9 @@ loadModule("rage.lua")
 loadModule("opponent_host.lua")
 loadModule("opponent/tracker.lua")
 
+-- Curing assist
+loadModule("curing/locks.lua")
+
 -- UI: the theme first, every widget uses it. Layout builds the (empty) panels.
 loadModule("ui/theme_css.lua")
 loadModule("ui/theme.lua")
@@ -59,6 +62,7 @@ loadModule("aliases/rift.lua")
 -- Misc
 loadModule("goldpickup.lua")
 loadModule("party/party_target.lua")
+loadModule("quests.lua")
 
 -- PRETTY!
 loadModule("colorize.lua")

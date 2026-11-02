@@ -5,6 +5,7 @@ local SAVE_KEY = "config" -- for saveTable
 config.defaults = {
   affEchos = false,
   partyAutoCaller = true,
+  lockPrio = true,
 }
 
 -- Defaults first, then saved values on top; keys no longer in defaults are dropped.

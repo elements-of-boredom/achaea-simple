@@ -10,6 +10,14 @@ local DEFS = {
   herb = { default = 1.6, defaults = { slow = 2.9 } },
   focus = { default = 2.5, defaults = { slow = 7.7 } }, pipe = { default = 1.5 }, 
   salve = { default = 1.4, defaults = { restoration = 4.0, slow = 1.9, ["restoration-slow"] = 6.0 } },
+  fitness = { default = 10, defaults = { retry = 1 } },
+  dragonheal = { default = 20, defaults = { retry = 2 } },
+  shrugging = { default = 10.5, defaults = { retry = 1 } },
+  rage = { default = 11, defaults = { retry = 2 } },
+  accelerate = { default = 10, defaults = { retry = 1 } },
+  fool = { default = 62 },
+  eruption = { default = 9 },
+  grovecure = { default = 4.2 },
 }
 local SLOWED_BY = { herb = "homunculusmercury", focus = "weakenedmind", salve = "timeflux" }
 local function slowVariant(id, variant)
@@ -162,4 +170,62 @@ local RECOVERY_LINES = {
 for _, r in ipairs(RECOVERY_LINES) do
   local id = r[2]
   tempRegexTrigger(r[1], function() markUp(id) end)
+end
+
+-- class cures -----------------
+-- used: it just went down. refused: it's down but we don't know since when, so the short retry
+-- timing lets server-side curing try again soon (as WunderSys does). ready: back up.
+-- Dragonheal and fitness have no ready line we know of, so they rely on the failsafe timer.
+local CLASS_CURES = {
+  fitness = {
+    used = [[^You inhale deeply, purging yourself of your asthmatic condition\.$]],
+    refused = [[^You may not purge your lungs again as of this time\.$]],
+    ready = [[^You may purge your lungs once again\.$]],
+  },
+  dragonheal = {
+    used = [[^You let out a great keening, and cast the impurities from your form\.$]],
+    refused = [[^You have not yet recovered enough to purge your great form of afflictions\.$]],
+    ready = [[^You may purge your great form of afflictions once again\.$]],
+  },
+  shrugging = {
+    used = [[^Focusing inward, you purge your body of afflictions\.$]],
+    refused = [[^You may not shrug again so soon\.$]],
+    ready = [[^Your body has recovered enough to shrug afflictions once again\.$]],
+  },
+  rage = {
+    used = [[^You allow your pent-up rage to vent and your eyes flash dangerously\.$]],
+    refused = [[^You are too exhausted to summon the rage of battle to throw off afflictions\.$]],
+    ready = [[^You may channel your rage to cure your afflictions once again\.$]],
+  },
+  accelerate = {
+    used = [[^You accelerate your body's ability to purge afflictions a thousandfold\.$]],
+    refused = [[^You have not recovered enough to accelerate time in that way again so soon\.$]],
+    ready = [[^You may accelerate time to cleanse your afflictions once again\.$]],
+  },
+  fool = {
+    used = [[^You press the Fool tarot to your forehead\.$]],
+    ready = [[^You may heal another affliction\.$]],
+  },
+  eruption = {
+    used = [[^You summon up the magma that courses beneath your outer layers, sending it forth in an eruption to drive out that which taints your perfect form\.$]],
+    refused = [[^You may not cleanse your form of weakness quite so soon after doing so previously\.$]],
+    ready = [[^You may purge yourself of weakness once again\.$]],
+  },
+  grovecure = {
+    used = [[^You stand upright, fists clenched, and feel the power of the earth rushing upwards to heal your body and mind\.$]],
+  },
+}
+for id, lines in pairs(CLASS_CURES) do
+  tempRegexTrigger(lines.used, function()
+    B.downAt[id] = nil
+    markDown(id)
+  end)
+  if lines.refused then
+    tempRegexTrigger(lines.refused, function()
+      if not B.downAt[id] then markDown(id, "retry") end
+    end)
+  end
+  if lines.ready then
+    tempRegexTrigger(lines.ready, function() markUp(id) end)
+  end
 end
