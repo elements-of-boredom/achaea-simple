@@ -103,6 +103,7 @@ local function fresh(keepSaved)
   wait(60)
   if not keepSaved then variables = {} end
   o.pending = {}
+  o.bleed = {}
   o.apply({ kind = "reset", name = "Bob" })
   return o.get("Bob")
 end
@@ -343,5 +344,41 @@ fresh()
 variables["opp_weights_bob"] = "bogus=1,wsys=oops"
 o.apply({ kind = "reset", name = "Bob" })
 check("unreadable saved weights fall back to defaults", weights().wsys, 0.5)
+
+-- The defence markers ----------------------------------------------------------------------------
+local function view() return o.defenceView("Bob") end
+fresh()
+same("fresh: shield unknown", view().shield, "unknown")
+same("fresh: rebounding assumed up", view().rebounding, "up")
+same("fresh: no bleeding reading", view().bleeding, nil)
+same("someone we don't track: shield unknown", o.defenceView("Nobody").shield, "unknown")
+same("someone we don't track: rebounding unknown", o.defenceView("Nobody").rebounding, "unknown")
+
+line("A nearly invisible magical shield forms around Bob.")
+line("Bob's aura of weapons rebounding disappears.")
+prompt()
+same("shield up", view().shield, "up")
+same("rebounding down", view().rebounding, "down")
+line("You flay away Bob's shield defence.")
+prompt()
+same("shield flayed", view().shield, "down")
+
+t = fresh()
+M.gainMaybe(t, "norebounding", 0.5)
+same("rebounding a coin flip shows unknown", view().rebounding, "unknown")
+
+-- Bleeding ------------------------------------------------------------------------------------------
+fresh()
+line("You observe sluggish bleeding from Bob's wounds.")
+same("discern reads the band's middle", view().bleeding, 350)
+line("You observe arterial spray gushing from the open wounds of Bob.")
+same("a new reading replaces the old", view().bleeding, 950)
+wait(o.BLEED_FRESH + 1)
+same("a reading goes stale", view().bleeding, nil)
+line("You observe that Bob will shortly bleed to death.")
+line("The blood ceases flowing from the wounds of Bob.")
+same("stopped bleeding reads zero", view().bleeding, 0)
+line("You observe that Alice is bleeding slightly.")
+same("someone we don't track is ignored", o.bleedAmount("Alice"), nil)
 
 print(failures == 0 and "all passed" or (failures .. " failed"))
