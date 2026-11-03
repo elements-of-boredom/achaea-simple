@@ -71,17 +71,38 @@ function chat.flush()
     writeNow()
 end
 
+-- After a full restart loadTable hands back nested tables that don't act like Lua tables (type() isn't
+-- "table"; # and ipairs can fail), so copy the saved lines out one by one, keeping only plain strings.
+local function savedLines(saved)
+    local out = {}
+    local ok, lines = pcall(function() return saved.lines end)
+    if not ok or lines == nil then return out end
+    for i = 1, MAX_LINES + TRIM_SLACK do
+        local got, line = pcall(function() return lines[i] end)
+        if not got or line == nil then break end
+        local c, a, t = line.c, line.a, line.t
+        if (c == "tells" or c == "channels") and (type(a) == "string" or type(t) == "string") then
+            out[#out + 1] = { c = c, a = type(a) == "string" and a or nil, t = type(t) == "string" and t or nil }
+        end
+    end
+    return out
+end
+
 local function restore()
     if chat.restored or storageStatus() ~= "ready" then return end
     local saved = loadTable(SAVE_KEY) or {}
+    local lines = savedLines(saved)
     -- Lines that arrived before storage was ready go after the restored history.
-    local lines = saved.lines or {}
     for _, line in ipairs(chat.lines) do
         lines[#lines + 1] = line
     end
     chat.lines = lines
-    chat.unread = saved.unread or chat.unread
-    if VALID_TAB[saved.active] then chat.active = saved.active end
+    for _, tab in ipairs(TABS) do
+        local ok, n = pcall(function() return saved.unread[tab.key] end)
+        chat.unread[tab.key] = ok and tonumber(n) or chat.unread[tab.key]
+    end
+    local ok, active = pcall(function() return saved.active end)
+    if ok and VALID_TAB[active] then chat.active = active end
     chat.restored = true
 end
 restore()

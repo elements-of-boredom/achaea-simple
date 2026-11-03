@@ -175,6 +175,8 @@ PkCore.registerPromptTag("targetafflictions", function()
     if entry.p < opponent.Queries.SURE then short = short .. "?" end
     table.insert(parts, "<" .. afflictionColor(entry.aff) .. ">" .. short)
   end
+  local lock = opponent.target.lock(name)
+  if lock then table.insert(parts, 1, "<" .. C.critical .. ">" .. lock:upper()) end
   if #parts == 0 then return "" end
   return table.concat(parts, " ") .. "<" .. C.text .. ">"
 end)

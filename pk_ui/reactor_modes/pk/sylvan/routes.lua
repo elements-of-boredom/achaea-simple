@@ -6,6 +6,8 @@ PkCore.pk.register("sylvan", {
   defaultRoute = "heartseed",
   routes = {
     heartseed = {
+      "force_shockwave",
+      "viridian",
       "vinewreathe",
       "steal_body_restoration",
       "prep_torso",
@@ -15,6 +17,22 @@ PkCore.pk.register("sylvan", {
       "heartseed_now",
       "break_bait",
       "wait_restoration",
+    },
+    momentum = {
+      "force_shockwave",
+      "viridian",
+      "lock_disturb",
+      "lock_feedback",
+      "momentum_static",
+      "momentum_weariness",
+      "momentum_asthma",
+      "momentum_impatience",
+      "momentum_seal",
+      "momentum_heartseed",
+      "shockwave",
+      "momentum_strike",
+      "momentum_setup",
+      "momentum_build",
     },
   },
 })

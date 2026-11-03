@@ -219,7 +219,8 @@ local function showGroup(kind, title, group, chosen)
         local text = "$K[" .. mark .. "$K] " .. (defences.have[key] and "$G" or "$W") .. label .. " "
         local link = (i % COLUMNS == 0 or i == #names) and hyperlink or hyperlinkInline
         link(text, "pkdef toggle " .. kind .. " " .. key, {
-            hint = "Toggle " .. kind .. " of " .. def.name
+            hint = "Toggle " .. kind .. " of " .. def.name,
+            style = { textDecorationColor = "transparent" }
         })
     end
 end

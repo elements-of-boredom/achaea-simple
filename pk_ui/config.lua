@@ -7,6 +7,7 @@ config.defaults = {
   partyAutoCaller = true,
   lockPrio = true,
   classCure = true,
+  herbReserve = true,
 }
 
 -- Defaults first, then saved values on top; keys no longer in defaults are dropped.

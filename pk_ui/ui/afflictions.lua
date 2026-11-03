@@ -41,6 +41,11 @@ local SCRIPT = [[
     box.replaceChildren();
     entries.forEach(function (e) { box.appendChild(row(e)); });
     for (var i = entries.length; i < ROWS; i++) box.appendChild(row(null));
+    if (m.side !== "target") return;
+    var section = box.closest(".mf-afflictions"), title = section.querySelector("h2");
+    if (!title.dataset.title) title.dataset.title = title.textContent;
+    section.dataset.lock = m.lock || "";
+    title.textContent = m.lock ? m.lock.toUpperCase() : title.dataset.title;
   };
 })();
 </script>
@@ -120,7 +125,8 @@ function afflictions.render(id, force)
     afflictions.lastSelf = self
     sendWidgetMessage(id, self)
   end
-  local target = json.encode({ kind = "afflictions", side = "target", entries = targetEntries() })
+  local lock = Opponent and Opponent.target and Opponent.target.lock(PkCore.room.targetName()) or ""
+  local target = json.encode({ kind = "afflictions", side = "target", entries = targetEntries(), lock = lock })
   if target ~= afflictions.lastTarget or force then
     afflictions.lastTarget = target
     sendWidgetMessage(id, target)

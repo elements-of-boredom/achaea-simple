@@ -391,6 +391,20 @@ PkCore.ui.theme.mockCss = [==[
 .mf-theme .mf-afflictions[data-side="target"] {
   border-top-color: var(--mf-accent);
 }
+/* The target is locked: amber while the tree can still break it, red once paralysis is on too. */
+.mf-theme .mf-afflictions[data-lock="softlock"] { --mf-lock-alert: #d9a13b; }
+.mf-theme .mf-afflictions[data-lock="venomlock"],
+.mf-theme .mf-afflictions[data-lock="hardlock"],
+.mf-theme .mf-afflictions[data-lock="truelock"] { --mf-lock-alert: #e04848; }
+.mf-theme .mf-afflictions[data-side="target"][data-lock]:not([data-lock=""]) {
+  outline: 2px solid var(--mf-lock-alert);
+  outline-offset: -2px;
+  background: color-mix(in srgb, var(--mf-lock-alert) 14%, var(--mf-surface-inset));
+}
+.mf-theme .mf-afflictions[data-lock]:not([data-lock=""]) h2 {
+  color: var(--mf-lock-alert);
+  font-weight: 700;
+}
 .mf-theme .mf-afflictions .mf-panel-heading {
   height: var(--mf-affliction-heading-height);
   padding: 4px 6px;

@@ -4,6 +4,7 @@ reactor.modes = reactor.modes or {}
 reactor.pollInterval = reactor.pollInterval or 0.35
 reactor.lastQueueSent = ""
 reactor.pollGeneration = reactor.pollGeneration or 0
+reactor.ranAt = reactor.ranAt or 0
 
 -- Bal and eq both up but our queue still hasn't fired: after staleAfter, allow a resend.
 -- Without this a whiff (target gone, command rejected) left the mode stuck until toggled.
@@ -11,6 +12,7 @@ reactor.staleAfter = reactor.staleAfter or 2.0
 reactor.lastQueueAt = reactor.lastQueueAt or 0
 
 local function clearStaleQueue()
+  if PkCore.slowed.busy() then return end
   if reactor.lastQueueSent == "" then return end
   if not (PkCore.balance.balance and PkCore.balance.equilibrium) then
     reactor.lastQueueAt = PkCore.now()   -- off balance: the queue is legitimately waiting
@@ -51,9 +53,12 @@ end
 
 -- fired: optional, runs when the game says our queued command actually ran.
 function reactor.submitQueue(actions, fired)
+  if PkCore.slowed.busy() then return end
   if #actions == 0 then return end
   local commands = table.concat(actions, "|")
   if commands == reactor.lastQueueSent then return end
+  local ready = PkCore.balance.balance and PkCore.balance.equilibrium
+  if ready and commands == reactor.lastRan and PkCore.now() - reactor.ranAt < reactor.staleAfter then return end
   reactor.lastQueueSent = commands
   reactor.lastQueueAt = PkCore.now()
   reactor.pendingFired = fired
@@ -94,12 +99,14 @@ PkCore.registerAlias("PkCore mode set", [[^mode\s+(\w+)$]], [[PkCore.reactor.set
 tempRegexTrigger([[^\[System\]: Running queued \w+ command: (.+)$]], function(_, _, w)
   if w[1]:upper() ~= reactor.lastQueueSent:upper() then return end
   local fired = reactor.pendingFired
+  reactor.lastRan, reactor.ranAt = reactor.lastQueueSent, PkCore.now()
   reactor.queueConsumed()
   if fired then
     local ok, err = pcall(fired)
     if not ok then PkCore.note("reactor fired hook: " .. tostring(err)) end
   end
 end)
+
 -- target gone (dead, moved, we flew): the queued attack failed without spending balance
 tempRegexTrigger([[^You cannot see that being here\.$]], reactor.queueConsumed)
 

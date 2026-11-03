@@ -86,3 +86,13 @@ function T.nextLimb(candidates, name)
   if best then return best end
   return nil, blocked and "parried" or nil
 end
+-- The strongest lock that's likely on them, or nil. Truelock is the hardlock plus weariness, so even
+-- fitness can't break it.
+local LOCK_ORDER = { { "truelock", { "weariness" } }, { "hardlock" }, { "venomlock" }, { "softlock" } }
+function T.lock(name)
+  local target = tracked(name)
+  if not target then return nil end
+  for _, entry in ipairs(LOCK_ORDER) do
+    if Q.lock(target, entry[1], entry[2]) >= Q.HAS then return entry[1] end
+  end
+end

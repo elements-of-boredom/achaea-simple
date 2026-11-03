@@ -28,6 +28,7 @@ return {
     ["boostedregeneration"] = { name = "Boosting", skillsets = { "kaido" } },
     ["chargeshield"] = { name = "Chargeshield", skillsets = { "elementalism" } },
     ["cheetah"] = { name = "Cheetah", skillsets = { "spiritform" } },
+    ["circulate"] = { name = "Circulate", skillsets = { "weatherweaving" } },
     ["clinging"] = { name = "Clinging", skillsets = { "survival" } },
     ["cloak"] = { name = "Cloak", skillsets = { "tattoos" } },
     ["cohesion"] = { name = "Cohesion", skillsets = { "pervasion" } },

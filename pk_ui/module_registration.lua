@@ -14,6 +14,7 @@ loadModule("state/afflictions.lua")
 loadModule("state/balances.lua")
 loadModule("state/limbs.lua")
 loadModule("state/me.lua")
+loadModule("state/slowed.lua")
 
 loadModule("readiness.lua")
 loadModule("prompt_tags.lua")
@@ -29,6 +30,7 @@ loadModule("opponent/tracker.lua")
 
 -- Curing assist
 loadModule("curing/locks.lua")
+loadModule("curing/reserve.lua")
 
 -- UI: the theme first, every widget uses it. Layout builds the (empty) panels.
 loadModule("ui/theme_css.lua")

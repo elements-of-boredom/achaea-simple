@@ -92,6 +92,7 @@ end
 
 function locks.classCure()
   if not PkCore.config.values.classCure then return end
+  if PkCore.slowed.busy() then return end
   local cure = CLASS_CURES[PkCore.defences.classKey() or ""]
   if not cure or pressure() < locks.CLASS_PRESSURE then return end
   if not PkCore.balances.isReady(cure.id) or classCureBlocked(cure.id) then return end
