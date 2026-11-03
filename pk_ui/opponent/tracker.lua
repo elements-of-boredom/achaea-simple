@@ -119,6 +119,7 @@ opponent.GAPS = {
 }
 
 opponent.lastCure = opponent.lastCure or {}
+opponent.classCureAt = opponent.classCureAt or {}
 
 -- Triggers only record. Nothing touches the model until the prompt.
 function opponent.record(name, event)
@@ -250,6 +251,9 @@ function opponent.apply(event)
         return
     end
     if event.kind == "classcure" then
+        local key = event.name:lower()
+        opponent.classCureAt[key] = opponent.classCureAt[key] or {}
+        opponent.classCureAt[key][event.cure] = event.time
         local entry = opponent.classCures.active[event.cure] or opponent.classCures.passive[event.cure]
         if not entry then
             return

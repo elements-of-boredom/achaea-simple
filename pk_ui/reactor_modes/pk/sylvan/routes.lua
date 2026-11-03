@@ -20,9 +20,9 @@ PkCore.pk.register("sylvan", {
     },
     momentum = {
       "force_shockwave",
-      "viridian",
-      "lock_disturb",
-      "lock_feedback",
+      --"viridian",
+      "weather_disturb",
+      "weather_feedback",
       "momentum_static",
       "momentum_weariness",
       "momentum_asthma",

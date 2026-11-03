@@ -465,3 +465,9 @@ registerCommand("pkdef", function(args)
 end, "Show or change your defence keepup and defup lists")
 
 PkCore.registerAlias("PkCore defences", [[^pkdefs$]], [[PkCore.defences.report()]])
+
+-- GMCP can miss the form going away; the failed rend can't.
+addTrigger([[^You must have transformed into a Viridian in order to do that\.$]], function()
+    remove("viridian")
+    PkCore.stateChanged()
+end, { type = "regex" })

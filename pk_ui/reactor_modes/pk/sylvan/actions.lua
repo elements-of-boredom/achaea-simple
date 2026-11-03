@@ -72,13 +72,11 @@ S.actions = {
     why = "their salve is busy on a limb: heartseed",
     can = function() return salveOn("legs") or salveOn("arms") end,
     build = heartseed,
-    fired = S.heartseedCast,
   },
   heartseed_now = {
     why = "torso already in trauma, or salve blocked: heartseed",
     can = function() return torsoTrauma() or C.salveBlocked end,
     build = heartseed,
-    fired = S.heartseedCast,
   },
   break_bait = {
     why = "break a prepped bait limb to draw a restoration",
@@ -104,12 +102,12 @@ local function target() return PkCore.room.targetName() end
 local function cast(verb, pair) return verb .. " " .. pair[1] .. " " .. pair[2] .. " " .. target() end
 local function sealed() return T.has("anorexia") and T.has("slickness") end
 
-S.actions.lock_disturb = {
+S.actions.weather_disturb = {
   why = "weather isn't disturbed here",
   can = function() return not S.here().disturbed end,
   build = function() return "cast disturb" end,
 }
-S.actions.lock_feedback = {
+S.actions.weather_feedback = {
   why = "feedback isn't on them",
   can = function()
     local on = S.here().feedback
@@ -120,34 +118,30 @@ S.actions.lock_feedback = {
 
 -- Momentum route: setup overcharge, strike overcharge, seal, static. Anorexia, impatience, slickness and
 -- asthma hold each other up (no eating, focus, salve or pipe); paralysis then takes the tree away.
-local Mo = C.momentum
+local Mo = S.momentum
 local function on(aff) return T.has(aff) end
 local function core() return on("asthma") and on("impatience") and on("anorexia") and on("slickness") end
+local function lockHolds() return on("anorexia") and on("slickness") and on("asthma") end
 -- Wiping first (free) makes the named venom the only one on the vines, so it's the one the rend carries.
 local function rendWith(venom, plant)
   local limb = T.nextLimb(Mo.limbs) or "torso"
   return "wipe arms|thornrend " .. target() .. " " .. venom .. " " .. WORDS[RULES.key(limb)] .. " " .. plant
 end
 local function setupJustLanded()
-  for _, spell in ipairs(Mo.setup) do
-    local at = S.storedAt and S.storedAt[spell]
-    if not at or PkCore.now() - at > Mo.strikeWindow then return false end
-  end
-  return true
+  return S.setupAt ~= nil and PkCore.now() - S.setupAt <= Mo.strikeWindow
 end
 
 -- Doesn't wait to be sure of impatience: the cyclone brings it back on a dizzy target anyway.
 S.actions.momentum_static = {
   why = "anorexia, slickness, asthma on: paralysis takes the tree away",
-  can = function() return on("anorexia") and on("slickness") and on("asthma") and not on("paralysis") end,
+  can = function() return lockHolds() and not on("paralysis") end,
   build = function() return cast("synchronise", { "static", "cyclone" }) end,
 }
--- Fitness cures asthma whatever else is on them; weariness is the only thing that stops it. Grulk's
--- 5/5 at 13:35:40 broke to fitness two seconds later.
+-- Fitness cures asthma whatever else is on them; weariness is the only thing that stops it.
 -- Only once we've seen them use fitness and it's (nearly) ready again: otherwise the 18 AE is better
 -- spent on the shockwave.
 local function fitnessReady()
-  local at = S.fitnessAt[target():lower()]
+  local at = (Opponent.classCureAt[target():lower()] or {}).fitness
   return at ~= nil and PkCore.now() - at >= Mo.fitnessCooldown - 2
 end
 -- Overcharged water if the AE is there; otherwise vernalius on the vines, which costs none (and the
@@ -155,7 +149,7 @@ end
 S.actions.momentum_weariness = {
   why = "locked and their fitness is due: weariness so it can't take the asthma",
   can = function()
-    return on("anorexia") and on("slickness") and on("asthma") and on("paralysis") and not on("weariness")
+    return lockHolds() and on("paralysis") and not on("weariness")
       and fitnessReady()
   end,
   build = function()
@@ -173,7 +167,7 @@ S.actions.momentum_asthma = {
 }
 S.actions.momentum_impatience = {
   why = "anorexia, slickness, asthma on: impatience back",
-  can = function() return on("anorexia") and on("slickness") and on("asthma") and not on("impatience") end,
+  can = function() return lockHolds() and not on("impatience") end,
   build = function() return cast("synchronise", { "cyclone", "hailstone" }) end,
 }
 S.actions.momentum_seal = {
@@ -186,11 +180,10 @@ S.actions.momentum_seal = {
 S.actions.momentum_heartseed = {
   why = "5/5 lock: heartseed",
   can = function()
-    return on("anorexia") and on("slickness") and on("asthma") and on("impatience") and on("paralysis")
-      and (on("weariness") or not S.fitnessAt[target():lower()]) and not heartseedActive()
+    return lockHolds() and on("impatience") and on("paralysis")
+      and (on("weariness") or not (Opponent.classCureAt[target():lower()] or {}).fitness) and not heartseedActive()
   end,
   build = heartseed,
-  fired = S.heartseedCast,
 }
 -- Right after the setup we know they're dizzy, whatever the tracker makes of their focus.
 S.actions.momentum_strike = {
@@ -203,31 +196,21 @@ S.actions.momentum_setup = {
   can = function() return not core() and S.ae() >= Mo.setupAt end,
   build = function() return cast("overcharge", Mo.setup) end,
 }
--- While anorexia, slickness and asthma hold, nothing they eat off: build with kelp afflictions instead.
-local function lockHolds() return on("anorexia") and on("slickness") and on("asthma") end
+
 S.actions.momentum_build = {
   why = "building AE",
   can = function() return true end,
   build = function() return cast("synchronise", lockHolds() and Mo.holdBuild or Mo.build) end,
 }
 
--- Shockwave whenever it's on: sensitivity and most of the other kelp afflictions. We don't know its
--- line yet, so the queue confirmation zeroes our AE; the next AE line corrects it if the cast failed.
-local SW = C.shockwave
-local function count(affs)
-  local n = 0
-  for _, aff in ipairs(affs) do
-    if T.has(aff) then n = n + 1 end
-  end
-  return n
-end
+local SW = S.shockwave
+
 -- Only while the lock holds: that's when what's on them stays on. The setup waits for 60 AE, so
 -- after setup and strike the lock builds back up to 40 with afflictions they can't cure.
 S.actions.shockwave = {
   why = "locked, 40 AE and they're vulnerable: shockwave",
   can = function()
     if S.ae() < SW.minAE or setupJustLanded() or not lockHolds() then return false end
-    if T.has("sensitivity", SW.sensitivity) and count(SW.kelp) >= SW.kelpNeeded then return true end
     -- Expected count, not "sure of each": one goldenseal leaves dizziness, epilepsy and impatience each
     -- uncertain, but two of the three are certainly still there.
     local expected = 0

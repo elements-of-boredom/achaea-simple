@@ -165,15 +165,42 @@ local LADDERS = {
     hailstone = { "clumsiness", "epilepsy", "impatience" },
     waterspout = { "confusion", "dizziness", "vertigo" },
 }
-addTrigger([[^Channeling power through your water channel, you conjure forth a hailstone to strike ([\w'\-]+) in the side of the head\.$]], function()
-    opponent.offense.spell = "hailstone"
-end, { type = "regex" })
-addTrigger([[^You summon forth a spout of water, directing it at ([\w'\-]+)\.$]], function()
-    opponent.offense.spell = "waterspout"
-end, { type = "regex" })
+local OUR_CASTS = {
+    { [[^Channeling arcane power through your air and earth channels, you summon forth a burst of arcane static directed at ([\w'\-]+)\.$]], "static" },
+    { [[^Channeling large quantities of arcane power through your air channel, you direct a localised explosion of pure sound at ([\w'\-]+)]], "thunderclap" },
+    { [[^Tapping into your air channel, you summon forth a vicious wind to lacerate the body of ([\w'\-]+)\.$]], "razorwind" },
+    { [[^Summoning forth energy that you have gathered, you conjure forth a terrible cyclone of wind, picking up (?:the disorientated form of )?([\w'\-]+)]], "cyclone" },
+    { [[^Channeling power through your water channel, you conjure forth a hailstone to strike ([\w'\-]+) in the side of the head\.$]], "hailstone" },
+    { [[^You summon forth a spout of water, directing it at ([\w'\-]+)\.$]], "waterspout" },
+}
+for _, entry in ipairs(OUR_CASTS) do
+    local spell = entry[2]
+    addTrigger(entry[1], function(_, _, w)
+        opponent.offense.spell, opponent.offense.spellTarget = spell, w[1]
+        opponent.offense.spellAt = opponent.host.now()
+    end, { type = "regex" })
+end
 opponent.host.onPrompt("sylvan spell", function()
-    opponent.offense.spell = nil
+    opponent.offense.spell, opponent.offense.spellTarget = nil, nil
 end)
+
+-- Overcharging adds the element's affliction; the "stored" AE line right after the cast is the proof.
+local ELEMENT_AFF = {
+    static = "paralysis", thunderclap = "paralysis",
+    razorwind = "asthma", cyclone = "asthma",
+    hailstone = "weariness", waterspout = "weariness",
+}
+-- Held breath eats the asthma: the defence parser has already queued their exhale.
+local function exhaledSince(name, at)
+    local event = opponent.lastPending(name, "sense")
+    return event ~= nil and event.sense == "holdbreath" and event.value == "no" and event.time >= at
+end
+addTrigger([[^You have \d+ units of arcane energy stored\.]], function()
+    local name, spell = opponent.offense.spellTarget, opponent.offense.spell
+    if not (name and spell and opponent.isTracked(name)) then return end
+    if exhaledSince(name, opponent.offense.spellAt) then return end
+    opponent.record(name, { kind = "gain", aff = ELEMENT_AFF[spell] })
+end, { type = "regex" })
 
 local FOLLOWUPS = {
     { [[^([\w'\-]+) stumbles clumsily as the blow lands\.$]], "hailstone", 1 },
