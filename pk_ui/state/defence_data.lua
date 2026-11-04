@@ -173,7 +173,7 @@ return {
     ["vengeance"] = { name = "Vengeance", skillsets = { "necromancy" } },
     ["vigilance"] = { name = "Vigilance", skillsets = { "vision" }, mana = true },
     ["vigour"] = { name = "Vigour", skillsets = { "groves" } },
-    ["viridian"] = { name = "Viridian", skillsets = { "propagation" } },
+    ["viridian"] = { name = "Viridian", skillsets = { "propagation" }, manual = "assume viridian" },
     ["vitality"] = { name = "Vitality", skillsets = { "kaido", "metamorphosis" } },
     ["waterwalking"] = { name = "Waterwalking", skillsets = { "shindo" } },
     ["weathering"] = { name = "Weathering", skillsets = { "discipline", "valour", "malignity", "dominion", "kaido", "shindo" } },

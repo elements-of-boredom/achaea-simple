@@ -3,6 +3,15 @@ Queries.LIKELY = 0.7
 Queries.SURE = 0.9
 Queries.HAS = Queries.LIKELY
 
+-- A blocker is one affliction, or a table of afflictions that only block together (both arms for tree).
+local function blocks(affs, blocker)
+  if type(blocker) == "string" then return affs[blocker] ~= nil end
+  for _, aff in ipairs(blocker) do
+    if affs[aff] == nil then return false end
+  end
+  return true
+end
+
 -- Chance the target has every affliction in the list at the same time.
 function Queries.probAll(target, affs)
   local p = 0
@@ -22,7 +31,7 @@ function Queries.probAny(target, affs)
   for _, state in ipairs(target.states) do
     local any = false
     for _, aff in ipairs(affs) do
-      if state.affs[aff] ~= nil then any = true end
+      if blocks(state.affs, aff) then any = true end
     end
     if any then p = p + state.p end
   end
@@ -45,7 +54,7 @@ function Queries.probGroups(target, groups)
         for _, group in ipairs(groups) do
             local any = false
             for _, aff in ipairs(group) do
-                if state.affs[aff] ~= nil then any = true end
+                if blocks(state.affs, aff) then any = true end
             end
             if not any then all = false end
         end
@@ -90,7 +99,7 @@ Queries.BLOCKERS = {
   smoke   = { "asthma" },
   apply   = { "slickness" },
   focus   = { "impatience" },
-  tree    = { "paralysis" },
+  tree    = { "paralysis", { "brokenleftarm", "brokenrightarm" } },
   fitness = { "weariness" },
   sip     = { "anorexia" },
   stand = {

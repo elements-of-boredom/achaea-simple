@@ -31,6 +31,7 @@ loadModule("opponent/tracker.lua")
 -- Curing assist
 loadModule("curing/locks.lua")
 loadModule("curing/reserve.lua")
+loadModule("curing/tree.lua")
 
 -- UI: the theme first, every widget uses it. Layout builds the (empty) panels.
 loadModule("ui/theme_css.lua")

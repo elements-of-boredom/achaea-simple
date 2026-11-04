@@ -8,6 +8,7 @@ config.defaults = {
   lockPrio = true,
   classCure = true,
   herbReserve = true,
+  treeAssist = true,
 }
 
 -- Defaults first, then saved values on top; keys no longer in defaults are dropped.
@@ -26,6 +27,13 @@ function config.set(key, value)
   end
   config.values[key] = value
   saveTable(SAVE_KEY, config.values)
+  local listener = config.listeners[key]
+  if listener then listener(value) end
+end
+-- A module that has to act when its setting changes (tell the server, say) registers here.
+config.listeners = config.listeners or {}
+function config.onChange(key, fn)
+  config.listeners[key] = fn
 end
 
 function config.alias(key, rawValue)

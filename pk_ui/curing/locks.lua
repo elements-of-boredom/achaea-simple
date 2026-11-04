@@ -3,7 +3,7 @@ local locks = PkCore.locks
 
 -- Lock pressure: three or more of these at once (Grulk's numbers).
 locks.AFFS = { "paralysis", "slickness", "asthma", "anorexia", "impatience", "weariness" }
-locks.PRESSURE = 3
+locks.PRESSURE = 2
 
 -- Under pressure, cure the affliction that blocks a cure we're about to have. The first rule that fits wins.
 local RULES = {

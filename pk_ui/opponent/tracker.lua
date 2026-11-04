@@ -158,7 +158,11 @@ end
 function opponent.channelProof(target, cureKey)
     local channel = cureKey:match("^(%a+)")
     for _, blocker in ipairs(opponent.Queries.BLOCKERS[channel] or {}) do
-        opponent.Model.proof(target, blocker, false)
+        if type(blocker) == "table" then
+            opponent.Model.proofNotAll(target, blocker)
+        else
+            opponent.Model.proof(target, blocker, false)
+        end
     end
 end
 

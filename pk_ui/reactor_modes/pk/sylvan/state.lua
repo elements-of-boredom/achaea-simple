@@ -57,7 +57,9 @@ S.momentum = {
   setupAt = 60,                           -- a full bar: the setup and strike (38) leave 22 to build on
   fitnessCooldown = 9.4,                  -- seconds between their fitnesses (Grulk: 9.4 to 10)
   strikeWindow = 2.5,                     -- the setup still counts this long after it went off
-  limbs = { "torso", "ll", "rl" },        -- where the rends go
+  limbs = { "ll", "rl" },        -- where the rends go
+  prepVenom = "curare",   -- the leg prep against might: paralysis keeps their tree and bloodroot busy
+  prepPlant = "kelp",     -- healthleech
 }
 -- Shockwave dumps all stored AE (40 at least) for damage, more with the kelp afflictions on them.
 S.shockwave = {

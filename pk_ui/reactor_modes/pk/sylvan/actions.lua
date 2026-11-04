@@ -322,8 +322,8 @@ S.actions.momentum_prep_leg = {
         return needsLeg() and not core() and not preppedBait() and T.nextLimb(C.bait) ~= nil
     end,
     build = function()
-        return "wipe arms|thornrend " .. target() .. " " .. C.venom .. " " .. WORDS[RULES.key(T.nextLimb(C.bait))] ..
-                   " " .. C.plant
+         return "wipe arms|thornrend " .. target() .. " " .. Mo.prepVenom .. " " .. WORDS[RULES.key(T.nextLimb(C.bait))] ..
+                   " " .. Mo.prepPlant
     end
 }
 
