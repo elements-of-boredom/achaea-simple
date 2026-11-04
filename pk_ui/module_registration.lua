@@ -15,6 +15,7 @@ loadModule("state/balances.lua")
 loadModule("state/limbs.lua")
 loadModule("state/me.lua")
 loadModule("state/slowed.lua")
+loadModule("state/leaving.lua") 
 
 loadModule("readiness.lua")
 loadModule("prompt_tags.lua")
