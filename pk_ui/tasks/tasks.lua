@@ -7,6 +7,7 @@ local filenames = {
   "divingboard.lua", 
   "dryadgarden.lua", 
   "ironmill.lua",
+  "takesh.lua",
   "worldreaver.lua"
 }
 

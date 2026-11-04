@@ -32,7 +32,15 @@ PkCore.pk.register("sylvan", {
       "shockwave",
       "momentum_strike",
       "momentum_setup",
+      "momentum_prep_leg",
       "momentum_build",
+    },
+    group = {
+      "force_shockwave",
+      "weather_disturb",
+      "weather_feedback",
+      "group_shockwave",
+      "group_build",
     },
   },
 })

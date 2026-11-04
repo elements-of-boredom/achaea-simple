@@ -55,6 +55,11 @@ function T.class(name)
   local target = tracked(name)
   return target and target.class
 end
+-- Every class they could still be, from what we've seen them do. Empty until something narrows it.
+function T.classes(name)
+  local target = tracked(name)
+  return target and target.classes or {}
+end
 
 -- A parried limb stays avoided until a hit lands on it, or this many seconds pass (they may switch).
 opponent.PARRY_MEMORY = 15
