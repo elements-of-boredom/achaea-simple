@@ -7,6 +7,8 @@ locks.PRESSURE = 2
 
 -- Under pressure, cure the affliction that blocks a cure we're about to have. The first rule that fits wins.
 local RULES = {
+  { has = { "brokenleftarm", "brokenrightarm", "slickness" }, ready = "herb", cure = "slickness",
+    why = "both arms broken: slickness off so restoration can go on" },
   { has = { "impatience", "anorexia" }, without = "slickness", ready = "salve", cure = "anorexia",
     why = "salve ready, can't eat or focus" },
   { has = { "asthma", "slickness" }, ready = "pipe", cure = "asthma",

@@ -4,6 +4,27 @@ limbs.self = limbs.self or {}
 
 -- The game's limb rules, the same file the opponent tracker uses.
 local RULES = loadModule("opponent/limb_rules.lua")
+limbs.PREDICT_AFTER = 0.5
+-- The torso's first step in the game is mild trauma; the shared ladder starts with a broken torso.
+local function gameLadder(limb)
+  local ladder = RULES.ladder(limb)
+  if limb == "torso" then table.remove(ladder, 1) end
+  return ladder
+end
+
+function limbs.crossed(limb)
+  local ladder, level = gameLadder(limb), 0
+  for i, aff in ipairs(ladder) do
+    if PkCore.afflictions.has(aff) then level = i end
+  end
+  local expected = ladder[level + 1]
+  if not expected then return end
+  setTimeout(function()
+    if PkCore.afflictions.has(expected) then return end
+    send("curing predict " .. expected)
+    PkCore.note("predicted " .. expected .. ": " .. limb .. " past 100% with no affliction shown")
+  end, limbs.PREDICT_AFTER * 1000)
+end
 
 -- One hit on us; at 100 the game steps the limb (GMCP shows it) and the extra is lost.
 function limbs.hit(limb, amount, now)
@@ -12,7 +33,10 @@ function limbs.hit(limb, amount, now)
   entry.damage = entry.damage + amount
   entry.lastHit = amount
   entry.at = now
-  if entry.damage >= RULES.BREAK then entry.damage = 0 end
+  if entry.damage >= RULES.BREAK then
+    entry.damage = 0
+    limbs.crossed(limb)
+  end
   limbs.self[limb] = entry
 end
 

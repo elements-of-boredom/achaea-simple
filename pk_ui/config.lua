@@ -9,6 +9,7 @@ config.defaults = {
   classCure = true,
   herbReserve = true,
   treeAssist = true,
+  autoParry = true,
 }
 
 -- Defaults first, then saved values on top; keys no longer in defaults are dropped.

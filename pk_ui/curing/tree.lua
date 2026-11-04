@@ -108,8 +108,9 @@ end
 function tree.update()
   if not PkCore.config.values.treeAssist then return end
   if not B.isReady("tree") or has("paralysis") or PkCore.afflictions.armsDamaged() or treeCurable() == 0 then return end
+  if PkCore.slowed.busy() then return end
   local now = PkCore.now()
-  if now - (tree.sentAt or 0) < RESEND then return end
+  if now - (tree.sentAt or 0) < PkCore.slowed.resendAfter(RESEND) then return end
   for _, reason in ipairs(REASONS) do
     if reason[2]() then
       tree.sentAt = now

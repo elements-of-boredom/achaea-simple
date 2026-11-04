@@ -55,6 +55,12 @@ end
 function reactor.submitQueue(actions, fired)
   if PkCore.slowed.busy() then return end
   if #actions == 0 then return end
+  local parryCommand = PkCore.parry and PkCore.parry.command()
+  if parryCommand then
+    local withParry = { parryCommand }
+    for _, action in ipairs(actions) do withParry[#withParry + 1] = action end
+    actions = withParry
+  end
   local commands = table.concat(actions, "|")
   if commands == reactor.lastQueueSent then return end
   local ready = PkCore.balance.balance and PkCore.balance.equilibrium

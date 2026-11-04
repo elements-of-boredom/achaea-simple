@@ -6,7 +6,7 @@ local reserve = PkCore.reserve
 reserve.HERBS = { bloodroot = 5, kelp = 5, goldenseal = 5 }
 reserve.inv = reserve.inv or {}
 reserve.sentAt = reserve.sentAt or {}
-local RESEND = 1.5   -- seconds: let the inventory update land before asking again
+local RESEND = 0.5   -- seconds: the inventory update lands ~0.1s after an outr
 
 -- GMCP names a stack "a piece of kelp" or "5 pieces of kelp".
 local function count(herb)
@@ -33,11 +33,11 @@ end
 
 function reserve.update()
   if not PkCore.config.values.herbReserve then return end
-  if not PkCore.afflictions.has("addiction") or not armsFree() then return end
+  if not armsFree() then return end
   local now = PkCore.now()
   for herb, want in pairs(reserve.HERBS) do
     local short = want - count(herb)
-    if short > 0 and now - (reserve.sentAt[herb] or 0) >= RESEND then
+    if short > 0 and not PkCore.slowed.busy() and now - (reserve.sentAt[herb] or 0) >= PkCore.slowed.resendAfter(RESEND) then
       reserve.sentAt[herb] = now
       send("outr " .. short .. " " .. herb)
     end
@@ -72,3 +72,15 @@ registerCommand("reserve", function()
 end, "Lock-breaking herbs carried against what addiction tops up to")
 
 PkCore.onVitalsChanged("reserve", reserve.update)
+
+-- Refill on the eat, not on the next prompt: Lauryyn broke both arms 1.6s after an addicted eat
+-- emptied the stack. The short delay lets the inventory update for the eaten herb land first.
+addTrigger([[^You eat (?:a|an|some) (.+)\.$]], function(_, _, w)
+  local eaten = w[1]:lower()
+  for herb in pairs(reserve.HERBS) do
+    if eaten:find(herb, 1, true) then
+      setTimeout(reserve.update, 200)
+      return
+    end
+  end
+end, { type = "regex" })

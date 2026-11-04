@@ -5,6 +5,10 @@ PkCore.slowed = PkCore.slowed or { lastSluggish = 0, on = false }
 local slowed = PkCore.slowed
 slowed.ACTION_DELAY = 1.25
 slowed.QUIET = 5
+slowed.RESEND = 2
+function slowed.resendAfter(normal)
+  return slowed.active() and math.max(normal, slowed.RESEND) or normal
+end
 
 function slowed.active()
   return PkCore.afflictions.has("aeon") or PkCore.now() - slowed.lastSluggish < slowed.QUIET
