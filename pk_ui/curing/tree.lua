@@ -90,9 +90,9 @@ local REASONS = {
       return has("slickness") and armGoing("left") and armGoing("right")
     end },
   { "draining", function() return lowHealth() and count(DRAINS) > 0 end },
-  { "nearly locked", function() return has("anorexia") and has("slickness") and not B.isReady("smoke") end },
+  { "nearly locked", function() return has("anorexia") and has("slickness") and not B.isReady("pipe") end },
   { "blocked channel", channelBlocked },
-  { "aeon", function() return has("aeon") and (has("asthma") or not B.isReady("smoke")) end },
+  { "aeon", function() return has("aeon") and (has("asthma") or not B.isReady("pipe")) end },
   { "same herb twice", function() return not B.isReady("herb") and sameHerbTwice() end },
   { "broken limbs", function() return not B.isReady("salve") and count(LIMBS) >= 2 end },
   { "swamped", function() return treeCurable() >= 5 end },

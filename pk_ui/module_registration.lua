@@ -15,7 +15,7 @@ loadModule("state/balances.lua")
 loadModule("state/limbs.lua")
 loadModule("state/me.lua")
 loadModule("state/slowed.lua")
-loadModule("state/leaving.lua") 
+loadModule("state/leaving.lua")
 
 loadModule("readiness.lua")
 loadModule("prompt_tags.lua")
@@ -34,6 +34,7 @@ loadModule("curing/locks.lua")
 loadModule("curing/reserve.lua")
 loadModule("curing/tree.lua")
 loadModule("curing/parry.lua")
+loadModule("curing/pipes.lua")
 
 -- UI: the theme first, every widget uses it. Layout builds the (empty) panels.
 loadModule("ui/theme_css.lua")

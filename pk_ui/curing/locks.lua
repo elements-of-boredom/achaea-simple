@@ -7,7 +7,10 @@ locks.PRESSURE = 2
 
 -- Under pressure, cure the affliction that blocks a cure we're about to have. The first rule that fits wins.
 local RULES = {
-  { has = { "brokenleftarm", "brokenrightarm", "slickness" }, ready = "herb", cure = "slickness",
+  { has = { "brokenleftarm", "brokenrightarm", "slickness", "asthma" }, always = true, cure = "asthma",
+    when = function() return PkCore.reserve.count("bloodroot") == 0 end,
+    why = "both arms broken, no bloodroot carried: asthma off so valerian can be smoked" },
+  { has = { "brokenleftarm", "brokenrightarm", "slickness" }, always = true, cure = "slickness",
     why = "both arms broken: slickness off so restoration can go on" },
   { has = { "impatience", "anorexia" }, without = "slickness", ready = "salve", cure = "anorexia",
     why = "salve ready, can't eat or focus" },
@@ -47,13 +50,14 @@ local function fits(rule)
     if not PkCore.afflictions.has(aff) then return false end
   end
   if rule.without and PkCore.afflictions.has(rule.without) then return false end
-  return canUse(rule.ready)
+  if rule.when and not rule.when() then return false end
+  return rule.ready == nil or canUse(rule.ready)
 end
 
 function locks.choose()
-  if pressure() < locks.PRESSURE then return nil end
+  local pressured = pressure() >= locks.PRESSURE
   for _, rule in ipairs(RULES) do
-    if fits(rule) then return rule end
+    if (pressured or rule.always) and fits(rule) then return rule end
   end
 end
 
