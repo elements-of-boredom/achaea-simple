@@ -7,6 +7,7 @@ PkCore.pk.register("sylvan", {
   routes = {
     heartseed = {
       "force_shockwave",
+      "break_shield",
       "viridian",
       "vinewreathe",
       "steal_body_restoration",
@@ -20,7 +21,7 @@ PkCore.pk.register("sylvan", {
     },
     momentum = {
       "force_shockwave",
-      --"viridian",
+      "break_shield",
       "weather_disturb",
       "weather_feedback",
       "momentum_static",
@@ -37,6 +38,7 @@ PkCore.pk.register("sylvan", {
     },
     group = {
       "force_shockwave",
+      "break_shield",
       "weather_disturb",
       "weather_feedback",
       "group_shockwave",

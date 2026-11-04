@@ -71,7 +71,7 @@ S.shockwave = {
 
 local ELEMENT = {
   static = "lightning", thunderclap = "lightning", bolt = "lightning",
-  razorwind = "wind", cyclone = "wind",
+  razorwind = "wind", cyclone = "wind", shear = "wind",
   hailstone = "water", waterspout = "water",
 }
 -- From the AE lines in our logs; HELP says 13 for wind, but every cyclone and razorwind cost 5.

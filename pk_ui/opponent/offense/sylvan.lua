@@ -158,6 +158,8 @@ local SPELLS = {
         { E.gain("vinewreathed"), E.lose("vinewreathed", opponent.VINEWREATHE) } },
     { [[^The vines flailing about ([\w'\-]+)'s form recede\.$]],
         { E.lose("vinewreathed") } },
+    { [[^The bees sting ([\w'\-]+) into paralysis\.$]],
+        { E.gain("paralysis") } },
 }
 for _, entry in ipairs(SPELLS) do
     opponent.onLine(entry[1], entry[2])
@@ -181,6 +183,9 @@ for _, entry in ipairs(OUR_CASTS) do
     local spell = entry[2]
     addTrigger(entry[1], function(_, _, w)
         opponent.offense.spell, opponent.offense.spellTarget = spell, w[1]
+        if opponent.isTracked(w[1]) then
+            opponent.record(w[1], { kind = "sense", sense = "shield", value = "no" })
+        end
         opponent.offense.spellAt = opponent.host.now()
     end, { type = "regex" })
 end

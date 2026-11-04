@@ -65,6 +65,7 @@ loadModule("reactor_modes/pk.lua")
 loadModule("reactor_modes/pk/sylvan/state.lua")
 loadModule("reactor_modes/pk/sylvan/actions.lua")
 loadModule("reactor_modes/pk/sylvan/routes.lua")
+loadModule("reactor_modes/pk/sylvan/bees.lua")
 
 -- Alias stuff
 loadModule("aliases/iht.lua")

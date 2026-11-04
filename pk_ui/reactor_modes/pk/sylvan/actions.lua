@@ -159,6 +159,14 @@ end
 local function sealed()
     return T.has("anorexia") and T.has("slickness")
 end
+S.actions.break_shield = {
+  why = "they're shielded: shear",
+  can = function() return T.hasDef("shield") end,
+  build = function()
+    if S.here().disturbed then return cast("synchronise", { "shear", "cyclone" }) end
+    return "cast shear at " .. target()
+  end,
+}
 
 S.actions.weather_disturb = {
     why = "weather isn't disturbed here",
