@@ -280,11 +280,12 @@ function defences.ensureSet()
         return
     end
     listing, sets, currentSet = true, {}, nil
-    send("curingset list")
+    PkCore.quiet.send("sets", "curingset list")
 end
 
 addTrigger([[^Your current curing sets$]], function()
     sets = {}
+    if PkCore.quiet.expecting("sets") then return false end
 end, {
     type = "regex"
 })
@@ -296,6 +297,7 @@ addTrigger([[^(\w+)(?: \(current\))?$]], function(_, line, w)
     if line:find("(current)", 1, true) then
         currentSet = w[1]
     end
+    return false
 end, {
     type = "regex"
 })
@@ -304,25 +306,38 @@ addTrigger([[^You are using a total of (\d+) of your allowed (\d+) curing sets\.
     local class = defences.classKey()
     if sets[class] then
         if currentSet ~= class then
-            send("curingset switch " .. class)
+            PkCore.quiet.send("switch", "curingset switch " .. class)
         else
             defences.onSet(class)
         end
     elseif tonumber(w[1]) < tonumber(w[2]) then
         send("curingset new " .. class)
-        send("curingset switch " .. class)
+        PkCore.quiet.send("switch", "curingset switch " .. class)
         if currentSet then
             send("curingset clone " .. currentSet)
         end
     else
         PkCore.note("defences: no free curing set for " .. class .. " (" .. w[1] .. " of " .. w[2] .. " used)")
     end
+    if PkCore.quiet.expecting("sets") then
+        PkCore.quiet.finish("sets")
+        PkCore.quiet.blankAfterSets = true
+        return false
+    end
 end, {
     type = "regex"
 })
 
+addTrigger([[^-{20,}$]], function()
+    if listing and PkCore.quiet.expecting("sets") then return false end
+end, { type = "regex" })
+
 addTrigger([[^You will now cure using the (\w+) set\.$]], function(_, _, w)
     defences.onSet(w[1])
+    if PkCore.quiet.expecting("switch") then
+        PkCore.quiet.finish("switch")
+        return false
+    end
 end, {
     type = "regex"
 })
@@ -342,6 +357,7 @@ end
 addTrigger([[^Your defence priorities for curing set (\w+):$]], function()
     if awaitingList then
         awaitingList, reading = false, true
+        return false
     end
 end, {
     type = "regex"
@@ -350,6 +366,7 @@ end, {
 addTrigger([[^(\w+)\s+:\s+(\d+)$]], function(_, _, w)
     if reading then
         serverList[w[1]] = tonumber(w[2])
+        return false
     end
 end, {
     type = "regex"

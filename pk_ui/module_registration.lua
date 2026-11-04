@@ -4,6 +4,7 @@
 loadModule("core.lua")
 loadModule("config.lua")
 loadModule("gmcp.lua")
+loadModule("state/quiet.lua") 
 
 -- State: GMCP -> the PkCore blackboard.
 loadModule("state/player.lua")

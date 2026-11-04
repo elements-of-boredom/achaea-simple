@@ -125,7 +125,7 @@ PkCore.onVitalsChanged("tree", tree.update)
 
 -- Only one of us touches tree: the server's own tree use goes off while we handle it, and back on when we don't.
 function tree.syncServer()
-  send("curing tree " .. (PkCore.config.values.treeAssist and "off" or "on"))
+  PkCore.quiet.send("tree", "curing tree " .. (PkCore.config.values.treeAssist and "off" or "on"))
 end
 PkCore.config.onChange("treeAssist", tree.syncServer)
 onGMCPUpdate("Char.Name", tree.syncServer)

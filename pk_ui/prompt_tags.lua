@@ -290,5 +290,5 @@ local configured = false
 PkCore.onVitalsChanged("prompt.config", function()
   if configured then return end
   configured = true
-  send("config prompt custom [*s] *h/*H *m/*M *e/*E *w/*W *b *d *c *r *k *t *T *1 *2 *3 *4")
+  PkCore.quiet.send("prompt", "config prompt custom [*s] *h/*H *m/*M *e/*E *w/*W *b *d *c *r *k *t *T *1 *2 *3 *4")
 end)
