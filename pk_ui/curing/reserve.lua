@@ -32,7 +32,7 @@ local function armsFree()
 end
 
 function reserve.update()
-  if not PkCore.config.values.herbReserve then return end
+  if not PkCore.config.values.herbReserve or PkCore.leaving.active then return end
   if not armsFree() then return end
   local now = PkCore.now()
   for herb, want in pairs(reserve.HERBS) do
