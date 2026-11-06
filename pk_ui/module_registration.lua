@@ -20,6 +20,7 @@ loadModule("state/leaving.lua")
 
 loadModule("readiness.lua")
 loadModule("prompt_tags.lua")
+loadModule("alerts.lua")
 
 
 -- Class systems

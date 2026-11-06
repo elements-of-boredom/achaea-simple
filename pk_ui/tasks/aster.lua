@@ -43,36 +43,20 @@ local function build()
     { send = "give carrot to Hettie", wait = "Hettie, the Ostler's cook says, \"Just in time", timeout = 15 },
     pathTrack(51486),
     {
-      -- The child's name (boy/girl) varies - look every few seconds until
-      -- one appears, then hand over the bread.
+      -- The child (a boy or a girl) wanders the hovel: watch for one the whole step, look every 6s in
+      -- case it's already here, and finish on the give no matter who sent it.
       fn = function()
-        local done = false
-        local tmr
-        local function tryFind()
-          if done then return end
-          local tidB, tidG
-          local function found(target)
-            if done then return end
-            done = true
-            pcall(killTrigger, tidB); pcall(killTrigger, tidG); pcall(killTimer, tmr)
-            tempTrigger("You give a stale slice of bread to", function()
-              raiseEvent("AchaeaCore.task.asterChildFound")
-            end)
-            send("give bread to " .. target)
-          end
-          tidB = tempTrigger("boy", function() found("boy") end)
-          tidG = tempTrigger("girl", function() found("girl") end)
-          tempTimer(2, function()
-            if not done then
-              pcall(killTrigger, tidB); pcall(killTrigger, tidG)
-            end
-          end)
-          send("look")
-          tmr = tempTimer(6, tryFind)
-        end
-        tryFind()
+        local tmr, tid, givenAt
+        tid = tempRegexTrigger([[\b(?:serf|small) (boy|girl)\b]], function(_, _, w)
+          if givenAt and PkCore.now() - givenAt < 3 then return end
+          givenAt = PkCore.now()
+          send("give bread to " .. w[1])
+        end)
+        local function look() send("look"); tmr = tempTimer(6, look) end
+        look()
+        return function() pcall(killTimer, tmr); pcall(killTrigger, tid) end
       end,
-      waitEvent = "AchaeaCore.task.asterChildFound",
+      wait = "You give a stale slice of bread to",
       timeout = 120,
     },
     pathTrack(55425),

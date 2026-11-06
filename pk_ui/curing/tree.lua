@@ -129,4 +129,3 @@ function tree.syncServer()
 end
 PkCore.config.onChange("treeAssist", tree.syncServer)
 onGMCPUpdate("Char.Name", tree.syncServer)
-tree.syncServer()
